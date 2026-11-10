@@ -13,8 +13,5 @@ src-tauri/gen/
 dev/seed/shop.sqlite
 dev/seed/shop.sqlite.*.tmp
 
-# Rendered website (node website/build.mjs .site)
-.site/
-
 # Local planning notes (plans, research, ADR drafts, tech debt): never pushed
 /notes/

@@ -1,4 +1,4 @@
-<img src="website/assets/logo.svg" alt="" width="72" align="left">
+<img src="src/assets/logo.svg" alt="" width="72" align="left">
 
 # DataStudio
 
@@ -11,7 +11,7 @@ Elasticsearch, OpenSearch, ClickHouse và Oracle. Có bản desktop cho Windows 
 (GPL-3.0).
 
 **[Tải cho Windows](https://github.com/vd-huy/DataStudio/releases/latest)** ·
-[Website](https://dbcl.fosta.app/vi/) · [Changelog](CHANGELOG.md)
+[Changelog](CHANGELOG.md)
 
 ## Tính năng
 

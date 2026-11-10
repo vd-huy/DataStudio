@@ -1,4 +1,4 @@
-<img src="website/assets/logo.svg" alt="" width="72" align="left">
+<img src="src/assets/logo.svg" alt="" width="72" align="left">
 
 # DataStudio
 
@@ -10,7 +10,7 @@ A small, fast database client for **11 engines**: MariaDB, MySQL, SQL Server, Mo
 OpenSearch, ClickHouse and Oracle. A desktop app for Windows, or a web edition in Docker. Free and open source (GPL-3.0).
 
 **[Download for Windows](https://github.com/vd-huy/DataStudio/releases/latest)** ·
-[Website](https://dbcl.fosta.app) · [Changelog](CHANGELOG.md)
+[Changelog](CHANGELOG.md)
 
 ## Features
 
