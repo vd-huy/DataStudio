@@ -273,7 +273,9 @@ delete products
         assert!(requests[0].classification.refused.is_some());
         let error = requests[0].to_es_request(Duration::from_secs(1), None).unwrap_err();
         assert_eq!(error.code(), Some("INVALID_REQUEST"));
-        assert!(requests[1].to_es_request(Duration::from_secs(1), Some("datastudio-1".into())).is_ok());
+        assert!(requests[1]
+            .to_es_request(Duration::from_secs(1), Some("datastudio-1".into()))
+            .is_ok());
         let kibana = parse("GET kbn:/api/status").unwrap();
         assert!(kibana[0].to_es_request(Duration::from_secs(1), None).is_err());
     }

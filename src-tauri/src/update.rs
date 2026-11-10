@@ -243,12 +243,8 @@ mod tests {
             .unwrap();
         assert_eq!(info.url, "https://github.com/vd-huy/DataStudio/releases/tag/v0.1.1");
         assert!(is_release_page("https://github.com/vd-huy/DataStudio/releases/latest"));
-        assert!(!is_release_page(
-            "https://github.com/vd-huy/DataStudio/releases.evil.example"
-        ));
-        assert!(!is_release_page(
-            "https://github.com/vd-huy/DataStudio/releases/x\" & calc"
-        ));
+        assert!(!is_release_page("https://github.com/vd-huy/DataStudio/releases.evil.example"));
+        assert!(!is_release_page("https://github.com/vd-huy/DataStudio/releases/x\" & calc"));
     }
 
     #[test]

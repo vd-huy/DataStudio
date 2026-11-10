@@ -595,9 +595,15 @@ async fn contract_clickhouse_creates_databases() {
         })
         .await
         .unwrap();
-    let sink = run(&handle, &session, "EXISTS DATABASE datastudio_contract_new", None, RunOptions::default())
-        .await
-        .unwrap();
+    let sink = run(
+        &handle,
+        &session,
+        "EXISTS DATABASE datastudio_contract_new",
+        None,
+        RunOptions::default(),
+    )
+    .await
+    .unwrap();
     assert_eq!(text(&sink.sets[0].rows[0][0]), "1");
     run(
         &handle,

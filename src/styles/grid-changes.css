@@ -71,30 +71,50 @@
   color: var(--ws-orange);
 }
 
-/* A coloured edge on the row number says what will happen to the row. */
-.grid-table tr.state-modified td.row-number {
-  box-shadow: inset 3px 0 0 var(--warning);
-  color: var(--fg-2);
-}
-.grid-table tr.state-new td.row-number {
-  box-shadow: inset 3px 0 0 var(--success);
-  color: var(--success);
-}
-.grid-table tr.state-deleted td.row-number {
-  box-shadow: inset 3px 0 0 var(--danger);
+/* Row states: distinct TablePlus-style highlighting for modified, new, and deleted rows */
+.grid-table tr.state-modified td.cell {
+  background: color-mix(in srgb, var(--accent) 24%, var(--surface));
 }
 
-.grid-table tbody tr.current td.cell {
+.grid-table tr.state-modified td.row-number {
+  background: var(--accent);
+  color: var(--accent-fg, #ffffff);
+  font-weight: 600;
+}
+
+.grid-table tr.state-new td.cell {
+  background: color-mix(in srgb, var(--success) 20%, var(--surface));
+}
+
+.grid-table tr.state-new td.row-number {
+  background: var(--success);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.grid-table tr.state-deleted td.cell {
+  background: color-mix(in srgb, var(--danger) 18%, var(--surface));
+  color: var(--fg-3);
+  text-decoration: line-through;
+}
+
+.grid-table tr.state-deleted td.row-number {
+  background: var(--danger);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.grid-table tbody tr.current:not(.state-modified):not(.state-new):not(.state-deleted) td.cell {
   background: color-mix(in srgb, var(--accent) 7%, var(--surface));
 }
 
-.grid-table tbody tr.current td.row-number {
+.grid-table tbody tr.current:not(.state-modified):not(.state-new):not(.state-deleted) td.row-number {
   color: var(--accent);
   font-weight: 600;
 }
 
 .grid-table tbody tr td.modified {
-  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--warning) 70%, transparent);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .pending-bar {
@@ -123,4 +143,21 @@
 
 .pending-text {
   font-weight: 500;
+}
+
+.preview-sql-body {
+  max-height: 480px;
+  overflow: auto;
+}
+
+.preview-sql-pre {
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--editor-bg, var(--surface-2));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: 12.5px/1.55 var(--font-mono);
+  color: var(--fg);
+  white-space: pre-wrap;
+  user-select: text;
 }

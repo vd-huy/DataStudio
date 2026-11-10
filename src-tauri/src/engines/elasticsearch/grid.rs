@@ -272,11 +272,9 @@ pub fn sort(engine: &EsEngine, target: &Target, keys: &[SortKey]) -> AppResult<V
     for key in keys {
         let order = if key.descending { "desc" } else { "asc" };
         let field = match key.column.as_str() {
-            ID if !engine.info().is_opensearch() => {
-                return Err(AppError::new(
-                    "Elasticsearch cannot sort by _id. Sort by another field, or declare a key field in the mapping (_meta.datastudio.key).",
-                ))
-            }
+            ID if !engine.info().is_opensearch() => return Err(AppError::new(
+                "Elasticsearch cannot sort by _id. Sort by another field, or declare a key field in the mapping (_meta.datastudio.key).",
+            )),
             ID | INDEX => key.column.clone(),
             name => target
                 .column(name)

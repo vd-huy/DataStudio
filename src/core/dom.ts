@@ -11,6 +11,7 @@ const ICONS = {
   play: '<path d="M5 3l8 5-8 5z" fill="currentColor"/>',
   stop: '<rect x="4" y="4" width="8" height="8" rx="1" fill="currentColor"/>',
   refresh: '<path d="M13 8a5 5 0 1 1-1.46-3.54"/><path d="M13 2.5V5h-2.5"/>',
+  undo: '<path d="M3.5 6.5h7a3.5 3.5 0 0 1 0 7h-2"/><path d="M6 4L3.5 6.5 6 9"/>',
   plus: '<path d="M8 3v10M3 8h10"/>',
   minus: '<path d="M3 8h10"/>',
   check: '<path d="M3 8.5l3 3 7-7"/>',

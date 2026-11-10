@@ -17,15 +17,19 @@ import type {
   EngineDescriptor,
   ErrorPosition,
   LanguageSpec,
+  ObjectRef,
+  RowChangeSet,
   RunRequest,
   RunSummary,
   SessionInfo,
   SqlDialectId,
   TransactionOp,
   TransactionState,
+  Value,
 } from "../../core/contract";
 import { confirmDialog, toast } from "../../core/dialogs";
-import { clamp, formatNumber, h, icon, iconOrDefault, secondaryTool, separator, spacer, toolButton } from "../../core/dom";
+import { clamp, copyText, formatNumber, h, icon, iconOrDefault, secondaryTool, separator, spacer, toolButton } from "../../core/dom";
+import { showContextMenu, type MenuItem } from "../../core/contextMenu";
 import { defaultLanguage, hasCapability } from "../../core/engines";
 import { renderError, showError } from "../../core/errorPanel";
 import { isCancelError } from "../../core/errors";
@@ -36,6 +40,12 @@ import { dialectOf } from "../../core/sql";
 import type { TabContent } from "../../core/tabs";
 import type { HistoryEntry } from "../../core/types";
 import { openColumnsPopover } from "../grid/columnsPopover";
+import { gridSetup, type SortState } from "../grid/grid";
+import { EXPORT_LABELS, type ExportFormat } from "../importExport/exporters";
+import { loadDefaultPageSize } from "../table/pageSizePill";
+import { openPreviewSqlDialog } from "../table/previewSql";
+import { buildCountQuery, buildPaginatedQuery } from "./queryPaging";
+import { extractTargetTable, findKeyColumns } from "./tableExtractor";
 
 import { withConfirmation } from "../safety/confirmationDialog";
 import { commitsOpenTransaction, IDLE_TRANSACTION_MINUTES, idleReminderDue, transactionButtons, transactionLabel } from "../safety/safety";
@@ -43,7 +53,7 @@ import { AttemptTimer } from "./attemptTimer";
 import { HistoryPanel } from "./historyPanel";
 import { changesSchema, defaultDatabase, hasUnsavedText } from "./queryRules";
 import { lostSessionMessage, recoverLostSession, sessionGone } from "./lostSession";
-import { ResultArea, type Message } from "./resultArea";
+import { ResultArea, type Message, type QueryResultPanel } from "./resultArea";
 import { editorOffset, RunResults } from "./runResults";
 import { createSqlEditor, selectedOrAllText, setEditorLanguage } from "./sqlEditor";
 import "./query-run.css";
@@ -77,6 +87,7 @@ export interface QueryViewOptions {
   languageSupport(languageId: string): Promise<LanguageSupport>;
 }
 
+const EXPORT_FORMATS: ExportFormat[] = ["csv", "json", "markdown", "insert"];
 const HISTORY_PANEL_KEY = "db-studio.queryHistoryPanel";
 /** Reported once per session so a read-only disk does not flood the user with toasts. */
 let historyFailureReported = false;
@@ -156,6 +167,15 @@ export class QueryView implements TabContent {
   private readonly autoCommit = h("input", { type: "checkbox", checked: true, title: "Commit every statement on its own" });
   private readonly autoCommitLabel: HTMLElement;
   private readonly transactionButtons: HTMLButtonElement[];
+  private pageSize: number = loadDefaultPageSize();
+  private readonly resultToolbar: HTMLElement;
+  private readonly resultRefreshButton: HTMLButtonElement;
+  private readonly resultAddButton: HTMLButtonElement;
+  private readonly resultDeleteButton: HTMLButtonElement;
+  private readonly resultRevertButton: HTMLButtonElement;
+  private readonly resultPreviewButton: HTMLButtonElement;
+  private readonly resultSubmitButton: HTMLButtonElement;
+  private readonly resultExportButton: HTMLButtonElement;
 
   constructor(options: QueryViewOptions) {
     this.connection = options.connection;
@@ -232,6 +252,30 @@ export class QueryView implements TabContent {
       close: () => this.toggleHistory(false),
     });
 
+    this.resultRefreshButton = toolButton("refresh", "Refresh", () => void this.run("statement"), "Reload current statement (F5)");
+    this.resultAddButton = toolButton("plus", "Add", () => this.resultArea.activeGrid()?.addRow(), "Add row");
+    this.resultDeleteButton = toolButton("minus", "Delete", () => this.resultArea.activeGrid()?.deleteSelectedRow(), "Delete selected row");
+    this.resultRevertButton = toolButton("undo", "Revert", () => this.revertActiveChanges(), "Revert all pending changes in this result");
+    this.resultPreviewButton = toolButton("query", "Preview SQL", () => this.previewActiveChanges(), "Preview SQL statements for pending changes");
+    this.resultSubmitButton = toolButton("check", "Save", () => void this.submitActiveChanges(), "Save changes to database (Ctrl+S)");
+    this.resultExportButton = toolButton("download", "Export", () => undefined, "Export result to CSV, JSON, Markdown, or SQL INSERT");
+    this.resultExportButton.addEventListener("click", (event) => this.showExportMenu(event));
+
+    this.resultToolbar = h(
+      "div",
+      { class: "toolbar-group result-toolbar" },
+      this.resultRefreshButton,
+      separator(),
+      this.resultAddButton,
+      this.resultDeleteButton,
+      this.resultRevertButton,
+      this.resultPreviewButton,
+      this.resultSubmitButton,
+      separator(),
+      this.resultExportButton,
+    );
+    this.resultToolbar.hidden = true;
+
     const splitter = h("div", { class: "splitter-y" });
     makeSplitter(splitter, "y", (delta) => this.resizeEditor(delta));
     this.element = h(
@@ -263,12 +307,58 @@ export class QueryView implements TabContent {
           { class: "query-main" },
           this.editorHost,
           splitter,
-          h("div", { class: "results" }, h("div", { class: "result-bar" }, this.resultArea.tabs, this.runStatus), this.resultArea.body),
+          h("div", { class: "results" }, h("div", { class: "result-bar" }, this.resultArea.tabs, this.resultToolbar, this.runStatus), this.resultArea.body),
         ),
         this.history.element,
       ),
     );
     this.resultArea.onActiveChange = () => this.syncResultTools();
+    this.resultArea.onGridChange = () => this.syncResultTools();
+    this.resultArea.onPageSizeChange = (panel, size) => {
+      this.pageSize = size;
+      panel.limit = size;
+      panel.offset = 0;
+      void this.loadPage(panel);
+    };
+    this.resultArea.onCountRows = (panel) => void this.countRows(panel);
+    this.resultArea.onFirstPage = (panel) => {
+      panel.offset = 0;
+      void this.loadPage(panel);
+    };
+    this.resultArea.onPrevPage = (panel) => {
+      panel.offset = Math.max(0, panel.offset - panel.limit);
+      void this.loadPage(panel);
+    };
+    this.resultArea.onNextPage = (panel) => {
+      panel.offset = panel.offset + panel.limit;
+      void this.loadPage(panel);
+    };
+    this.resultArea.onLastPage = (panel) => {
+      if (panel.total !== null && panel.exactTotal) {
+        panel.offset = Math.floor(Math.max(0, panel.total - 1) / panel.limit) * panel.limit;
+        void this.loadPage(panel);
+      } else {
+        void this.countRows(panel, true);
+      }
+    };
+    this.resultArea.onSort = (panel, column) => {
+      const current = panel.sort?.column === column ? panel.sort : null;
+      const nextSort: SortState | null = current === null ? { column, descending: false } : current.descending ? null : { column, descending: true };
+      panel.sort = nextSort;
+      panel.offset = 0;
+      void this.loadPage(panel);
+    };
+
+    this.element.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+        const grid = this.resultArea.activeGrid();
+        if (grid && grid.hasChanges()) {
+          event.preventDefault();
+          event.stopPropagation();
+          void this.submitActiveChanges();
+        }
+      }
+    });
     this.showHint();
     this.toggleHistory(readHistoryPanelOpen(), false);
     this.showTransactionControls(this.transactionsSupported);
@@ -288,10 +378,12 @@ export class QueryView implements TabContent {
   }
 
   canClose(): boolean | Promise<boolean> {
+    const gridChanges = this.resultArea.activeGrid()?.hasChanges() ?? false;
     const open = this.hasOpenTransaction();
     const unsaved = this.hasUnsavedText();
-    if (!open && !unsaved) return true;
+    if (!open && !unsaved && !gridChanges) return true;
     const reasons = [
+      gridChanges ? "There are unsaved row edits in query results." : "",
       open ? "This tab has an open transaction. Closing the tab rolls it back, so uncommitted changes are lost." : "",
       unsaved ? `${open ? "Its" : "This tab's"} query text was edited and not run since; closing the tab discards it.` : "",
     ];
@@ -706,6 +798,7 @@ export class QueryView implements TabContent {
                 this.scheduleRender(current);
               },
               confirmation,
+              this.pageSize >= 50000 ? null : this.pageSize + 1,
             ),
           inFlight,
         );
@@ -871,11 +964,231 @@ export class QueryView implements TabContent {
         : "Failed";
   }
 
-  /** The Columns and Cell editor buttons act on the grid of the active result tab. */
+  /** The Columns, Cell editor and result toolbar buttons act on the active result tab. */
   private syncResultTools(): void {
     const grid = this.resultArea.activeGrid();
+    const entry = this.resultArea.activeEntry();
     this.columnsButton.disabled = !grid;
     this.cellButton.disabled = !grid;
+
+    if (!grid || !entry) {
+      this.resultToolbar.hidden = true;
+      return;
+    }
+
+    this.resultToolbar.hidden = false;
+    const target = entry.sql ? extractTargetTable(entry.sql) : null;
+    const editable = target !== null;
+    const changes = grid.changes();
+    const changeCount = changes.length;
+
+    this.resultAddButton.disabled = !editable;
+    this.resultDeleteButton.disabled = !editable;
+    this.resultRevertButton.disabled = changeCount === 0;
+    this.resultPreviewButton.disabled = changeCount === 0;
+    this.resultSubmitButton.disabled = changeCount === 0;
+
+    const revertSpan = this.resultRevertButton.querySelector("span");
+    if (revertSpan) revertSpan.textContent = changeCount > 0 ? `Revert (${changeCount})` : "Revert";
+    const submitSpan = this.resultSubmitButton.querySelector("span");
+    if (submitSpan) submitSpan.textContent = changeCount > 0 ? `Save (${changeCount})` : "Save";
+  }
+
+  private async submitActiveChanges(): Promise<void> {
+    const grid = this.resultArea.activeGrid();
+    const entry = this.resultArea.activeEntry();
+    if (!grid || !entry) return;
+    const built = grid.changes();
+    if (built.length === 0) return;
+
+    const target = extractTargetTable(entry.sql);
+    if (!target) {
+      toast("Cannot determine target table for this query to save changes automatically", "error");
+      return;
+    }
+
+    const object: ObjectRef = {
+      database: target.database ?? this.currentDatabase(),
+      schema: target.schema ?? null,
+      name: target.name,
+      kind: "table",
+    };
+
+    const set: RowChangeSet = {
+      object,
+      changes: built.map(({ change }) => change),
+    };
+
+    try {
+      const result = await withConfirmation((confirmation) => this.connection.applyEdits(set, "gridSave", confirmation));
+      if (result !== null) {
+        const total = result.inserted + result.updated + result.deleted;
+        toast(`Saved ${total} change(s) to ${object.name}`, "success");
+        void this.run("statement");
+      }
+    } catch (error) {
+      showError(error, `Save changes to ${object.name}`);
+    }
+  }
+
+  private previewActiveChanges(): void {
+    const grid = this.resultArea.activeGrid();
+    const entry = this.resultArea.activeEntry();
+    if (!grid || !entry) return;
+    const built = grid.changes();
+    if (built.length === 0) {
+      toast("No pending changes to preview");
+      return;
+    }
+    const target = extractTargetTable(entry.sql);
+    const tableName = target ? (target.schema ? `${target.schema}.${target.name}` : target.name) : "query_result";
+    openPreviewSqlDialog(
+      tableName,
+      built.map(({ change }) => change),
+      dialectOf(this.dialect()),
+    );
+  }
+
+  private revertActiveChanges(): void {
+    const grid = this.resultArea.activeGrid();
+    if (!grid) return;
+    grid.discard();
+    this.syncResultTools();
+    toast("Reverted all pending changes", "info");
+  }
+
+  private showExportMenu(event: MouseEvent): void {
+    const grid = this.resultArea.activeGrid();
+    if (!grid) return;
+    const items: MenuItem[] = EXPORT_FORMATS.map((format) => ({
+      label: `Copy as ${EXPORT_LABELS[format]}`,
+      run: () => {
+        void copyText(grid.exportPage(format)).then(() => toast(`Copied as ${EXPORT_LABELS[format]}`, "success"));
+      },
+    }));
+    showContextMenu(event, items);
+  }
+
+  private async loadPage(panel: QueryResultPanel): Promise<void> {
+    if (!panel.entry || !panel.grid || !panel.baseSql) return;
+    const baseSql = panel.baseSql;
+    const dialect = dialectOf(this.dialect());
+    const limit = panel.limit;
+    const offset = panel.offset;
+    const sort = panel.sort;
+
+    panel.pageSizePill?.setLoading(true);
+
+    const target = extractTargetTable(baseSql);
+    const editable = target !== null;
+    const keyColumns = panel.entry.columns ? findKeyColumns(panel.entry.columns) : [];
+
+    const fetchedRows: Value[][] = [];
+    let elapsedMs = 0;
+    let truncated = false;
+
+    try {
+      const pageSql = buildPaginatedQuery(baseSql, dialect, limit, offset, sort);
+      const req: RunRequest = { text: pageSql, database: this.currentDatabase(), offset: 0 };
+      const summary = await this.connection.run(
+        this.sessionId,
+        req,
+        (event) => {
+          if (event.event === "rows") {
+            for (const r of event.rows) fetchedRows.push(r);
+          } else if (event.event === "done") {
+            elapsedMs = event.elapsedMs;
+            truncated = event.truncated;
+          }
+        },
+        null,
+        limit + 1,
+      );
+      if (summary) elapsedMs = summary.elapsedMs;
+
+      const hasMore = fetchedRows.length > limit || truncated;
+      const displayedRows = hasMore && fetchedRows.length > limit ? fetchedRows.slice(0, limit) : fetchedRows;
+
+      panel.hasMore = hasMore;
+      panel.elapsedMs = elapsedMs;
+      if (!hasMore && (panel.total === null || !panel.exactTotal)) {
+        panel.total = offset + displayedRows.length;
+        panel.exactTotal = true;
+      }
+
+      panel.grid.load({
+        ...gridSetup(panel.entry.columns ?? [], displayedRows, dialectOf(this.dialect())),
+        clientFilter: true,
+        clientSort: false,
+        sort,
+        onSort: (col) => this.resultArea.onSort?.(panel, col),
+        editable,
+        readOnlyReason: editable ? null : "Results from complex queries (JOIN/GROUP BY) cannot be updated automatically",
+        tableName: target ? target.name : null,
+        keyColumns,
+      });
+      panel.grid.element.scrollTop = 0;
+
+      panel.pageSizePill?.update({
+        offset,
+        count: displayedRows.length,
+        total: panel.total,
+        exactTotal: panel.exactTotal,
+        elapsedMs,
+        hasMore,
+      });
+      this.syncResultTools();
+    } catch (error) {
+      showError(error, `Load page at offset ${offset}`);
+    } finally {
+      panel.pageSizePill?.setLoading(false);
+    }
+  }
+
+  private async countRows(panel: QueryResultPanel, jumpToLast = false): Promise<void> {
+    if (!panel.baseSql) return;
+    const countSql = buildCountQuery(panel.baseSql);
+    panel.pageSizePill?.setLoading(true);
+    try {
+      const req: RunRequest = { text: countSql, database: this.currentDatabase(), offset: 0 };
+      let count: number | null = null;
+      await this.connection.run(
+        this.sessionId,
+        req,
+        (event) => {
+          if (event.event === "rows" && event.rows.length > 0) {
+            const val = event.rows[0][0];
+            if (val && (val.t === "int" || val.t === "float" || val.t === "decimal")) {
+              count = Number(val.v);
+            }
+          }
+        },
+        null,
+        1,
+      );
+      if (count !== null) {
+        panel.total = count;
+        panel.exactTotal = true;
+        toast(`Count: ${formatNumber(count)} rows`, "info");
+        if (jumpToLast) {
+          panel.offset = Math.floor(Math.max(0, count - 1) / panel.limit) * panel.limit;
+          await this.loadPage(panel);
+        } else {
+          panel.pageSizePill?.update({
+            offset: panel.offset,
+            count: panel.grid ? panel.grid.pageRows().length : 0,
+            total: count,
+            exactTotal: true,
+            elapsedMs: panel.elapsedMs,
+            hasMore: panel.offset + (panel.grid ? panel.grid.pageRows().length : 0) < count,
+          });
+        }
+      }
+    } catch (error) {
+      showError(error, "Count query rows");
+    } finally {
+      panel.pageSizePill?.setLoading(false);
+    }
   }
 
   private toggleHistory(open = this.history.element.hidden, remember = true): void {

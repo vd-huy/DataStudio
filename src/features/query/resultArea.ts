@@ -7,8 +7,11 @@
 import type { ColumnInfo, Value, ValueKind } from "../../core/contract";
 import { formatNumber, h } from "../../core/dom";
 import type { SqlDialect } from "../../core/sql";
-import { DataGrid, gridSetup } from "../grid/grid";
+import { DataGrid, gridSetup, type SortState } from "../grid/grid";
+import { createPageSizePill, loadDefaultPageSize, type PageSizePillControl } from "../table/pageSizePill";
+import { isPaginatableQuery } from "./queryPaging";
 import { describeResult, resultLayout, statementExcerpt, type RunResults, type StatementResult } from "./runResults";
+import { extractTargetTable, findKeyColumns } from "./tableExtractor";
 
 export interface Message {
   text: string;
@@ -18,7 +21,7 @@ export interface Message {
 /** While rows stream in, a grid (and the list of result sets) is reloaded at most this often. */
 const GRID_RELOAD_MS = 1000;
 
-interface Panel {
+export interface QueryResultPanel {
   element: HTMLElement;
   button: HTMLButtonElement;
   titleLabel: HTMLElement;
@@ -31,7 +34,19 @@ interface Panel {
   loadedAt: number;
   /** The list: its rows as last loaded (JSON), so an unchanged list is not loaded again. */
   loadedSignature?: string;
+  pageSizePill?: PageSizePillControl;
+
+  baseSql: string;
+  offset: number;
+  limit: number;
+  sort: SortState | null;
+  total: number | null;
+  exactTotal: boolean;
+  hasMore: boolean;
+  elapsedMs: number;
 }
+
+type Panel = QueryResultPanel;
 
 interface MessageGroup {
   line: HTMLElement;
@@ -44,6 +59,16 @@ export class ResultArea {
   readonly body = h("div", { class: "result-body" });
   /** The active tab changed (the Columns and Cell editor buttons follow its grid). */
   onActiveChange: (() => void) | null = null;
+  onPageSizeChange: ((panel: QueryResultPanel, size: number) => void) | null = null;
+  onCountRows: ((panel: QueryResultPanel) => void) | null = null;
+  onGridChange: ((grid: DataGrid, entry: StatementResult) => void) | null = null;
+  onFirstPage: ((panel: QueryResultPanel) => void) | null = null;
+  onPrevPage: ((panel: QueryResultPanel) => void) | null = null;
+  onNextPage: ((panel: QueryResultPanel) => void) | null = null;
+  onLastPage: ((panel: QueryResultPanel) => void) | null = null;
+  onSort: ((panel: QueryResultPanel, column: string) => void) | null = null;
+
+  private pageSize = loadDefaultPageSize();
   private panels: Panel[] = [];
   private active: Panel | null = null;
   private messages: Panel;
@@ -107,8 +132,37 @@ export class ResultArea {
     if (reveal) this.activate(this.messages);
   }
 
+  /** The columns of the active result grid, or empty when Messages is active. */
+  activeColumns(): ColumnInfo[] {
+    return this.active?.grid?.columns() ?? [];
+  }
+
   activeGrid(): DataGrid | null {
     return this.active?.grid ?? null;
+  }
+
+  activeEntry(): StatementResult | null {
+    return this.active?.entry ?? null;
+  }
+
+  activePanel(): QueryResultPanel | null {
+    return this.active ?? null;
+  }
+
+  activePageSizePill(): PageSizePillControl | null {
+    return this.active?.pageSizePill ?? null;
+  }
+
+  setPageSize(size: number): void {
+    this.pageSize = size;
+    for (const panel of this.panels) {
+      panel.limit = size;
+      panel.pageSizePill?.setSize(size);
+    }
+  }
+
+  getPageSize(): number {
+    return this.pageSize;
   }
 
   dispose(): void {
@@ -204,15 +258,44 @@ export class ResultArea {
     const detail = this.detail;
     if (!entry || !detail) return;
     detail.entry = entry;
+    detail.baseSql = entry.sql;
+    detail.offset = 0;
+    detail.sort = null;
+    detail.total = null;
+    detail.exactTotal = false;
+    detail.hasMore = false;
+    detail.limit = this.pageSize;
     detail.loadedRows = -1;
     detail.titleLabel.textContent = `Result #${position + 1}`;
     detail.countLabel.textContent = rowCount(entry);
     detail.button.title = statementExcerpt(entry.sql, 200);
     detail.button.hidden = false;
-    detail.grid ??= new DataGrid();
-    detail.element = detail.grid.element;
+    this.ensurePanelGrid(detail);
     this.reloadGrid(detail, entry, true, performance.now());
     this.activate(detail);
+  }
+
+  private ensurePanelGrid(panel: Panel): void {
+    if (panel.grid) return;
+    panel.grid = new DataGrid(() => {
+      if (panel.entry && panel.grid) this.onGridChange?.(panel.grid, panel.entry);
+    });
+    panel.pageSizePill = createPageSizePill({
+      initialSize: panel.limit,
+      onPageSizeChange: (size) => {
+        panel.limit = size;
+        this.pageSize = size;
+        this.onPageSizeChange?.(panel, size);
+      },
+      onCountRows: () => {
+        this.onCountRows?.(panel);
+      },
+      onFirst: () => this.onFirstPage?.(panel),
+      onPrev: () => this.onPrevPage?.(panel),
+      onNext: () => this.onNextPage?.(panel),
+      onLast: () => this.onLastPage?.(panel),
+    });
+    panel.element = h("div", { class: "table-grid-wrap query-grid-wrap" }, panel.grid.element, panel.pageSizePill.element);
   }
 
   // --- Messages -----------------------------------------------------------------------------------------------------------
@@ -267,7 +350,24 @@ export class ResultArea {
     const titleLabel = h("span", {}, title);
     const countLabel = h("span", { class: "result-count" });
     const button = h("button", { class: "result-tab", type: "button", title: entry ? statementExcerpt(entry.sql, 200) : undefined }, titleLabel, countLabel);
-    const panel: Panel = { element: h("div"), button, titleLabel, countLabel, grid: null, entry, loadedRows: 0, loadedAt: 0 };
+    const panel: Panel = {
+      element: h("div"),
+      button,
+      titleLabel,
+      countLabel,
+      grid: null,
+      entry,
+      loadedRows: 0,
+      loadedAt: 0,
+      baseSql: entry?.sql ?? "",
+      offset: 0,
+      limit: this.pageSize,
+      sort: null,
+      total: null,
+      exactTotal: false,
+      hasMore: false,
+      elapsedMs: 0,
+    };
     button.addEventListener("click", () => this.activate(panel));
     return panel;
   }
@@ -280,8 +380,7 @@ export class ResultArea {
   private activate(panel: Panel): void {
     if (panel.entry && !panel.grid && this.resultPanels.includes(panel)) {
       // A result tab builds its grid when it is first shown.
-      panel.grid = new DataGrid();
-      panel.element = panel.grid.element;
+      this.ensurePanelGrid(panel);
       this.reloadGrid(panel, panel.entry, true, performance.now());
     }
     for (const item of this.panels) item.button.classList.toggle("active", item === panel);
@@ -293,9 +392,45 @@ export class ResultArea {
   private reloadGrid(panel: Panel, entry: StatementResult, force: boolean, now: number): void {
     const stale = entry.rows.length !== panel.loadedRows;
     if (!panel.grid || !stale || !(force || entry.done !== null || panel.loadedRows <= 0 || now - panel.loadedAt > GRID_RELOAD_MS)) return;
-    panel.grid.load({ ...gridSetup(entry.columns ?? [], entry.rows.slice(), this.dialect()), clientFilter: true, clientSort: true });
+    panel.baseSql = entry.sql;
+    const isPaginatable = isPaginatableQuery(entry.sql);
+    const target = entry.sql ? extractTargetTable(entry.sql) : null;
+    const editable = target !== null;
+    const keyColumns = entry.columns ? findKeyColumns(entry.columns) : [];
+
+    const rows = entry.rows.slice();
+    const hasMore = rows.length > panel.limit || Boolean(entry.done?.truncated);
+    const displayedRows = hasMore && rows.length > panel.limit ? rows.slice(0, panel.limit) : rows;
+
+    panel.hasMore = hasMore;
+    panel.elapsedMs = entry.done?.elapsedMs ?? 0;
+    if (!hasMore && panel.offset === 0 && entry.done !== null) {
+      panel.total = displayedRows.length;
+      panel.exactTotal = true;
+    }
+
+    panel.grid.load({
+      ...gridSetup(entry.columns ?? [], displayedRows, this.dialect()),
+      clientFilter: true,
+      clientSort: !isPaginatable,
+      sort: panel.sort,
+      onSort: isPaginatable ? (col) => this.onSort?.(panel, col) : null,
+      editable,
+      readOnlyReason: editable ? null : "Results from complex queries (JOIN/GROUP BY) cannot be updated automatically",
+      tableName: target ? target.name : null,
+      keyColumns,
+    });
     panel.loadedRows = entry.rows.length;
     panel.loadedAt = now;
+
+    panel.pageSizePill?.update({
+      offset: panel.offset,
+      count: displayedRows.length,
+      total: panel.total,
+      exactTotal: panel.exactTotal,
+      elapsedMs: panel.elapsedMs,
+      hasMore: panel.hasMore,
+    });
   }
 }
 

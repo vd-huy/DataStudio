@@ -14,8 +14,12 @@ use crate::{
 };
 
 fn path() -> String {
-    std::env::var("DATASTUDIO_CONTRACT_SQLITE_FILE")
-        .unwrap_or_else(|_| std::env::temp_dir().join("datastudio-contract-sqlite.db").to_string_lossy().into_owned())
+    std::env::var("DATASTUDIO_CONTRACT_SQLITE_FILE").unwrap_or_else(|_| {
+        std::env::temp_dir()
+            .join("datastudio-contract-sqlite.db")
+            .to_string_lossy()
+            .into_owned()
+    })
 }
 
 fn seed() -> Vec<String> {

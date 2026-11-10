@@ -104,11 +104,7 @@ pub fn init(data_dir: &Path, location: LogLocation) -> PathBuf {
             reload: handle,
             base,
         });
-        tracing::info!(
-            version = env!("CARGO_PKG_VERSION"),
-            os = std::env::consts::OS,
-            "DataStudio started"
-        );
+        tracing::info!(version = env!("CARGO_PKG_VERSION"), os = std::env::consts::OS, "DataStudio started");
     }
     dir
 }

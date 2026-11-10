@@ -43,7 +43,9 @@
   --deleted: #fde3e3;
 
   --editor-bg: #ffffff;
-  --active-line: #f3f6fb;
+  --active-line: rgba(47, 111, 237, 0.045);
+  --active-line-gutter: #f3f6fb;
+  --editor-selection: #b8d6fc;
   --syn-keyword: #0b55c7;
   --syn-string: #b03f0c;
   --syn-number: #0e7c68;
@@ -129,7 +131,9 @@ html[data-theme="dark"] {
   --deleted: #4b2326;
 
   --editor-bg: #1a1d22;
-  --active-line: #22262d;
+  --active-line: rgba(255, 255, 255, 0.045);
+  --active-line-gutter: #22262d;
+  --editor-selection: #264f78;
   --syn-keyword: #6aa5ff;
   --syn-string: #e69a6b;
   --syn-number: #5fd1b5;

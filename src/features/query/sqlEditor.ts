@@ -25,10 +25,14 @@ const editorTheme = EditorView.theme({
   ".cm-scroller": { fontFamily: "var(--font-mono)", lineHeight: "1.55" },
   ".cm-content": { caretColor: "var(--fg)" },
   ".cm-gutters": { backgroundColor: "var(--bg-sidebar)", color: "var(--fg-muted)", borderRight: "1px solid var(--border)" },
-  ".cm-activeLine, .cm-activeLineGutter": { backgroundColor: "var(--active-line)" },
+  ".cm-activeLine": { backgroundColor: "var(--active-line)" },
+  ".cm-activeLineGutter": { backgroundColor: "var(--active-line-gutter, var(--active-line))" },
   "&.cm-focused .cm-cursor": { borderLeftColor: "var(--fg)" },
-  "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground": {
-    backgroundColor: "var(--selection) !important",
+  "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
+    backgroundColor: "var(--editor-selection, var(--selection)) !important",
+  },
+  ".cm-selectionMatch": {
+    backgroundColor: "color-mix(in srgb, var(--editor-selection, var(--selection)) 40%, transparent)",
   },
   // Below modal overlays (z-index 40), so a completion list never stays drawn above a dialog.
   ".cm-tooltip": { zIndex: "35", backgroundColor: "var(--bg-panel)", color: "var(--fg)", border: "1px solid var(--border)" },

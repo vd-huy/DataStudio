@@ -55,8 +55,9 @@ import { EXPORT_LABELS, type ExportFormat } from "../importExport/exporters";
 import { exportDialog, importDialog } from "../importExport/importExport";
 import { withConfirmation } from "../safety/confirmationDialog";
 import { RecordPanel, referencingFilters, referencingObject } from "./recordPanel";
+import { openPreviewSqlDialog } from "./previewSql";
+import { createPageSizePill, loadDefaultPageSize, type PageSizePillControl } from "./pageSizePill";
 
-const PAGE_SIZES = [100, 200, 500, 1000];
 const EXPORT_FORMATS: ExportFormat[] = ["csv", "json", "markdown", "insert"];
 const DEFAULT_PANEL_WIDTH = 340;
 const NARROW_WINDOW = 1200;
@@ -110,12 +111,14 @@ export class TableView implements TabContent {
   private readonly loads = new LatestRequest();
   private readonly vectorTools = h("div", { class: "toolbar-group" });
   private readonly content: HTMLElement;
-  private readonly pendingText = h("span", { class: "pending-text" });
-  private pendingBar: HTMLElement | null = null;
+  private readonly pageSizeControl: PageSizePillControl;
+  private revertButton: HTMLButtonElement | null = null;
+  private previewButton: HTMLButtonElement | null = null;
+  private submitButton: HTMLButtonElement | null = null;
   private cursor: PageCursor = { offset: 0, after: null };
   private history: PageCursor[] = [];
   private page: Page | null = null;
-  private limit = 200;
+  private limit: number;
   private total: Total | null = null;
   private exact = false;
   /** The engine cannot read from the end (non-SQL engines): Last pages by the exact count instead. */
@@ -201,11 +204,40 @@ export class TableView implements TabContent {
       last: iconButton("last", "Last page", () => this.goLast()),
     };
 
-    // Saving and discarding live in the pending-changes bar (Apply / Discard), which shows up as soon as there is an edit.
+    this.limit = loadDefaultPageSize();
+    this.pageSizeControl = createPageSizePill({
+      initialSize: this.limit,
+      onPageSizeChange: (size) => {
+        this.limit = size;
+        void this.reload({ cursor: { offset: 0, after: null }, history: [] });
+      },
+      onCountRows: () => {
+        void this.reload({ cursor: this.cursor, history: this.history, exact: true });
+      },
+      onFirst: () => this.goFirst(),
+      onPrev: () => this.goPrevious(),
+      onNext: () => this.goNext(),
+      onLast: () => this.goLast(),
+    });
+
+    if (this.editable) {
+      this.revertButton = toolButton("undo", "Revert", () => this.grid.discard(), "Revert all pending changes");
+      this.revertButton.disabled = true;
+
+      this.previewButton = toolButton("query", "Preview SQL", () => this.previewSql(), "Preview SQL statements for pending changes");
+      this.previewButton.disabled = true;
+
+      this.submitButton = toolButton("check", "Save", () => void this.submit(), "Save changes to database (Ctrl+S)");
+      this.submitButton.disabled = true;
+    }
+
     const editTools = this.editable
       ? [
           toolButton("plus", "Add", () => this.grid.addRow(), "Add row"),
           toolButton("minus", "Delete", () => this.grid.deleteSelectedRow(), "Delete selected row"),
+          this.revertButton!,
+          this.previewButton!,
+          this.submitButton!,
           separator(),
         ]
       : [];
@@ -236,23 +268,18 @@ export class TableView implements TabContent {
     );
     const splitter = h("div", { class: "splitter-x" });
     makeSplitter(splitter, "x", (delta) => this.resizeRecord(-delta));
-    this.content = h("div", { class: "table-content" }, this.grid.element, splitter, this.record.element);
+    const gridWrap = h("div", { class: "table-grid-wrap" }, this.grid.element, this.pageSizeControl.element);
+    this.content = h("div", { class: "table-content" }, gridWrap, splitter, this.record.element);
     this.content.style.setProperty("--record-width", `${this.panelWidth}px`);
     // In a narrow window the record panel would leave room for only a few grid columns; it starts closed there.
     if (window.innerWidth < NARROW_WINDOW) this.content.classList.add("record-hidden");
-    const applyButton = h("button", { class: "btn primary", type: "button", title: "Save changes in one transaction (Ctrl+S)" }, "Apply");
-    applyButton.addEventListener("click", () => void this.submit());
-    const discardPending = h("button", { class: "btn", type: "button" }, "Discard");
-    discardPending.addEventListener("click", () => this.grid.discard());
-    this.pendingBar = h("div", { class: "pending-bar" }, icon("edit"), this.pendingText, spacer(), discardPending, applyButton);
-    this.pendingBar.hidden = true;
     this.suggestionBar = suggested && initialFilter && this.rawLanguage ? this.suggestion(initialFilter) : null;
     // A Read-only workspace blocks every save, so the grid says so up front instead of failing at Apply.
     const readOnlyBar =
       EDITABLE_KINDS.has(this.object.kind) && this.writesBlocked
         ? h("div", { class: "readonly-bar", role: "status" }, icon("view"), h("span", {}, READ_ONLY_NOTE))
         : null;
-    this.element = h("div", { class: "view table-view" }, toolbar, readOnlyBar, this.suggestionBar, this.content, this.pendingBar);
+    this.element = h("div", { class: "view table-view" }, toolbar, readOnlyBar, this.suggestionBar, this.content);
     this.element.addEventListener("keydown", (event) => this.handleShortcut(event));
     void this.loadMetadata();
     if (this.suggestionBar) this.pageInfo.textContent = "Not loaded";
@@ -509,17 +536,21 @@ export class TableView implements TabContent {
   }
 
   private pager(): HTMLElement {
-    const sizes = h(
-      "select",
-      { class: "input page-size", title: "Rows per page" },
-      ...PAGE_SIZES.map((size) => h("option", { value: String(size), selected: size === this.limit }, `${size} rows`)),
-    );
-    sizes.addEventListener("change", () => {
-      this.limit = Number(sizes.value);
-      void this.reload({ cursor: { offset: 0, after: null }, history: [] });
-    });
     const { first, prev, next, last } = this.pagerButtons;
-    return h("div", { class: "pager" }, first, prev, this.pageInfo, this.countButton, next, last, sizes);
+    return h("div", { class: "pager" }, first, prev, this.pageInfo, this.countButton, next, last);
+  }
+
+  private previewSql(): void {
+    const built = this.grid.changes();
+    if (built.length === 0) {
+      toast("No pending changes to preview");
+      return;
+    }
+    openPreviewSqlDialog(
+      this.label,
+      built.map(({ change }) => change),
+      this.dialect,
+    );
   }
 
   private lastPageOffset(): number | null {
@@ -705,6 +736,19 @@ export class TableView implements TabContent {
     // Last needs the exact count only where the engine cannot read from the end.
     const byCount = this.keyColumns.length === 0 || this.reverseUnsupported;
     last.disabled = this.atLastPage() || (byCount && !page.hasMore);
+
+    this.pageSizeControl.update({
+      offset,
+      count,
+      total: total ? total.value : null,
+      exactTotal: Boolean(total?.exact),
+      elapsedMs: page.elapsedMs,
+      hasMore: page.hasMore,
+      canGoFirst: Boolean(before || this.cursor.after),
+      canGoPrev: Boolean(before),
+      canGoNext: Boolean(after),
+      canGoLast: !last.disabled,
+    });
   }
 
   dispose(): void {
@@ -798,12 +842,12 @@ export class TableView implements TabContent {
 
   private refreshButtons(): void {
     const dirty = this.grid.hasChanges();
-    if (this.pendingBar) {
-      const { updated, inserted, deleted } = this.grid.changeSummary();
-      const total = updated + inserted + deleted;
-      const parts = [updated ? `${updated} updated` : "", inserted ? `${inserted} new` : "", deleted ? `${deleted} deleted` : ""].filter(Boolean);
-      this.pendingText.textContent = `${total} pending ${total === 1 ? "change" : "changes"} · ${parts.join(" · ")}`;
-      this.pendingBar.hidden = !dirty;
+    if (this.revertButton) this.revertButton.disabled = !dirty;
+    if (this.previewButton) this.previewButton.disabled = !dirty;
+    if (this.submitButton) {
+      this.submitButton.disabled = !dirty;
+      if (dirty) this.submitButton.classList.add("primary");
+      else this.submitButton.classList.remove("primary");
     }
   }
 

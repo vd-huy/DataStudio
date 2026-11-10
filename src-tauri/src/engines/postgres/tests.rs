@@ -539,5 +539,7 @@ async fn live_engine_postgres_read_only_backstop_is_reasserted() {
     s.run("SELECT 1", &ro, &mut CollectSink::default()).await.unwrap();
     s.rollback().await.unwrap();
     s.run(probe, &rw, &mut CollectSink::default()).await.unwrap();
-    s.run("DROP TABLE datastudio_ro_probe", &rw, &mut CollectSink::default()).await.unwrap();
+    s.run("DROP TABLE datastudio_ro_probe", &rw, &mut CollectSink::default())
+        .await
+        .unwrap();
 }

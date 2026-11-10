@@ -33,7 +33,13 @@ export interface ConnectionApi {
   applyEdits(changes: RowChangeSet, caller?: Caller, confirmation?: Confirmation | null, importId?: string | null): Promise<ApplyResult>;
   openSession(sessionId: string, options?: SessionOptions | null): Promise<SessionInfo>;
   closeSession(sessionId: string): Promise<void>;
-  run(sessionId: string, request: RunRequest, onEvent: (event: StreamEvent) => void, confirmation?: Confirmation | null): Promise<RunSummary>;
+  run(
+    sessionId: string,
+    request: RunRequest,
+    onEvent: (event: StreamEvent) => void,
+    confirmation?: Confirmation | null,
+    maxRows?: number | null,
+  ): Promise<RunSummary>;
   cancelRun(sessionId: string): Promise<void>;
   /** How the engine classifies `text` in the session's language, one category per statement (nothing runs). */
   classifyRun(sessionId: string, text: string): Promise<StatementCategory[]>;
@@ -55,7 +61,7 @@ export function bindConnection(connectionId: string): ConnectionApi {
     applyEdits: (changes, caller = "gridSave", confirmation = null, importId = null) => api.applyEdits(connectionId, changes, caller, confirmation, importId),
     openSession: (sessionId, options = null) => api.openSession(connectionId, sessionId, options),
     closeSession: (sessionId) => api.closeSession(sessionId),
-    run: (sessionId, request, onEvent, confirmation = null) => api.run(sessionId, request, onEvent, confirmation),
+    run: (sessionId, request, onEvent, confirmation = null, maxRows = null) => api.run(sessionId, request, onEvent, confirmation, maxRows),
     cancelRun: (sessionId) => api.cancelRun(sessionId),
     classifyRun: (sessionId, text) => api.classifyRun(sessionId, text),
     transaction: (sessionId, op) => api.transaction(sessionId, op),
