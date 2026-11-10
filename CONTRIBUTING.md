@@ -3,9 +3,8 @@
 Thanks for helping. This guide covers the local setup, the checks CI runs, and the conventions of the code base.
 [ARCHITECTURE.md](ARCHITECTURE.md) explains how the pieces fit together.
 
-> **License and CLA**: DataStudio is licensed under the [GPL v3.0](LICENSE). On your first pull request a bot asks you to sign the
-> [Contributor License Agreement](CLA.md) by posting a comment; you keep the copyright in your work, and the CLA lets the
-> maintainer also offer DataStudio under commercial terms.
+> **License**: DataStudio is licensed under the [GPL v3.0](LICENSE). By opening a pull request you agree that your contribution
+> is released under the same license.
 
 Questions? Ask on [Discord](https://discord.gg/pBFkZD5mhN); use GitHub Issues for bugs and feature requests.
 

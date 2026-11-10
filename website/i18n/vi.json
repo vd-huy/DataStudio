@@ -167,7 +167,7 @@
   "oss.kicker": "Mã nguồn mở",
   "oss.title": "Phần mềm tự do, phát triển công khai",
   "oss.license": "DataStudio được phát hành theo giấy phép <a href=\"https://github.com/vd-huy/DataStudio/blob/main/LICENSE\">GNU General Public License v3.0</a>. Bạn được tự do sử dụng, nghiên cứu, sửa đổi và chia sẻ.",
-  "oss.cla": "Mọi đóng góp đều được hoan nghênh. Ở pull request đầu tiên, bạn sẽ được đề nghị ký <a href=\"https://github.com/vd-huy/DataStudio/blob/main/CLA.md\">Contributor License Agreement</a>: bạn vẫn giữ bản quyền đối với phần đóng góp của mình, và người duy trì dự án cũng có thể cung cấp giấy phép thương mại, trong khi bản thân dự án vẫn giữ GPL.",
+  "oss.cla": "Mọi đóng góp đều được hoan nghênh. Pull request được nhận theo cùng giấy phép GPL-3.0 với dự án.",
   "oss.contributing": "Hướng dẫn đóng góp",
   "oss.architecture": "Kiến trúc",
   "build.title": "Build từ mã nguồn",

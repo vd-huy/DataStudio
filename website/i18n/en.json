@@ -167,7 +167,7 @@
   "oss.kicker": "Open source",
   "oss.title": "Free software, built in the open",
   "oss.license": "DataStudio is licensed under the <a href=\"https://github.com/vd-huy/DataStudio/blob/main/LICENSE\">GNU General Public License v3.0</a>. Use it, study it, change it and share it.",
-  "oss.cla": "Contributions are welcome. On your first pull request you are asked to sign the <a href=\"https://github.com/vd-huy/DataStudio/blob/main/CLA.md\">Contributor License Agreement</a>: you keep the copyright in your work, and the maintainer may also offer commercial licenses while the project itself stays GPL.",
+  "oss.cla": "Contributions are welcome. Pull requests are accepted under the same GPL-3.0 license as the project.",
   "oss.contributing": "Contributing guide",
   "oss.architecture": "Architecture",
   "build.title": "Build from source",

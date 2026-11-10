@@ -110,7 +110,7 @@ Vietnamese).
 
 ### Translation conventions
 
-- Keep product and engine names, code, SQL keywords, commands, file names, "GPL-3.0" and "CLA" as they are. Keep the app's
+- Keep product and engine names, code, SQL keywords, commands, file names, and "GPL-3.0" as they are. Keep the app's
   own UI labels in English (Insert, New tab, Open / Guarded / Read-only / Custom, Production, List / JSON / Table), since
   the app is English.
 - Use the terms developers use locally: Vietnamese keeps words like workspace, query, connection string, transaction in

@@ -167,7 +167,7 @@
   "oss.kicker": "开源",
   "oss.title": "自由软件，公开开发",
   "oss.license": "DataStudio 采用 <a href=\"https://github.com/vd-huy/DataStudio/blob/main/LICENSE\">GNU General Public License v3.0</a> 许可。你可以自由地使用、研究、修改和分享它。",
-  "oss.cla": "欢迎贡献。提交第一个 pull request 时，你需要签署<a href=\"https://github.com/vd-huy/DataStudio/blob/main/CLA.md\">贡献者许可协议（Contributor License Agreement）</a>：你保留自己作品的版权，维护者也可以另行提供商业许可，而项目本身始终保持 GPL。",
+  "oss.cla": "欢迎贡献。pull request 采用与项目相同的 GPL-3.0 许可证。",
   "oss.contributing": "贡献指南",
   "oss.architecture": "架构",
   "build.title": "从源码构建",
