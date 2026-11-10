@@ -125,7 +125,7 @@ export class AssistantPanel {
       h(
         "p",
         {},
-        `Connect Fosta, OpenAI, Gemini, Claude (Anthropic), Ollama or any OpenAI-compatible endpoint with your key. The key stays in ${capabilities().secretStore}; requests go straight from ${capabilities().edition === "web" ? "the Fosta Studio server" : "this computer"} to the provider.`,
+        `Connect OpenAI, Gemini, Claude (Anthropic), Ollama or any OpenAI-compatible endpoint with your key. The key stays in ${capabilities().secretStore}; requests go straight from ${capabilities().edition === "web" ? "the DataStudio server" : "this computer"} to the provider.`,
       ),
       h(
         "p",

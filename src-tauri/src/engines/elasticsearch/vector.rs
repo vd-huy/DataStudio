@@ -14,7 +14,7 @@
 //! - **Distances.** Scores differ by flavor, similarity and engine (and quantized graphs score approximately), so the
 //!   hits return their vector in `_source` and the distance is computed here, as pgvector defines it: `1 - cosine`,
 //!   L2, or the negative inner product. Rows are ordered by that distance.
-//! - **Keys.** The grid's key: the declared key field (`_meta.fosta.key`), else `_id` (plus `_index` for aliases and
+//! - **Keys.** The grid's key: the declared key field (`_meta.datastudio.key`), else `_id` (plus `_index` for aliases and
 //!   patterns). [`SampleOrder::ByKey`] sorts by the declared key field; `_id` cannot be sorted on Elasticsearch, so a
 //!   key on `_id` sorts by `_doc` (index order: stable while the index does not change, which is what seeded recall
 //!   needs).

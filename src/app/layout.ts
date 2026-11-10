@@ -112,7 +112,7 @@ export function buildLayout(parts: LayoutParts): HTMLElement {
   }
   area.classList.toggle("with-assistant", remembered === "open");
   area.classList.toggle("sidebar-collapsed", readStored(SIDEBAR_STORAGE_KEY) === "collapsed");
-  const version = h("span", { class: "status-version", title: "Fosta Studio version" }, `v${__APP_VERSION__}`);
+  const version = h("span", { class: "status-version", title: "DataStudio version" }, `v${__APP_VERSION__}`);
   const statusBar = h(
     "footer",
     { class: "status-bar" },

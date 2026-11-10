@@ -49,7 +49,6 @@ const STOPPED: &str = "Stopped";
 #[serde(rename_all = "kebab-case")]
 pub enum AiProvider {
     #[default]
-    Fosta,
     Openai,
     Gemini,
     Anthropic,
@@ -73,7 +72,6 @@ impl AiProvider {
 
     fn default_url(self) -> &'static str {
         match self {
-            AiProvider::Fosta => "https://admin.fosta.app/v1",
             AiProvider::Openai => "https://api.openai.com/v1",
             AiProvider::Gemini => "https://generativelanguage.googleapis.com/v1beta/openai",
             AiProvider::Anthropic => "https://api.anthropic.com",
@@ -83,7 +81,6 @@ impl AiProvider {
 
     fn label(self) -> &'static str {
         match self {
-            AiProvider::Fosta => "Fosta",
             AiProvider::Openai => "OpenAI",
             AiProvider::Gemini => "Gemini",
             AiProvider::Anthropic => "Anthropic",

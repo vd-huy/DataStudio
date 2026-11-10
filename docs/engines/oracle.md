@@ -10,13 +10,13 @@ Connecting needs Instant Client 19c or newer. Before the first connection the ap
 
 1. the profile's **Instant Client folder** (Advanced section of the connection dialog; `options.clientDir`);
 2. a system install: `PATH` (Windows), `LD_LIBRARY_PATH` (Linux), `DYLD_LIBRARY_PATH` (macOS), `ORACLE_HOME`;
-3. a client Fosta Studio downloaded into its data folder (`fosta-studio-oracle/` next to `fosta-studio.json`, or
-   `<FOSTA_STUDIO_DATA>/oracle` in the web edition).
+3. a client DataStudio downloaded into its data folder (`datastudio-oracle/` next to `datastudio.json`, or
+   `<DATASTUDIO_DATA>/oracle` in the web edition).
 
 ODPI-C loads a client once per process, so the first one loaded stays in use until the app restarts. A folder that does not
 hold the client library (`oci.dll`, `libclntsh.so`) is an error of its own, not silently skipped.
 
-On Linux the client folder must also be on `LD_LIBRARY_PATH` when Fosta Studio starts: `libclntsh.so` finds `libnnz.so` (which
+On Linux the client folder must also be on `LD_LIBRARY_PATH` when DataStudio starts: `libclntsh.so` finds `libnnz.so` (which
 has no SONAME) only through the loader's search path, which is read at process start. A client downloaded while the app runs
 therefore loads after a restart with `LD_LIBRARY_PATH=<client folder>`; the load error names the folder.
 
@@ -114,7 +114,7 @@ cargo test live_oracle_instant_client_download -- --ignored --nocapture
 cargo test contract_oracle -- --ignored --test-threads=1
 ```
 
-`FOSTA_CONTRACT_ORACLE_CLIENT_DIR` passes a client folder as the profile's Instant Client folder;
-`FOSTA_CONTRACT_ORACLE_{HOST,PORT,USER,PASSWORD,SERVICE}` override the server (defaults: `127.0.0.1:1521`, `shop` /
+`DATASTUDIO_CONTRACT_ORACLE_CLIENT_DIR` passes a client folder as the profile's Instant Client folder;
+`DATASTUDIO_CONTRACT_ORACLE_{HOST,PORT,USER,PASSWORD,SERVICE}` override the server (defaults: `127.0.0.1:1521`, `shop` /
 `studio-root`, `FREEPDB1`). The suite data is `dev/seed/oracle/contract.sql` (run before each suite); the core's own live tests
 (`cargo test live_engine_oracle -- --ignored --test-threads=1`) use `dev/seed/oracle.sql`.

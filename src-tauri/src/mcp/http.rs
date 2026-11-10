@@ -162,7 +162,7 @@ fn guard(endpoint: &Endpoint, peer: Option<IpAddr>, headers: &HeaderMap) -> Resu
     let app = endpoint
         .app
         .upgrade()
-        .ok_or_else(|| plain_error(StatusCode::SERVICE_UNAVAILABLE, "Fosta Studio is shutting down"))?;
+        .ok_or_else(|| plain_error(StatusCode::SERVICE_UNAVAILABLE, "DataStudio is shutting down"))?;
     let host = header_str(headers, header::HOST.as_str()).unwrap_or_default();
     if endpoint.loopback {
         if !peer_allowed(peer) {
@@ -178,7 +178,7 @@ fn guard(endpoint: &Endpoint, peer: Option<IpAddr>, headers: &HeaderMap) -> Resu
     if !app.config.read(|config| config.mcp.enabled) {
         return Err(plain_error(
             StatusCode::FORBIDDEN,
-            "The MCP server is off. Turn it on in Fosta Studio: Settings → MCP server.",
+            "The MCP server is off. Turn it on in DataStudio: Settings → MCP server.",
         ));
     }
     let ip = peer.unwrap_or(IpAddr::V4(Ipv4Addr::UNSPECIFIED));
@@ -192,7 +192,7 @@ fn guard(endpoint: &Endpoint, peer: Option<IpAddr>, headers: &HeaderMap) -> Resu
         let mut response = plain_error(StatusCode::UNAUTHORIZED, "Missing or wrong bearer token");
         response
             .headers_mut()
-            .insert(header::WWW_AUTHENTICATE, HeaderValue::from_static("Bearer realm=\"fosta-studio\""));
+            .insert(header::WWW_AUTHENTICATE, HeaderValue::from_static("Bearer realm=\"datastudio\""));
         return Err(response);
     }
     if let Some(version) = header_str(headers, VERSION_HEADER) {

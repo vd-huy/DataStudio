@@ -1,4 +1,4 @@
-# Local test databases for Fosta Studio: the three engines the app has shipped with. Test-only credentials.
+# Local test databases for DataStudio: the three engines the app has shipped with. Test-only credentials.
 #   docker compose -f dev/docker-compose.yml up -d
 #   then: dev/seed-mssql.sh  (SQL Server has no init directory)
 #

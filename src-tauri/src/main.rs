@@ -6,7 +6,7 @@
 
 use std::{sync::Arc, time::Duration};
 
-use fosta_studio::{
+use datastudio::{
     ai::{ChatEvent, ChatRequest},
     commands,
     error::AppResult,
@@ -32,7 +32,7 @@ macro_rules! tauri_command {
         #[allow(clippy::too_many_arguments)]
         #[tauri::command]
         fn $name(state: State<'_, Arc<AppState>>, $($arg: $type),*) -> $output {
-            fosta_studio::logging::command_sync(stringify!($name), || $function(&state, $($arg),*))
+            datastudio::logging::command_sync(stringify!($name), || $function(&state, $($arg),*))
         }
     };
     ([async] $name:ident ($($arg:ident : $type:ty),*) -> $output:ty = $function:path) => {
@@ -40,7 +40,7 @@ macro_rules! tauri_command {
         #[allow(clippy::too_many_arguments)]
         #[tauri::command]
         async fn $name(state: State<'_, Arc<AppState>>, $($arg: $type),*) -> $output {
-            fosta_studio::logging::command(stringify!($name), $function(&state, $($arg),*)).await
+            datastudio::logging::command(stringify!($name), $function(&state, $($arg),*)).await
         }
     };
     ([stream] $name:ident ($($arg:ident : $type:ty),*) -> $output:ty => $event:ty = $function:path) => {
@@ -48,8 +48,8 @@ macro_rules! tauri_command {
         #[allow(clippy::too_many_arguments)]
         #[tauri::command]
         async fn $name(state: State<'_, Arc<AppState>>, $($arg: $type,)* on_event: Channel<$event>) -> $output {
-            let events: fosta_studio::events::EventSink<$event> = Arc::new(move |event| on_event.send(event).is_ok());
-            fosta_studio::logging::command(stringify!($name), $function(&state, $($arg,)* events)).await
+            let events: datastudio::events::EventSink<$event> = Arc::new(move |event| on_event.send(event).is_ok());
+            datastudio::logging::command(stringify!($name), $function(&state, $($arg,)* events)).await
         }
     };
 }
@@ -65,7 +65,7 @@ macro_rules! desktop_commands {
     };
 }
 
-fosta_studio::for_each_command!(desktop_commands);
+datastudio::for_each_command!(desktop_commands);
 
 /// Streams one assistant reply over `on_event`; resolves with the full text.
 #[tauri::command]
@@ -81,13 +81,13 @@ async fn ai_chat(state: State<'_, Arc<AppState>>, request: ChatRequest, on_event
 async fn export_rows(
     state: State<'_, AppState>,
     connection_id: String,
-    request: fosta_studio::export::ExportRequest,
-    on_event: Channel<fosta_studio::export::ExportProgress>,
+    request: datastudio::export::ExportRequest,
+    on_event: Channel<datastudio::export::ExportProgress>,
 ) -> AppResult<commands::files::ExportDone> {
     let progress = move |event| {
         let _ = on_event.send(event);
     };
-    fosta_studio::logging::command(
+    datastudio::logging::command(
         "export_rows",
         commands::files::export_rows(&state, connection_id, request, progress),
     )
@@ -117,14 +117,14 @@ fn open_release_page(url: String) -> AppResult<()> {
 }
 
 fn main() {
-    // `fosta-studio mcp`: the stdio bridge for MCP clients; it starts no window and writes only JSON-RPC to stdout.
+    // `datastudio mcp`: the stdio bridge for MCP clients; it starts no window and writes only JSON-RPC to stdout.
     if std::env::args().nth(1).as_deref() == Some("mcp") {
-        std::process::exit(fosta_studio::mcp::bridge::run_desktop());
+        std::process::exit(datastudio::mcp::bridge::run_desktop());
     }
-    if let Ok(data_dir) = fosta_studio::config::data_dir() {
-        fosta_studio::logging::init(&data_dir, fosta_studio::logging::LogLocation::Desktop);
+    if let Ok(data_dir) = datastudio::config::data_dir() {
+        datastudio::logging::init(&data_dir, datastudio::logging::LogLocation::Desktop);
     }
-    fosta_studio::runtime::install_panic_hook();
+    datastudio::runtime::install_panic_hook();
     tauri::Builder::default()
         // In-place updates of the installed app (src/app/update.ts); the endpoint and key are in tauri.conf.json.
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -143,7 +143,7 @@ fn main() {
         })
         .invoke_handler(invoke_handler())
         .build(tauri::generate_context!())
-        .expect("failed to start Fosta Studio")
+        .expect("failed to start DataStudio")
         .run(|app, event| {
             if let RunEvent::Exit = event {
                 app.state::<Arc<AppState>>().tasks.stop_all();

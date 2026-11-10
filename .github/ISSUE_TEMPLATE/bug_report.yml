@@ -9,7 +9,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Fosta Studio version
+      label: DataStudio version
       description: Shown at the right end of the status bar.
       placeholder: "0.1.1"
     validations:

@@ -5,7 +5,7 @@
  * the mutations your edits create, and logs the statements you run.
  *
  * Conflict demo: open `shop.customers`, edit a name, then in the browser console run
- * `__fostaMock.touchRow("c-local", "shop.customers", 3)` (someone else changes the row) and save.
+ * `__datastudioMock.touchRow("c-local", "shop.customers", 3)` (someone else changes the row) and save.
  */
 import type { ConnectInfo, EngineDescriptor, ObjectDescription, ObjectNode, ObjectRef, RowChangeSet, RunRequest } from "../../../core/contract";
 import { builtin, column, MockCatalog, queryAction, v, viewAction, type CatalogStyle, type TableSpec } from "../catalog";

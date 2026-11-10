@@ -45,7 +45,7 @@ jobs:
         id: notes
         run: |
           {
-            echo "notes<<FOSTA_RELEASE_NOTES_EOF"
+            echo "notes<<DATASTUDIO_RELEASE_NOTES_EOF"
             node scripts/version.mjs changelog "$GITHUB_REF_NAME"
             if [ -f Dockerfile ]; then
               version="${GITHUB_REF_NAME#v}"
@@ -53,13 +53,13 @@ jobs:
               echo "### Docker (web edition)"
               echo
               echo '```sh'
-              echo "docker run -d --name fosta-studio -p 127.0.0.1:8080:8080 -v fosta-studio-data:/data ghcr.io/caothanhphatit/fosta-studio:$version"
-              echo "docker logs fosta-studio"
+              echo "docker run -d --name datastudio -p 127.0.0.1:8080:8080 -v datastudio-data:/data ghcr.io/vd-huy/datastudio:$version"
+              echo "docker logs datastudio"
               echo '```'
               echo
-              echo "Open the sign-in address printed in the log. Image: [ghcr.io/caothanhphatit/fosta-studio](https://github.com/caothanhphatit/fosta-dbclient/pkgs/container/fosta-studio); settings in [docs/web-edition.md](https://github.com/caothanhphatit/fosta-dbclient/blob/$GITHUB_REF_NAME/docs/web-edition.md)."
+              echo "Open the sign-in address printed in the log. Image: [ghcr.io/vd-huy/datastudio](https://github.com/vd-huy/DataStudio/pkgs/container/datastudio); settings in [docs/web-edition.md](https://github.com/vd-huy/DataStudio/blob/$GITHUB_REF_NAME/docs/web-edition.md)."
             fi
-            echo "FOSTA_RELEASE_NOTES_EOF"
+            echo "DATASTUDIO_RELEASE_NOTES_EOF"
           } >> "$GITHUB_OUTPUT"
       - name: Is there a Docker web edition?
         id: docker
@@ -94,7 +94,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: Fosta Studio ${{ needs.verify.outputs.version }}
+          releaseName: DataStudio ${{ needs.verify.outputs.version }}
           releaseBody: ${{ needs.verify.outputs.notes }}
           releaseDraft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
@@ -108,8 +108,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.verify.outputs.version }}
         run: |
-          portable="Fosta-Studio_${VERSION}_x64_portable.exe"
-          cp src-tauri/target/release/fosta-studio.exe "$portable"
+          portable="DataStudio_${VERSION}_x64_portable.exe"
+          cp src-tauri/target/release/datastudio.exe "$portable"
           gh release upload "$GITHUB_REF_NAME" "$portable" --clobber --repo "$GITHUB_REPOSITORY"
 
   docker:
@@ -131,7 +131,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/caothanhphatit/fosta-studio
+          images: ghcr.io/vd-huy/datastudio
           flavor: latest=false
           # X.Y.Z, X.Y and latest; pre-releases (vX.Y.Z-rc.1) only get their full version.
           tags: |
@@ -139,10 +139,10 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
           labels: |
-            org.opencontainers.image.title=Fosta Studio
-            org.opencontainers.image.description=Fosta Studio web edition: a database client for 11 engines in your browser
+            org.opencontainers.image.title=DataStudio
+            org.opencontainers.image.description=DataStudio web edition: a database client for 11 engines in your browser
             org.opencontainers.image.licenses=GPL-3.0-only
-      # The root Dockerfile builds the UI and `fosta-studio-server` (feature `web`) from the whole repository.
+      # The root Dockerfile builds the UI and `datastudio-server` (feature `web`) from the whole repository.
       - uses: docker/build-push-action@v6
         with:
           context: .

@@ -63,7 +63,7 @@ pub fn build_config(request: &ConnectRequest) -> Config {
     config.host(&request.endpoint.host);
     config.port(request.endpoint.port);
     config.authentication(AuthMethod::sql_server(&spec.user, request.secrets.password_or_empty()));
-    config.application_name("Fosta Studio");
+    config.application_name("DataStudio");
     if let Some(database) = spec.database.as_deref().filter(|name| !name.is_empty()) {
         config.database(database);
     }

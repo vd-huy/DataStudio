@@ -19,9 +19,9 @@ describe("update item", () => {
   });
 
   it("links to the release and keeps the data volume when updating the container", () => {
-    expect(releaseUrl("0.1.1")).toBe("https://github.com/caothanhphatit/fosta-dbclient/releases/tag/v0.1.1");
+    expect(releaseUrl("0.1.1")).toBe("https://github.com/vd-huy/DataStudio/releases/tag/v0.1.1");
     const commands = dockerUpdateCommands();
-    expect(commands[0]).toBe("docker pull ghcr.io/caothanhphatit/fosta-studio");
-    expect(commands.at(-1)).toContain("-v fosta-studio-data:/data");
+    expect(commands[0]).toBe("docker pull ghcr.io/vd-huy/datastudio");
+    expect(commands.at(-1)).toContain("-v datastudio-data:/data");
   });
 });

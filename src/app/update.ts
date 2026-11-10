@@ -50,7 +50,7 @@ function render(): void {
   const version = pending?.version ?? info?.latest ?? "";
   item.hidden = phase === "none";
   item.replaceChildren(icon("download"), h("span", {}, updateLabel(phase, version, percent)));
-  item.title = phase === "ready" ? `Fosta Studio ${version} is ready; it installs when you quit` : `Fosta Studio ${version} is available`;
+  item.title = phase === "ready" ? `DataStudio ${version} is ready; it installs when you quit` : `DataStudio ${version} is available`;
   item.classList.toggle("ready", phase === "ready");
   refreshDialog?.();
 }
@@ -79,7 +79,7 @@ async function check(force: boolean): Promise<void> {
     kind = await api.installKind();
     const found = await api.checkUpdate(force);
     if (!found?.newer) {
-      if (force) toast(`Fosta Studio ${found?.current ?? __APP_VERSION__} is up to date`, "success");
+      if (force) toast(`DataStudio ${found?.current ?? __APP_VERSION__} is up to date`, "success");
       return;
     }
     info = found;
@@ -180,7 +180,7 @@ function commandLine(text: string): HTMLElement {
 
 function dialogBody(update: UpdateInfo): HTMLElement {
   const version = pending?.version ?? update.latest;
-  const summary = h("p", {}, `Fosta Studio ${version} is available (you have ${update.current}). `, releaseLink(update.url));
+  const summary = h("p", {}, `DataStudio ${version} is available (you have ${update.current}). `, releaseLink(update.url));
   const body = h("div", { class: "update-dialog" }, summary);
   if (kind === "web") {
     body.append(

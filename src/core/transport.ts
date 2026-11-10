@@ -3,9 +3,9 @@
  *
  * - **Tauri** (the desktop app, and `npm run dev` with the dev mock, which installs `__TAURI_INTERNALS__`):
  *   Tauri's `invoke`, `Channel` and `listen`.
- * - **Web** (the Docker image, `fosta-studio-server`): `POST /api/invoke/<command>` with the same JSON
+ * - **Web** (the Docker image, `datastudio-server`): `POST /api/invoke/<command>` with the same JSON
  *   arguments and result, `ai_chat`'s events streamed as NDJSON in its response, and task events over
- *   Server-Sent Events from `/api/events`. The session cookie authenticates; the `X-Fosta-Studio` header
+ *   Server-Sent Events from `/api/events`. The session cookie authenticates; the `X-DataStudio` header
  *   marks the call as coming from this app (CSRF protection).
  *
  * The choice is made per call, so the dev mock (installed after this module loads) is still picked up.
@@ -68,12 +68,12 @@ async function post(command: string, args: Record<string, unknown>, options: Inv
     response = await fetch(`/api/invoke/${encodeURIComponent(command)}`, {
       method: "POST",
       credentials: "same-origin",
-      headers: { "Content-Type": "application/json", "X-Fosta-Studio": "1" },
+      headers: { "Content-Type": "application/json", "X-DataStudio": "1" },
       body: JSON.stringify(args),
       ...(options.keepalive ? { keepalive: true } : {}),
     });
   } catch {
-    throw "Cannot reach the Fosta Studio server. Check that it is still running.";
+    throw "Cannot reach the DataStudio server. Check that it is still running.";
   }
   if (response.status === 401) {
     // The session expired or the token changed: the server shows its sign-in page.
@@ -92,9 +92,9 @@ async function post(command: string, args: Record<string, unknown>, options: Inv
 export async function signOut(): Promise<void> {
   let response: Response;
   try {
-    response = await fetch("/api/logout", { method: "POST", credentials: "same-origin", headers: { "X-Fosta-Studio": "1" } });
+    response = await fetch("/api/logout", { method: "POST", credentials: "same-origin", headers: { "X-DataStudio": "1" } });
   } catch {
-    throw "Cannot reach the Fosta Studio server. Check that it is still running.";
+    throw "Cannot reach the DataStudio server. Check that it is still running.";
   }
   if (!response.ok && response.status !== 401) {
     const body = (await response.json().catch(() => null)) as { error?: string } | null;

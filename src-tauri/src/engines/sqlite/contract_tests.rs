@@ -1,6 +1,6 @@
 //! Contract suites for SQLite against a file in the temp folder (data from `dev/seed/sqlite/contract.sql`; no container
 //! is needed), plus SQLite-specific checks: typed values, attached databases, the read-only switch and EXPLAIN.
-//! Override the file with FOSTA_CONTRACT_SQLITE_FILE.
+//! Override the file with DATASTUDIO_CONTRACT_SQLITE_FILE.
 
 use std::sync::Arc;
 
@@ -14,8 +14,8 @@ use crate::{
 };
 
 fn path() -> String {
-    std::env::var("FOSTA_CONTRACT_SQLITE_FILE")
-        .unwrap_or_else(|_| std::env::temp_dir().join("fosta-contract-sqlite.db").to_string_lossy().into_owned())
+    std::env::var("DATASTUDIO_CONTRACT_SQLITE_FILE")
+        .unwrap_or_else(|_| std::env::temp_dir().join("datastudio-contract-sqlite.db").to_string_lossy().into_owned())
 }
 
 fn seed() -> Vec<String> {
@@ -154,7 +154,7 @@ async fn contract_sqlite_attached_databases_read_only_and_explain() {
     let f = fixture();
     let (_manager, handle) = connect(&f).await;
     // A second file attached through the option shows up next to `main` and answers queries.
-    let other = std::env::temp_dir().join("fosta-contract-sqlite-attached.db");
+    let other = std::env::temp_dir().join("datastudio-contract-sqlite-attached.db");
     let _ = std::fs::remove_file(&other);
     let manager = ConnectionManager::default();
     let attach = format!("audit={}", other.to_string_lossy());

@@ -1,4 +1,4 @@
-//! The stdio bridge (`fosta-studio mcp`, `fosta-studio-server mcp`) for MCP clients that only start a command (Claude
+//! The stdio bridge (`datastudio mcp`, `datastudio-server mcp`) for MCP clients that only start a command (Claude
 //! Desktop): newline-delimited JSON-RPC on stdin/stdout, relayed to the running app's HTTP endpoint with its token.
 //! The bridge itself holds no connection and runs no tool; when the app is not running, every request gets a clear
 //! JSON-RPC error. When the MCP server is off in the settings it exits at once without sending the token anywhere.
@@ -25,31 +25,31 @@ pub fn require_enabled(config: &AppConfig) -> Result<(), String> {
     if config.mcp.enabled {
         Ok(())
     } else {
-        Err("the MCP server is off; turn it on in Fosta Studio (Settings → MCP server), then restart this client.".to_owned())
+        Err("the MCP server is off; turn it on in DataStudio (Settings → MCP server), then restart this client.".to_owned())
     }
 }
 
-/// `fosta-studio mcp`: the desktop app's endpoint and token, from its settings and Credential Manager.
+/// `datastudio mcp`: the desktop app's endpoint and token, from its settings and Credential Manager.
 pub fn run_desktop() -> i32 {
     let config = match config::read_saved() {
         Ok(config) => config,
         Err(error) => {
-            eprintln!("fosta-studio mcp: cannot read the settings: {error}");
+            eprintln!("datastudio mcp: cannot read the settings: {error}");
             return 1;
         }
     };
     if let Err(error) = require_enabled(&config) {
-        eprintln!("fosta-studio mcp: {error}");
+        eprintln!("datastudio mcp: {error}");
         return 1;
     }
     let token = match secrets::get(&SecretKey::McpToken) {
         Ok(Some(token)) => token,
         Ok(None) => {
-            eprintln!("fosta-studio mcp: no MCP token yet; start Fosta Studio with Settings → MCP server on.");
+            eprintln!("datastudio mcp: no MCP token yet; start DataStudio with Settings → MCP server on.");
             return 1;
         }
         Err(error) => {
-            eprintln!("fosta-studio mcp: cannot read the MCP token: {error}");
+            eprintln!("datastudio mcp: cannot read the MCP token: {error}");
             return 1;
         }
     };
@@ -61,7 +61,7 @@ pub fn run(endpoint: String, token: String) -> i32 {
     let runtime = match tokio::runtime::Builder::new_current_thread().enable_all().build() {
         Ok(runtime) => runtime,
         Err(error) => {
-            eprintln!("fosta-studio mcp: {error}");
+            eprintln!("datastudio mcp: {error}");
             return 1;
         }
     };
@@ -82,7 +82,7 @@ async fn relay(endpoint: String, token: String) -> i32 {
     let relay = match Relay::new(endpoint, token) {
         Ok(relay) => Arc::new(relay),
         Err(error) => {
-            eprintln!("fosta-studio mcp: {error}");
+            eprintln!("datastudio mcp: {error}");
             return 1;
         }
     };
@@ -169,12 +169,12 @@ impl Relay {
             let response = match self.post(&message, !initialize).await {
                 Ok(response) => response,
                 Err(error) => {
-                    eprintln!("fosta-studio mcp: {error}");
+                    eprintln!("datastudio mcp: {error}");
                     self.fail(
                         output,
                         id.as_ref(),
                         &format!(
-                            "Cannot reach Fosta Studio at {}. Start it and turn on Settings → MCP server.",
+                            "Cannot reach DataStudio at {}. Start it and turn on Settings → MCP server.",
                             self.endpoint
                         ),
                     );
@@ -214,9 +214,9 @@ impl Relay {
                     .first()
                     .and_then(|value| value["error"].as_str())
                     .map(str::to_owned)
-                    .unwrap_or_else(|| format!("Fosta Studio answered {status}"));
+                    .unwrap_or_else(|| format!("DataStudio answered {status}"));
                 let reason = if status == reqwest::StatusCode::UNAUTHORIZED {
-                    format!("{reason}. Turn on Settings → MCP server in Fosta Studio; after rotating the token, restart this client.")
+                    format!("{reason}. Turn on Settings → MCP server in DataStudio; after rotating the token, restart this client.")
                 } else {
                     reason
                 };
@@ -240,7 +240,7 @@ impl Relay {
             Some(id) => {
                 let _ = output.send(json!({ "jsonrpc": "2.0", "id": id, "error": { "code": -32000, "message": message } }).to_string());
             }
-            None => eprintln!("fosta-studio mcp: {message}"),
+            None => eprintln!("datastudio mcp: {message}"),
         }
     }
 

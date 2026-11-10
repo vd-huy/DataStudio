@@ -11,18 +11,18 @@
  *   the ready ones, `connectInfo`, `tree`, `describe`, `browse`, `apply`, `run`, `invoke`, … over `catalog.ts`.
  *
  * Conflict demo (optimistic concurrency): open a table, edit a cell, then in the browser console run
- * `__fostaMock.touchRow("c-local", "products", 1)` (every text and number column of row id 1 changes; pass a column name
- * as the 4th argument to change only that one) or `__fostaMock.deleteRow("c-local", "products", 1)`, then save:
+ * `__datastudioMock.touchRow("c-local", "products", 1)` (every text and number column of row id 1 changes; pass a column name
+ * as the 4th argument to change only that one) or `__datastudioMock.deleteRow("c-local", "products", 1)`, then save:
  * `apply_edits` fails with `CONFLICT`. Also reachable as the mock-only command
  * `mock_touch_row { connectionId, table, key, remove?, column? }`. Tables are named as in the tree (`dbo.Customers`).
  *
- * Tree paging demo: `__fostaMock.setTreePageSize(2)` caps every `tree_children` page at 2 nodes, so the tree shows its
+ * Tree paging demo: `__datastudioMock.setTreePageSize(2)` caps every `tree_children` page at 2 nodes, so the tree shows its
  * "Load more" row; `setTreePageSize(null)` restores the requested limit.
  *
- * MCP server (`mcp.ts`): Settings → MCP server works; `__fostaMock.mcpApproval()` (or `"typed"`, or `?mcpApproval` in the
+ * MCP server (`mcp.ts`): Settings → MCP server works; `__datastudioMock.mcpApproval()` (or `"typed"`, or `?mcpApproval` in the
  * address) shows an incoming `run_query` approval from Claude Code.
  *
- * Updates (`update.ts`): `check_update` always finds 0.1.1; `__fostaMock.setInstallKind("portable")` or `"web"` changes the
+ * Updates (`update.ts`): `check_update` always finds 0.1.1; `__datastudioMock.setInstallKind("portable")` or `"web"` changes the
  * update dialog (or `?installKind=web` in the address), `?whatsNew` shows the "What's new" note.
  */
 import type { Channel } from "@tauri-apps/api/core";
@@ -98,7 +98,7 @@ interface Connection {
 
 const connections = new Map<string, Connection>();
 const sessions = new Map<string, MockSession>();
-/** Connections the "backend" dropped (`__fostaMock.restartBackend`): calls fail with `NOT_CONNECTED` until `connect`. */
+/** Connections the "backend" dropped (`__datastudioMock.restartBackend`): calls fail with `NOT_CONNECTED` until `connect`. */
 const dropped = new Set<string>();
 const recentErrors: Diagnostics["recentErrors"] = [];
 
@@ -117,14 +117,14 @@ function unreachable(profile: ConnectionProfile): boolean {
 
 function knownEngine(id: string): EngineMock {
   const engine = engineById.get(id);
-  if (!engine) throw mockError("UNKNOWN_ENGINE", `This build of Fosta Studio does not know the engine '${id}'.`, { engine: id });
+  if (!engine) throw mockError("UNKNOWN_ENGINE", `This build of DataStudio does not know the engine '${id}'.`, { engine: id });
   return engine;
 }
 
 function open(profile: ConnectionProfile): Connection {
   const engine = knownEngine(profile.driver);
   if (engine.descriptor.status === "planned" || !engine.connectInfo)
-    throw mockError("ENGINE_NOT_WIRED", `${engine.descriptor.label} support is planned but not available in this build of Fosta Studio yet.`, {
+    throw mockError("ENGINE_NOT_WIRED", `${engine.descriptor.label} support is planned but not available in this build of DataStudio yet.`, {
       engine: engine.descriptor.id,
     });
   if (unreachable(profile))
@@ -158,7 +158,7 @@ function need<K extends keyof EngineMock>(engine: EngineMock, member: K, capabil
 
 // --- Open tabs (kept in localStorage, so a reload of the preview restores them like a restart of the app) ------------------
 
-const MOCK_TABS_KEY = "fosta-mock.openTabs";
+const MOCK_TABS_KEY = "datastudio-mock.openTabs";
 
 function readMockTabs(): { workspaces: Record<string, unknown>; revisions: Record<string, number> } {
   try {
@@ -258,7 +258,7 @@ async function run(
 
 // --- Contract operations --------------------------------------------------------------------------------------------------
 
-/** Mock-only cap on `tree_children` pages (`__fostaMock.setTreePageSize`), to show the tree's "Load more" row. */
+/** Mock-only cap on `tree_children` pages (`__datastudioMock.setTreePageSize`), to show the tree's "Load more" row. */
 let treePageSize: number | null = null;
 
 function treeChildren(connectionId: string, request: TreeRequest): TreeChildren {
@@ -425,7 +425,7 @@ function diagnostics(): Diagnostics {
     os: "windows",
     arch: "x86_64",
     osVersion: "Browser dev mock",
-    logFolder: "C:/Fosta Studio/fosta-studio-logs",
+    logFolder: "C:/DataStudio/datastudio-logs",
     debugLogging: Boolean(state.config.debugLogging),
     connections: [...connections.values()].map((item) => ({ engine: item.engine.descriptor.id, version: item.info.server.version, crashed: false })),
     recentErrors: recentErrors.slice(-20),
@@ -747,7 +747,7 @@ function record(command: string, error: unknown): void {
 declare global {
   interface Window {
     /** Dev mock helpers for the browser console (see the comment at the top of `src/dev/mock/index.ts`). */
-    __fostaMock?: {
+    __datastudioMock?: {
       touchRow(connectionId: string, table: string, key?: unknown, column?: string): string;
       deleteRow(connectionId: string, table: string, key?: unknown): string;
       connections(): string[];
@@ -776,7 +776,7 @@ export function installDevMock(): void {
     },
     { shouldMockEvents: true },
   );
-  window.__fostaMock = {
+  window.__datastudioMock = {
     touchRow: (connectionId, table, key, column) => touchRow(connectionId, table, key, false, column),
     deleteRow: (connectionId, table, key) => touchRow(connectionId, table, key, true),
     connections: () => [...connections.keys()],

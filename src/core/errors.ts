@@ -95,7 +95,7 @@ export function extraFields(error: AppError): Record<string, unknown> {
 /** Plain text for a bug report: versions, open connections and the newest errors (no secrets, no row data). */
 export function diagnosticsText(d: Diagnostics): string {
   const lines = [
-    `Fosta Studio ${d.appVersion} (${d.edition})`,
+    `DataStudio ${d.appVersion} (${d.edition})`,
     `OS: ${d.os} ${d.arch}${d.osVersion ? ` · ${d.osVersion}` : ""}`,
     `Log folder: ${d.logFolder ?? "not set up"}${d.debugLogging ? " (debug logging on)" : ""}`,
     `Open connections: ${d.connections.length === 0 ? "none" : d.connections.map((c) => `${c.engine} ${c.version}${c.crashed ? " (crashed)" : ""}`).join(", ")}`,

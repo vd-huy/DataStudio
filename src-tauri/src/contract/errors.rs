@@ -153,7 +153,7 @@ pub fn unsupported_capability(what: &str) -> AppError {
 /// `ENGINE_NOT_WIRED` for a registered engine whose adapter is not implemented in this build yet.
 pub fn not_wired(engine: &str, label: &str) -> AppError {
     AppError::structured(
-        format!("{label} support is planned but not available in this build of Fosta Studio yet."),
+        format!("{label} support is planned but not available in this build of DataStudio yet."),
         json!({ "code": ENGINE_NOT_WIRED, "engine": engine }),
     )
 }

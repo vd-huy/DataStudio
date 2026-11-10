@@ -16,7 +16,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE: ghcr.io/caothanhphatit/fosta-studio
+  IMAGE: ghcr.io/vd-huy/datastudio
 
 jobs:
   image:
@@ -46,8 +46,8 @@ jobs:
           flavor: |
             latest=false
           labels: |
-            org.opencontainers.image.title=Fosta Studio
-            org.opencontainers.image.description=Fosta Studio web edition: a database client for 11 engines in your browser
+            org.opencontainers.image.title=DataStudio
+            org.opencontainers.image.description=DataStudio web edition: a database client for 11 engines in your browser
             org.opencontainers.image.licenses=GPL-3.0-only
 
       - name: Build${{ github.event_name != 'pull_request' && ' and push' || '' }}
@@ -71,5 +71,5 @@ jobs:
           docker run -d --name smoke -p 8080:8080 "$image"
           for _ in $(seq 1 30); do curl -fsS http://localhost:8080/healthz && break; sleep 1; done
           docker logs smoke | grep -q '/?token='
-          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'X-Fosta-Studio: 1' http://localhost:8080/api/invoke/get_config)" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'X-DataStudio: 1' http://localhost:8080/api/invoke/get_config)" = 401
           docker rm -f smoke

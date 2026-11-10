@@ -23,7 +23,7 @@ pub struct NetSpec {
 
 // ---- TLS ----
 
-/// How strictly TLS is used. Fosta is secure by default: `require` verifies the certificate chain and the
+/// How strictly TLS is used. DataStudio is secure by default: `require` verifies the certificate chain and the
 /// host name, unlike libpq's `require`. Skipping verification takes an explicit
 /// [`TlsSpec::accept_invalid_certs`].
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]

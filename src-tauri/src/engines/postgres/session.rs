@@ -22,7 +22,7 @@ use std::time::{Duration, Instant};
 use tokio_postgres::{CancelToken, Client, SimpleQueryMessage};
 use tokio_postgres_rustls::MakeRustlsConnect;
 
-const CURSOR: &str = "fosta_cursor";
+const CURSOR: &str = "datastudio_cursor";
 /// In a transaction block `now()` is the block's start, so it differs from the statement's own timestamp.
 const STATE_PROBE: &str = "SELECT now() <> statement_timestamp()";
 

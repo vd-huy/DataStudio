@@ -3,7 +3,7 @@
 //! there is no declared key) beyond them.
 //!
 //! **Keys.** `_id` cannot be sorted (Elasticsearch 8 has no field data for it) or ranged, so an index may declare the
-//! field that holds its document id in the mapping: `"_meta": { "fosta": { "key": "id" } }`. The document `_id` is then
+//! field that holds its document id in the mapping: `"_meta": { "datastudio": { "key": "id" } }`. The document `_id` is then
 //! that field's value as text, the field is the key column (sortable, rangeable, the `search_after` tiebreaker) and
 //! `_id` is shown read-only. Without a declaration the key is `_id` (equality filters only). A target that is not one
 //! concrete index (an alias, a data stream, a pattern) adds `_index` to the key, so edits go to the document's own
@@ -46,7 +46,7 @@ pub struct Target {
     pub concrete: bool,
     pub indices: Vec<String>,
     pub columns: Vec<FieldColumn>,
-    /// The declared key field (`_meta.fosta.key`).
+    /// The declared key field (`_meta.datastudio.key`).
     pub key: Option<FieldColumn>,
     /// `_routing.required`: documents cannot be addressed by id alone.
     pub routing_required: bool,
@@ -127,7 +127,7 @@ pub async fn resolve(engine: &EsEngine, name: &str) -> AppResult<Target> {
                 columns.push(column);
             }
         }
-        keys.push(mappings["_meta"]["fosta"]["key"].as_str().map(str::to_owned));
+        keys.push(mappings["_meta"]["datastudio"]["key"].as_str().map(str::to_owned));
         routing_required |= mappings["_routing"]["required"].as_bool().unwrap_or(false);
     }
     // The key counts only when every index declares the same one and it is a scalar field.
@@ -274,7 +274,7 @@ pub fn sort(engine: &EsEngine, target: &Target, keys: &[SortKey]) -> AppResult<V
         let field = match key.column.as_str() {
             ID if !engine.info().is_opensearch() => {
                 return Err(AppError::new(
-                    "Elasticsearch cannot sort by _id. Sort by another field, or declare a key field in the mapping (_meta.fosta.key).",
+                    "Elasticsearch cannot sort by _id. Sort by another field, or declare a key field in the mapping (_meta.datastudio.key).",
                 ))
             }
             ID | INDEX => key.column.clone(),

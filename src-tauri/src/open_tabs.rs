@@ -1,4 +1,4 @@
-//! The open tabs of each workspace (`fosta-studio-tabs.json` next to the config, on the web server in the data volume), so
+//! The open tabs of each workspace (`datastudio-tabs.json` next to the config, on the web server in the data volume), so
 //! tabs and the text of query tabs come back after a restart.
 //!
 //! The UI owns the shape of a workspace's state (which tabs, the active one, query text); the store keeps it as JSON,
@@ -9,7 +9,7 @@
 //!   (`SaveOutcome::saved` false), so the UI can merge its tabs into it instead of overwriting them.
 //! - **Reads.** A missing file is an empty store. Any other read error fails the call and nothing is written, so a
 //!   transient error never wipes the other workspaces. A file that does not parse is moved aside to
-//!   `fosta-studio-tabs.json.corrupt` (replacing an older one) and the store starts empty.
+//!   `datastudio-tabs.json.corrupt` (replacing an older one) and the store starts empty.
 //! - **Writes** go to a temporary file of their own, flushed to disk, then renamed over the file, so a crash never
 //!   leaves half a file.
 //! - Entries of workspaces that are no longer in the configuration are dropped on the next save.
@@ -34,7 +34,7 @@ use crate::{
     lock::lock,
 };
 
-pub const OPEN_TABS_FILE: &str = "fosta-studio-tabs.json";
+pub const OPEN_TABS_FILE: &str = "datastudio-tabs.json";
 /// Where a tabs file that does not parse is moved (the last one is kept).
 pub const CORRUPT_SUFFIX: &str = ".corrupt";
 /// The most one workspace's tabs may take as JSON (the UI keeps each query text to 1 MB and stays under this).
@@ -225,7 +225,7 @@ mod tests {
 
     impl Folder {
         fn new(name: &str) -> Self {
-            let path = std::env::temp_dir().join(format!("fosta-open-tabs-{name}-{}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("datastudio-open-tabs-{name}-{}", std::process::id()));
             let _ = fs::remove_dir_all(&path);
             fs::create_dir_all(&path).expect("temporary folder");
             Self(path)

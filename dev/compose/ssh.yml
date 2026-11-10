@@ -12,13 +12,13 @@
 #
 # The linuxserver image disables TCP forwarding by default; the init script turns it on.
 
-name: fosta-dev-ssh
+name: datastudio-dev-ssh
 
 x-ssh: &ssh
   image: lscr.io/linuxserver/openssh-server:10.3_p1-r2-ls242
   configs:
     - source: init
-      target: /custom-cont-init.d/10-fosta-test
+      target: /custom-cont-init.d/10-datastudio-test
       mode: 0755
   healthcheck:
     test: ["CMD-SHELL", "nc -z 127.0.0.1 2222 && test -f /config/keys/ready"]
@@ -70,8 +70,8 @@ configs:
       done
       mkdir -p /config/keys /config/.ssh
       if [ ! -f /config/keys/id_ed25519 ]; then
-        ssh-keygen -q -t ed25519 -N tunnel-key-pass -C fosta-test-ed25519 -f /config/keys/id_ed25519
-        ssh-keygen -q -t rsa -b 2048 -m PEM -N '' -C fosta-test-rsa -f /config/keys/id_rsa
+        ssh-keygen -q -t ed25519 -N tunnel-key-pass -C datastudio-test-ed25519 -f /config/keys/id_ed25519
+        ssh-keygen -q -t rsa -b 2048 -m PEM -N '' -C datastudio-test-rsa -f /config/keys/id_rsa
       fi
       touch /config/.ssh/authorized_keys
       for pub in /config/keys/*.pub; do

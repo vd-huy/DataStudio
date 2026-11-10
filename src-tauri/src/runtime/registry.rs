@@ -57,7 +57,7 @@ impl Registry {
         self.engines.iter().copied().find(|engine| engine.id() == id).ok_or_else(|| {
             let known: Vec<&str> = self.engines.iter().map(|engine| engine.id()).collect();
             AppError::structured(
-                format!("This build of Fosta Studio does not support the engine '{id}'. Edit the connection to pick a supported one."),
+                format!("This build of DataStudio does not support the engine '{id}'. Edit the connection to pick a supported one."),
                 json!({ "code": UNKNOWN_ENGINE, "engine": id, "known": known }),
             )
         })

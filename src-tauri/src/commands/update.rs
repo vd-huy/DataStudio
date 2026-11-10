@@ -62,7 +62,7 @@ pub fn whats_new(state: &AppState) -> AppResult<Option<String>> {
 pub fn open_release_page(url: String) -> AppResult<()> {
     if !update::is_release_page(&url) && url != update::COMMUNITY_URL {
         return Err(AppError::new(
-            "Only Fosta Studio release pages and the community invite can be opened.",
+            "Only DataStudio release pages and the community invite can be opened.",
         ));
     }
     #[cfg(windows)]

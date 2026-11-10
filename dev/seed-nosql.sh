@@ -9,7 +9,7 @@
 #                 (20,000 elements) and big:set for paging, a key in db 1.
 # Elasticsearch:  products (nested variants, geo_point, dates, dense_vector, multi-fields; 300 docs) with the alias
 #                 products-current, ILM policy logs-policy, ingest pipeline logs-pipeline, component template
-#                 fosta-logs-mappings, index template logs-template, data stream logs-app with 20,000 time-series docs.
+#                 datastudio-logs-mappings, index template logs-template, data stream logs-app with 20,000 time-series docs.
 # OpenSearch:     the same products index (knn_vector embedding, index.knn), ISM policy logs-policy, data stream logs-app
 #                 with 2,000 docs.
 set -eu
@@ -24,8 +24,8 @@ export MSYS_NO_PATHCONV=1
 if pwd -W >/dev/null 2>&1; then devnull=NUL; else devnull=/dev/null; fi
 
 echo "== Redis"
-docker cp "$here/seed/redis.lua" fosta-dev-nosql-redis-1:/tmp/seed.lua
-docker exec fosta-dev-nosql-redis-1 redis-cli -a studio-redis --no-auth-warning --eval /tmp/seed.lua
+docker cp "$here/seed/redis.lua" datastudio-dev-nosql-redis-1:/tmp/seed.lua
+docker exec datastudio-dev-nosql-redis-1 redis-cli -a studio-redis --no-auth-warning --eval /tmp/seed.lua
 
 # es METHOD PATH [BODY]  (BODY "-" reads NDJSON from stdin)
 es() {
@@ -108,14 +108,14 @@ if curl -sS -k -u "$ES_AUTH" "$ES/" -o "$devnull" 2>/dev/null; then
   es DELETE "/_data_stream/logs-app" || true
   es DELETE "/products" || true
   es DELETE "/_index_template/logs-template" || true
-  es DELETE "/_component_template/fosta-logs-mappings" || true
+  es DELETE "/_component_template/datastudio-logs-mappings" || true
   es PUT "/products" "$(products_mapping ',"embedding": { "type": "dense_vector", "dims": 4, "similarity": "cosine" }')"
   products_bulk 1 | es POST "/_bulk?refresh=true" -
   es POST "/_aliases" '{"actions":[{"add":{"index":"products","alias":"products-current","is_write_index":true}}]}'
   es PUT "/_ilm/policy/logs-policy" '{"policy":{"phases":{"hot":{"actions":{"rollover":{"max_primary_shard_size":"1gb","max_age":"7d"}}},"warm":{"min_age":"7d","actions":{"forcemerge":{"max_num_segments":1}}},"delete":{"min_age":"30d","actions":{"delete":{}}}}}}'
   es PUT "/_ingest/pipeline/logs-pipeline" '{"description":"Normalise log events","processors":[{"lowercase":{"field":"level"}},{"rename":{"field":"msg","target_field":"message","ignore_missing":true}},{"set":{"field":"event.ingested","value":"{{_ingest.timestamp}}"}}]}'
-  es PUT "/_component_template/fosta-logs-mappings" '{"template":{"mappings":{"properties":{"@timestamp":{"type":"date"},"level":{"type":"keyword"},"service":{"type":"keyword"},"message":{"type":"text"},"duration_ms":{"type":"long"},"status":{"type":"short"},"host":{"properties":{"name":{"type":"keyword"}}},"event":{"properties":{"ingested":{"type":"date"}}}}}}}'
-  es PUT "/_index_template/logs-template" '{"index_patterns":["logs-app*"],"data_stream":{},"priority":200,"composed_of":["fosta-logs-mappings"],"template":{"settings":{"number_of_replicas":0,"index.lifecycle.name":"logs-policy","index.default_pipeline":"logs-pipeline"}}}'
+  es PUT "/_component_template/datastudio-logs-mappings" '{"template":{"mappings":{"properties":{"@timestamp":{"type":"date"},"level":{"type":"keyword"},"service":{"type":"keyword"},"message":{"type":"text"},"duration_ms":{"type":"long"},"status":{"type":"short"},"host":{"properties":{"name":{"type":"keyword"}}},"event":{"properties":{"ingested":{"type":"date"}}}}}}}'
+  es PUT "/_index_template/logs-template" '{"index_patterns":["logs-app*"],"data_stream":{},"priority":200,"composed_of":["datastudio-logs-mappings"],"template":{"settings":{"number_of_replicas":0,"index.lifecycle.name":"logs-policy","index.default_pipeline":"logs-pipeline"}}}'
   logs_bulk 20000 | es POST "/logs-app/_bulk?refresh=true" -
 else
   echo "Elasticsearch is not reachable on $ES; skipped."

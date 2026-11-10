@@ -7,7 +7,7 @@ import type { ConnectionProfile, Workspace } from "../../core/types";
 import { PRODUCTION_ICON } from "./safety";
 
 const PRODUCTION_WORD = /(^|[^a-z0-9])(prod|production|prd|live)([^a-z0-9]|$)/i;
-const DISMISSED_KEY = "fosta-studio-production-hint-dismissed";
+const DISMISSED_KEY = "datastudio-production-hint-dismissed";
 
 export function looksLikeProduction(profile: Pick<ConnectionProfile, "name" | "host" | "database" | "url">): boolean {
   return [profile.name, profile.host, profile.database, profile.url].some((value) => !!value && PRODUCTION_WORD.test(value));

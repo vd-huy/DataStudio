@@ -95,7 +95,7 @@ export function shellMenus(host: MenuHost): ShellMenus {
 
   /** Web edition only: there is one access token per server, so signing out ends every browser's session. */
   async function confirmSignOut(): Promise<void> {
-    const message = "Sign out of Fosta Studio? This signs out every browser using this server; sign in again with the access token.";
+    const message = "Sign out of DataStudio? This signs out every browser using this server; sign in again with the access token.";
     if (!(await confirmDialog(message, "Sign out"))) return;
     try {
       await signOut();
@@ -122,7 +122,7 @@ export function shellMenus(host: MenuHost): ShellMenus {
     }
   }
 
-  /** History stays on this machine (fosta-studio-history.jsonl next to the app); turning it off keeps old entries. */
+  /** History stays on this machine (datastudio-history.jsonl next to the app); turning it off keeps old entries. */
   async function setQueryHistory(enabled: boolean): Promise<void> {
     try {
       applyConfig(await api.setQueryHistory(enabled));

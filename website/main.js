@@ -1,9 +1,9 @@
-// Fosta Studio website: progressive enhancement only. The page works without this file.
+// DataStudio website: progressive enhancement only. The page works without this file.
 (function () {
   "use strict";
 
   var root = document.documentElement;
-  var KEY = "fosta-studio-site-theme";
+  var KEY = "datastudio-site-theme";
   var themedShots = []; // screenshot images that follow the theme, see initSlots
   var media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
 
@@ -176,7 +176,7 @@
     logo.width = 14;
     logo.height = 14;
     var title = document.createElement("span");
-    title.textContent = "Fosta Studio";
+    title.textContent = "DataStudio";
     var controls = document.createElement("span");
     controls.className = "am-win";
     controls.innerHTML = "<i></i><i></i><i></i>";
@@ -328,7 +328,7 @@
 
   // Languages: remember an explicit choice, close the switcher menu on Escape or an outside click, and on the
   // English page offer (never force) the visitor's preferred language.
-  var LANG_KEY = "fosta-studio-site-lang";
+  var LANG_KEY = "datastudio-site-lang";
   var OFFERED = ["vi", "zh", "ja"];
 
   function storedLang() {

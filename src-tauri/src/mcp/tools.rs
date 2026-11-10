@@ -126,7 +126,7 @@ pub fn definitions() -> Vec<Value> {
             "run_query",
             "Run query (asks the user)",
             "Runs one statement that may change data, only on connections whose workspace allows \"Ask before writes\". \
-             The user sees the statement in Fosta Studio and approves or denies it (no answer within 120 s is a denial). \
+             The user sees the statement in DataStudio and approves or denies it (no answer within 120 s is a denial). \
              Never available in Production or Read-only workspaces. Prefer run_read_query for reads.",
             json!({ "connection": connection, "query": query, "database": database, "max_rows": max_rows }),
             &["connection", "query"],
@@ -211,14 +211,14 @@ async fn ensure_connected(app: &AppState, target: &Target) -> Result<(), String>
 fn connect_error(error: &AppError) -> String {
     match error.code() {
         Some(COMMAND_NOT_RUNNING) => format!(
-            "{error} MCP clients never start workspace commands. Ask the user to start it in Fosta Studio (or to \
+            "{error} MCP clients never start workspace commands. Ask the user to start it in DataStudio (or to \
              connect once there), then try again."
         ),
-        Some("PASSWORD_REQUIRED") => "Fosta Studio has no saved password for this connection. Ask the user to connect \
-             to it once in Fosta Studio with \"Save password\" on."
+        Some("PASSWORD_REQUIRED") => "DataStudio has no saved password for this connection. Ask the user to connect \
+             to it once in DataStudio with \"Save password\" on."
             .to_owned(),
         Some(code) if code.starts_with("SSH_HOST_KEY") => "The SSH server's host key is not trusted yet. Ask the user to \
-             connect once in Fosta Studio and accept it."
+             connect once in DataStudio and accept it."
             .to_owned(),
         _ => crate::ai::framed("connect", &format!("Could not connect: {error}")),
     }
@@ -253,7 +253,7 @@ pub async fn call(app: &AppState, client: &ClientInfo, name: &str, arguments: &V
             return refuse(
                 None,
                 format!(
-                    "Refused: the statement is longer than {MAX_STATEMENT_CHARS} characters, the most Fosta Studio shows \
+                    "Refused: the statement is longer than {MAX_STATEMENT_CHARS} characters, the most DataStudio shows \
                      and runs. Send a shorter statement."
                 ),
             );
@@ -414,7 +414,7 @@ async fn run_query(
         Answer::Denied => {
             unanswered("denied by the user");
             Err(AppError::structured(
-                "The user denied this statement in Fosta Studio. Nothing was run; do not retry it unless the user asks.",
+                "The user denied this statement in DataStudio. Nothing was run; do not retry it unless the user asks.",
                 json!({ "code": gateway::BLOCKED }),
             ))
         }
@@ -422,8 +422,8 @@ async fn run_query(
             unanswered("no answer in time");
             Err(AppError::structured(
                 format!(
-                    "Nobody approved this statement in Fosta Studio within {} seconds, so it was denied and nothing \
-                     was run. Ask the user to keep Fosta Studio open and try again if they want it.",
+                    "Nobody approved this statement in DataStudio within {} seconds, so it was denied and nothing \
+                     was run. Ask the user to keep DataStudio open and try again if they want it.",
                     super::APPROVAL_TIMEOUT.as_secs()
                 ),
                 json!({ "code": gateway::BLOCKED }),
@@ -488,7 +488,7 @@ fn list_connections(app: &AppState) -> String {
             .collect()
     });
     if connections.is_empty() {
-        return "No connections are shared with MCP clients. The user turns it on per workspace in Fosta Studio (Edit \
+        return "No connections are shared with MCP clients. The user turns it on per workspace in DataStudio (Edit \
                 workspace → MCP clients)."
             .to_owned();
     }

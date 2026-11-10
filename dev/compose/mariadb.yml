@@ -1,7 +1,7 @@
 # MariaDB 11.8 (MARIADB_TAG overrides the image tag) for the contract tests.
 # Test-only credentials; never reuse them.
 # docker compose -f dev/compose/mariadb.yml up -d --wait
-# 127.0.0.1:3306  root / studio-root  database shop (vector column included); contract data in fosta_contract
+# 127.0.0.1:3306  root / studio-root  database shop (vector column included); contract data in datastudio_contract
 
 name: db-studio-dev
 

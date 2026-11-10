@@ -55,7 +55,7 @@ export function showApproval(approval: McpApproval): void {
           ),
         ),
     ),
-    h("p", { class: "confirm-reason" }, typed ? confirmationReason(problem) : "Fosta Studio asks before it runs any statement from an MCP client."),
+    h("p", { class: "confirm-reason" }, typed ? confirmationReason(problem) : "DataStudio asks before it runs any statement from an MCP client."),
     typed && problem.expected ? field(`Type ${problem.expected} to confirm`, input, "Used once, for exactly this statement.") : null,
     countdown,
   );

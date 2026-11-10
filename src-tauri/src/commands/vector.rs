@@ -16,7 +16,7 @@ use crate::{
     secrets, AppState,
 };
 
-const EMBEDDING_PROBE: &str = "Fosta Studio embedding test";
+const EMBEDDING_PROBE: &str = "DataStudio embedding test";
 
 /// The query vector as the vector view sends it.
 #[derive(Debug, Deserialize)]

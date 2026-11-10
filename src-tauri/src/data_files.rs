@@ -55,7 +55,7 @@ mod tests {
 
     #[test]
     fn private_files_are_written_whole_and_owner_only() {
-        let path = std::env::temp_dir().join(format!("fosta-data-files-{}.txt", std::process::id()));
+        let path = std::env::temp_dir().join(format!("datastudio-data-files-{}.txt", std::process::id()));
         let _ = fs::remove_file(&path);
         write_private(&path, b"first").unwrap();
         write_private(&path, b"second").unwrap();

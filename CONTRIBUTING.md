@@ -1,11 +1,11 @@
-# Contributing to Fosta Studio
+# Contributing to DataStudio
 
 Thanks for helping. This guide covers the local setup, the checks CI runs, and the conventions of the code base.
 [ARCHITECTURE.md](ARCHITECTURE.md) explains how the pieces fit together.
 
-> **License and CLA**: Fosta Studio is licensed under the [GPL v3.0](LICENSE). On your first pull request a bot asks you to sign the
+> **License and CLA**: DataStudio is licensed under the [GPL v3.0](LICENSE). On your first pull request a bot asks you to sign the
 > [Contributor License Agreement](CLA.md) by posting a comment; you keep the copyright in your work, and the CLA lets the
-> maintainer also offer Fosta Studio under commercial terms.
+> maintainer also offer DataStudio under commercial terms.
 
 Questions? Ask on [Discord](https://discord.gg/pBFkZD5mhN); use GitHub Issues for bugs and feature requests.
 
@@ -29,7 +29,7 @@ src-tauri/src/           Rust backend
   runtime/               engine registry, ConnectionManager, crash containment
   gateway/               statement gateway: classification, safety rules, confirmations
   ai/                    assistant: prompt, tools, Anthropic and OpenAI wire formats
-  config.rs secrets.rs   fosta-studio.json, Credential Manager / encrypted secret file
+  config.rs secrets.rs   datastudio.json, Credential Manager / encrypted secret file
   tasks.rs job.rs        workspace commands and their child processes (connection_command.rs: a connection's command)
   engines/               engine adapters; engines/mysql is MariaDB/MySQL with its vector tools, engines/mssql SQL Server,
                          engines/mongo MongoDB
@@ -64,7 +64,7 @@ deploy/                  docker-compose.yml for the web edition (Dockerfile at t
 npm install
 npm run tauri dev      # desktop app with hot reload
 npm run dev            # UI only, in a browser, against the mock backend (src/dev/mock/)
-npm run tauri build -- --no-bundle   # portable src-tauri\target\release\fosta-studio.exe
+npm run tauri build -- --no-bundle   # portable src-tauri\target\release\datastudio.exe
 ```
 
 The mock backend is loaded only when Vite runs in dev mode and the page is not inside Tauri, so it never reaches the desktop build. Keep it
@@ -109,7 +109,7 @@ engine from `ci/engines/<id>.json` (`.github/workflows/live.yml`). A few machine
 
 - `live_saved_passwords_are_readable` expects saved passwords in Credential Manager for connections with the ids `local-mariadb`,
   `local-mssql` and `local-mongo` (create them in the app with "Save password" ticked, or skip this test).
-- `live_assistant_tools` talks to the Fosta API and needs `FOSTA_KEY` in the environment; without it the test prints a note and passes.
+- `live_assistant_tools` talks to the OpenAI API and needs `OPENAI_API_KEY` in the environment; without it the test prints a note and passes.
 - `live_save_download` writes into your Downloads folder and cleans up.
 - The Redis and Elasticsearch adapters have `live_*` tests against their containers.
 
@@ -122,8 +122,8 @@ engine from `ci/engines/<id>.json` (`.github/workflows/live.yml`). A few machine
   chunk: the query view (CodeMirror) and the dev mock are loaded with dynamic `import()`.
 - **Rust**: errors are `AppError`s shown to the user, so write them as sentences that say what to do (structured ones, such as the gateway's `CONFIRMATION_REQUIRED`, carry a JSON payload with a `code` and a `message`). Serialised types use
   `#[serde(rename_all = "camelCase")]` and must match `src/core/types.ts`.
-- **Compatibility**: Tauri command names and argument names, the JSON shapes, the `fosta-studio.json` layout, the keyring service
-  `fosta-studio` and its account names, and the `db-studio.*` localStorage keys are a contract with existing installs. Change them only with
+- **Compatibility**: Tauri command names and argument names, the JSON shapes, the `datastudio.json` layout, the keyring service
+  `datastudio` and its account names, and the `db-studio.*` localStorage keys are a contract with existing installs. Change them only with
   a migration.
 - Unit-test pure logic (parsers, SQL builders) next to the code: `foo.test.ts` with Vitest, `#[cfg(test)] mod tests` in Rust.
 
@@ -140,7 +140,7 @@ Add a line for user-facing changes under `## [Unreleased]` in [CHANGELOG.md](CHA
 
 ## Releasing
 
-Fosta Studio follows [Semantic Versioning](https://semver.org/). `package.json` is the source of truth; `scripts/version.mjs` keeps
+DataStudio follows [Semantic Versioning](https://semver.org/). `package.json` is the source of truth; `scripts/version.mjs` keeps
 `package-lock.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `src-tauri/Cargo.lock` in step, and CI fails when they disagree.
 
 1. Bump the version: `npm run version:set -- 0.2.0` (or `patch`, `minor`, `major`).
@@ -155,7 +155,7 @@ Fosta Studio follows [Semantic Versioning](https://semver.org/). `package.json` 
 
 4. The tag starts `.github/workflows/release.yml`: it checks that the tag matches the version files and that `CHANGELOG.md` has a section
    for it, builds the NSIS installer and the portable exe, and creates a **draft** GitHub Release with that section as its notes. When a
-   `Dockerfile` exists, it also pushes `ghcr.io/caothanhphatit/fosta-studio` tagged `X.Y.Z`, `X.Y` and `latest`.
+   `Dockerfile` exists, it also pushes `ghcr.io/vd-huy/datastudio` tagged `X.Y.Z`, `X.Y` and `latest`.
    The installer is signed for the in-app updater with the `TAURI_SIGNING_PRIVATE_KEY` repository secret (the key matching
    `plugins.updater.pubkey` in `tauri.conf.json`; `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` only if the key has a password), and
    `latest.json` is attached for the updater. The workflow stops early when the key secret is missing.

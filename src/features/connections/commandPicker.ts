@@ -1,7 +1,7 @@
 /**
  * The connection dialog's "Command" select: none, one of the workspace's commands (started before connecting when it
  * does not run, see `src-tauri/src/connection_command.rs`), or "New command…" (the command dialog, then selected).
- * Hidden where commands are off (web edition without FOSTA_STUDIO_TASKS); a saved choice is then kept as it is.
+ * Hidden where commands are off (web edition without DATASTUDIO_TASKS); a saved choice is then kept as it is.
  */
 import { capabilities } from "../../core/capabilities";
 import { field } from "../../core/dialogs";

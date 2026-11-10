@@ -59,7 +59,7 @@ pub fn build_options(request: &ConnectRequest) -> AppResult<SqliteOptions> {
     // the tree, the grid and every query tab of this connection.
     if file == ":memory:" {
         options.path = format!(
-            "file:fosta-memory-{}?mode=memory&cache=shared",
+            "file:datastudio-memory-{}?mode=memory&cache=shared",
             MEMORY.fetch_add(1, Ordering::Relaxed)
         );
     }
@@ -143,7 +143,7 @@ mod tests {
     fn memory_databases_are_shared_between_connections_of_one_profile() {
         let first = build_options(&request(Some(":memory:"), &[])).unwrap();
         let second = build_options(&request(Some(":memory:"), &[])).unwrap();
-        assert!(first.path.starts_with("file:fosta-memory-") && first.path.contains("cache=shared"));
+        assert!(first.path.starts_with("file:datastudio-memory-") && first.path.contains("cache=shared"));
         assert_ne!(first.path, second.path, "two profiles must not see each other's data");
     }
 }

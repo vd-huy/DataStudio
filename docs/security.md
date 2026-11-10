@@ -1,11 +1,11 @@
 # Security and privacy
 
-What Fosta Studio stores, what it sends where, and how it keeps you from changing the wrong database. To report a vulnerability,
+What DataStudio stores, what it sends where, and how it keeps you from changing the wrong database. To report a vulnerability,
 see [SECURITY.md](../SECURITY.md).
 
 ## What leaves your machine
 
-Fosta Studio has no account and no telemetry. It connects only to:
+DataStudio has no account and no telemetry. It connects only to:
 
 - **Your databases**, and the SSH hosts you configure for tunnels.
 - **The AI provider you choose**, only when you use the assistant or embeddings, with your own key. See [The assistant](#the-assistant).
@@ -24,14 +24,14 @@ Everything lives next to the executable (the portable app), in the app's data fo
 
 | File                                                                                                | Holds                                                                                     | Secrets?                                                                          |
 | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `fosta-studio.json`                                                                                 | Workspaces, connections, commands, settings                                               | No: passwords and keys are never written here                                     |
+| `datastudio.json`                                                                                 | Workspaces, connections, commands, settings                                               | No: passwords and keys are never written here                                     |
 | Windows Credential Manager (desktop)                                                                | Saved database passwords, SSH passphrases, AI and embedding keys                          | Yes, protected by Windows                                                         |
-| `fosta-studio-secrets.enc` + `fosta-studio-secret.key` (web edition)                                | The same secrets, encrypted with XChaCha20-Poly1305                                       | Yes; set `FOSTA_STUDIO_SECRET_KEY` to keep the key out of the volume              |
-| `fosta-studio-history.jsonl`                                                                        | Query history (text, time, duration, row count)                                           | Statement text as you typed it; turn history off or clear it under _Settings_     |
-| `fosta-studio-tabs.json`                                                                            | The open tabs of each workspace, with the text of query tabs (restored on the next start) | Query text as you typed it, also with history off; closing a tab removes its text |
-| `fosta-studio-tabs.json.corrupt`                                                                    | The last tabs file that did not parse, moved aside (only when that happened)              | The same query text; delete it when you no longer need it                         |
-| `app:mcp-token` in Windows Credential Manager (desktop) or `fosta-studio-secrets.enc` (web edition) | The MCP server's bearer token, for MCP clients only                                       | Yes                                                                               |
-| `fosta-studio-audit.jsonl`                                                                          | Blocked, confirmed and relaxed operations, assistant runs and every MCP call              | Statement excerpts                                                                |
+| `datastudio-secrets.enc` + `datastudio-secret.key` (web edition)                                | The same secrets, encrypted with XChaCha20-Poly1305                                       | Yes; set `DATASTUDIO_SECRET_KEY` to keep the key out of the volume              |
+| `datastudio-history.jsonl`                                                                        | Query history (text, time, duration, row count)                                           | Statement text as you typed it; turn history off or clear it under _Settings_     |
+| `datastudio-tabs.json`                                                                            | The open tabs of each workspace, with the text of query tabs (restored on the next start) | Query text as you typed it, also with history off; closing a tab removes its text |
+| `datastudio-tabs.json.corrupt`                                                                    | The last tabs file that did not parse, moved aside (only when that happened)              | The same query text; delete it when you no longer need it                         |
+| `app:mcp-token` in Windows Credential Manager (desktop) or `datastudio-secrets.enc` (web edition) | The MCP server's bearer token, for MCP clients only                                       | Yes                                                                               |
+| `datastudio-audit.jsonl`                                                                          | Blocked, confirmed and relaxed operations, assistant runs and every MCP call              | Statement excerpts                                                                |
 | Log folder                                                                                          | Application log                                                                           | No passwords; statements are truncated                                            |
 
 On Linux (the web edition's `/data` volume) the app writes these files readable by their owner only (mode `0600`), the
@@ -114,4 +114,4 @@ workspace's MCP access. An `Origin` header must name the server itself, and the 
 - Sign-in with an access token exchanged for an `HttpOnly`, `SameSite=Strict` session cookie; one token per server.
 - Requests must carry a custom header and a same-origin `Origin`; responses set a strict Content Security Policy.
 - The image is distroless and runs as a non-root user.
-- Put it behind HTTPS for network access and set `FOSTA_STUDIO_SECURE_COOKIE=on`. See [web-edition.md](web-edition.md).
+- Put it behind HTTPS for network access and set `DATASTUDIO_SECURE_COOKIE=on`. See [web-edition.md](web-edition.md).

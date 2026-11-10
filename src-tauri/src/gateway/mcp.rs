@@ -5,7 +5,7 @@
 //!   timeout.
 //! - `run_query` ([`prepare_write`], then [`run_confirmed`]): one statement authorized as [`Caller::Mcp`], which always
 //!   needs a confirmation (typed where the rules say so) and is blocked where the rules block it. The one-time token
-//!   stays in the app: the user answers in Fosta Studio, never the client.
+//!   stays in the app: the user answers in DataStudio, never the client.
 //!
 //! Every run, refusal and unanswered request is audited with caller `mcp` and the client's name, including statements
 //! refused before they could be classified and confirmations that no longer hold.
@@ -39,7 +39,7 @@ pub(super) fn refusal_message(caller: Caller, worst: Option<Category>, workspace
     match (caller, worst) {
         (Caller::McpRead, Some(Category::Read) | None) => format!(
             "Refused: the rules of workspace {workspace} ask for a confirmation before reads. Use run_query, which asks \
-             the user in Fosta Studio, where the workspace allows it, or give the statement to the user to run."
+             the user in DataStudio, where the workspace allows it, or give the statement to the user to run."
         ),
         (Caller::McpRead, Some(category)) => format!(
             "Refused: run_read_query runs only read-only statements, and this is a {} statement. Use run_query where the \
@@ -48,7 +48,7 @@ pub(super) fn refusal_message(caller: Caller, worst: Option<Category>, workspace
         ),
         (_, worst) => format!(
             "Refused: the rules of workspace {workspace} block {} statements. Nothing was run; only the user can change \
-             the rules, in Fosta Studio.",
+             the rules, in DataStudio.",
             worst.map_or("these", |category| category.label()).to_lowercase()
         ),
     }
@@ -205,7 +205,7 @@ pub fn prepare_write(mgr: &ConnectionManager, context: &Context, client: &str, t
             .ok_or_else(|| AppError::new("The confirmation request has no details")),
         Err(error) => Err(error),
         // Caller::Mcp always confirms; never run without the user.
-        Ok(()) => Err(AppError::new("Refused: this statement needs the user's approval in Fosta Studio")),
+        Ok(()) => Err(AppError::new("Refused: this statement needs the user's approval in DataStudio")),
     }
 }
 

@@ -58,5 +58,5 @@ const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]", "0.0.0.0"
 /** In a container, `localhost` is the container itself: a hint to use host.docker.internal, or "". */
 export function localhostHint(host: string): string {
   if (!capabilities().inContainer || !LOCAL_HOSTS.has(host.trim().toLowerCase())) return "";
-  return "Fosta Studio runs in a container, where localhost is the container itself. For a database on the Docker host, use host.docker.internal.";
+  return "DataStudio runs in a container, where localhost is the container itself. For a database on the Docker host, use host.docker.internal.";
 }

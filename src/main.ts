@@ -270,7 +270,7 @@ function applyConfig(config: AppConfig): void {
   welcomeName.textContent = workspace.name;
   renderSafetyStatus(workspace);
   refreshActivity();
-  const title = `${workspace.name} — Fosta Studio`;
+  const title = `${workspace.name} — DataStudio`;
   if (isTauri()) void getCurrentWindow().setTitle(title);
   else document.title = title;
 }

@@ -55,7 +55,7 @@ pub fn descriptor() -> EngineDescriptor {
             auth: vec![AuthMethodId::Password],
             fields: vec![
                 FieldSpec::new("options.applicationName", FieldKind::Text, "Application name")
-                    .placeholder("Fosta Studio")
+                    .placeholder("DataStudio")
                     .hint("Shown in pg_stat_activity.")
                     .section(FormSection::Advanced),
                 FieldSpec::new("options.connectTimeout", FieldKind::Number, "Connect timeout (s)")

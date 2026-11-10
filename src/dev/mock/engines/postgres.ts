@@ -2,7 +2,7 @@
  * PostgreSQL 17 mock: the `shop` database with `public` and `sales` schemas. The tree is database → schema → folders
  * (tables, views, materialized views, functions, sequences, types) with an extensions folder per database, like the
  * backend. Tables carry typed values (arrays, jsonb, uuid, numeric, timestamptz) and `xmin`-style row versions, so the
- * conflict demo (`__fostaMock.touchRow`) works here too.
+ * conflict demo (`__datastudioMock.touchRow`) works here too.
  */
 import type { ConnectInfo, ForeignKeyInfo, ObjectDescription, ObjectNode, ObjectRef, TreeRequest } from "../../../core/contract";
 import { builtin, column, MockCatalog, queryAction, v, viewAction, type CatalogStyle, type TableSpec } from "../catalog";

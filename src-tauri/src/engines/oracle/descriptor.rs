@@ -1,5 +1,5 @@
 //! The Oracle descriptor: EZConnect host/port/service name or a full connect descriptor, the Instant Client folder,
-//! capabilities, languages and filter box. Connecting needs Oracle Instant Client on the machine (Fosta Studio offers to
+//! capabilities, languages and filter box. Connecting needs Oracle Instant Client on the machine (DataStudio offers to
 //! download it, see `instant_client.rs`).
 
 use crate::contract::{
@@ -66,7 +66,7 @@ pub fn descriptor() -> EngineDescriptor {
                     .placeholder("C:\\oracle\\instantclient_23_26")
                     .hint(
                         "A folder with Oracle Instant Client 19c or newer (oci.dll, or libclntsh.so on Linux). Leave it empty to \
-                         use PATH, ORACLE_HOME or the client Fosta Studio downloads. The first client loaded stays in use until \
+                         use PATH, ORACLE_HOME or the client DataStudio downloads. The first client loaded stays in use until \
                          the app restarts.",
                     )
                     .section(FormSection::Advanced),

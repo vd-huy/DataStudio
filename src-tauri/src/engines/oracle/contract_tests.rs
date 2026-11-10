@@ -3,8 +3,8 @@
 //! switch, PL/SQL source and the ER diagram.
 //!
 //! They need Oracle Instant Client: on PATH / ORACLE_HOME, downloaded by `cargo test live_oracle_instant_client_download --
-//! --ignored`, or in the folder named by FOSTA_CONTRACT_ORACLE_CLIENT_DIR (passed as the profile's Instant Client folder).
-//! Override the server with FOSTA_CONTRACT_ORACLE_{HOST,PORT,USER,PASSWORD,SERVICE}.
+//! --ignored`, or in the folder named by DATASTUDIO_CONTRACT_ORACLE_CLIENT_DIR (passed as the profile's Instant Client folder).
+//! Override the server with DATASTUDIO_CONTRACT_ORACLE_{HOST,PORT,USER,PASSWORD,SERVICE}.
 
 use std::sync::Arc;
 
@@ -21,7 +21,7 @@ use crate::{
 };
 
 fn env(name: &str, default: &str) -> String {
-    std::env::var(format!("FOSTA_CONTRACT_ORACLE_{name}")).unwrap_or_else(|_| default.to_owned())
+    std::env::var(format!("DATASTUDIO_CONTRACT_ORACLE_{name}")).unwrap_or_else(|_| default.to_owned())
 }
 
 fn seed() -> Vec<String> {
@@ -49,7 +49,7 @@ fn spec() -> ConnectionSpec {
         database: Some(env("SERVICE", "FREEPDB1")),
         ..ConnectionSpec::default()
     };
-    if let Ok(dir) = std::env::var("FOSTA_CONTRACT_ORACLE_CLIENT_DIR") {
+    if let Ok(dir) = std::env::var("DATASTUDIO_CONTRACT_ORACLE_CLIENT_DIR") {
         spec.options.insert(super::connect::CLIENT_DIR.into(), dir);
     }
     spec

@@ -720,7 +720,7 @@ pub async fn suite_transactions(f: &Fixture) {
 pub fn suite_assistant_reads_only(f: &Fixture) {
     use crate::gateway::{assistant, rules::Preset, Context, Gateway};
     let engine = registry().get(f.engine).unwrap();
-    let path = std::env::temp_dir().join(format!("fosta-assistant-suite-{}-{}.jsonl", f.engine, std::process::id()));
+    let path = std::env::temp_dir().join(format!("datastudio-assistant-suite-{}-{}.jsonl", f.engine, std::process::id()));
     let gateway = Gateway::with_audit(crate::audit::AuditLog::new(path.clone(), 1000));
     // Open rules: the user may run anything, the assistant still only reads.
     let context = Context {

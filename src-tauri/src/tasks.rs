@@ -25,7 +25,7 @@ use crate::{
 };
 
 pub const TASKS_DISABLED: &str =
-    "Commands are turned off in this web edition. Set FOSTA_STUDIO_TASKS=on to run programs inside the container.";
+    "Commands are turned off in this web edition. Set DATASTUDIO_TASKS=on to run programs inside the container.";
 
 /// How long a connection waits for a command to become ready when its definition does not say.
 pub const DEFAULT_READY_TIMEOUT_SECS: u64 = 30;

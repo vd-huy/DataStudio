@@ -51,7 +51,7 @@ pub fn reveal(path: &str) -> AppResult<()> {
     let target = Path::new(path);
     if !was_written(target) {
         return Err(AppError::new(
-            "Only files exported by Fosta Studio in this session can be shown in their folder.",
+            "Only files exported by DataStudio in this session can be shown in their folder.",
         ));
     }
     if !target.exists() {
@@ -110,7 +110,7 @@ mod tests {
     fn only_exported_files_can_be_revealed() {
         let error = reveal(r"C:\Windows\System32\cmd.exe").expect_err("not exported by the app");
         assert!(error.to_string().starts_with("Only files exported"), "{error}");
-        let exported = std::env::temp_dir().join("fosta-reveal-test-missing.csv");
+        let exported = std::env::temp_dir().join("datastudio-reveal-test-missing.csv");
         remember_written(&exported);
         assert!(was_written(&exported));
         // Remembered but deleted since: reported as missing, Explorer is not started.

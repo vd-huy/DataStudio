@@ -47,7 +47,7 @@ that holds its document id:
 
 ```json
 PUT /orders
-{ "mappings": { "_meta": { "fosta": { "key": "order_id" } }, "properties": { "order_id": { "type": "long" } } } }
+{ "mappings": { "_meta": { "datastudio": { "key": "order_id" } }, "properties": { "order_id": { "type": "long" } } } }
 ```
 
 With a declared key the document `_id` is that field's value as text, the field is the key column (sortable, rangeable, the
@@ -147,12 +147,12 @@ vector operations (`vector.info`, `vector.fetch`, `vector.search`, `vector.healt
 ## Tests
 
 ```sh
-docker start fosta-dev-nosql-elasticsearch-1
-docker compose -p fosta-dev-nosql -f dev/compose/opensearch.yml up -d --wait   # from the main checkout
+docker start datastudio-dev-nosql-elasticsearch-1
+docker compose -p datastudio-dev-nosql -f dev/compose/opensearch.yml up -d --wait   # from the main checkout
 sh dev/seed-nosql.sh                                                             # optional: logs-app for the PIT test
 cd src-tauri && cargo test contract_elasticsearch -- --ignored --test-threads=1
 cargo test contract_opensearch -- --ignored --test-threads=1
 ```
 
-Override the servers with `FOSTA_CONTRACT_ELASTICSEARCH_HOST` / `_PORT` / `_USER` / `_PASSWORD` and
-`FOSTA_CONTRACT_OPENSEARCH_HOST` / `_PORT`.
+Override the servers with `DATASTUDIO_CONTRACT_ELASTICSEARCH_HOST` / `_PORT` / `_USER` / `_PASSWORD` and
+`DATASTUDIO_CONTRACT_OPENSEARCH_HOST` / `_PORT`.

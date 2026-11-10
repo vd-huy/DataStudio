@@ -91,7 +91,7 @@ fn every_engine_classifies_its_default_language() {
             Category::Destructive,
         ),
     ];
-    let path = std::env::temp_dir().join(format!("fosta-gateway-assistant-{}.jsonl", std::process::id()));
+    let path = std::env::temp_dir().join(format!("datastudio-gateway-assistant-{}.jsonl", std::process::id()));
     let gateway = Gateway::with_audit(crate::audit::AuditLog::new(path.clone(), 1000));
     let open = context(Preset::Open);
     for (engine, language, read, read_category, danger, danger_category) in samples {
@@ -132,7 +132,7 @@ fn authorize(gateway: &Gateway, caller: Caller, preset: Preset, classification: 
 
 #[test]
 fn refusals_hold_whatever_the_preset_and_the_assistant_only_reads() {
-    let path = std::env::temp_dir().join(format!("fosta-gateway-engine-{}.jsonl", std::process::id()));
+    let path = std::env::temp_dir().join(format!("datastudio-gateway-engine-{}.jsonl", std::process::id()));
     let gateway = Gateway::with_audit(crate::audit::AuditLog::new(path.clone(), 1000));
     let refused = Classification::single(StatementInfo::refused("SUBSCRIBE", "SUBSCRIBE ch", "Pub/sub is not supported"));
     let error = authorize(&gateway, Caller::EngineView, Preset::Open, &refused).unwrap_err();

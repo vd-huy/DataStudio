@@ -734,7 +734,7 @@ mod tests {
     // --- Against the dev MariaDB (`dev/compose/mariadb.yml`, demo database `shop`) ------------------------------------
 
     fn env(name: &str, default: &str) -> String {
-        std::env::var(format!("FOSTA_CONTRACT_MARIADB_{name}")).unwrap_or_else(|_| default.to_owned())
+        std::env::var(format!("DATASTUDIO_CONTRACT_MARIADB_{name}")).unwrap_or_else(|_| default.to_owned())
     }
 
     async fn shop() -> ConnectionManager {
@@ -791,19 +791,19 @@ mod tests {
         db.disconnect("shop").await;
     }
 
-    /// The assistant end to end against Fosta (needs FOSTA_KEY; skipped without it).
+    /// The assistant end to end against OpenAI (needs OPENAI_API_KEY; skipped without it).
     #[tokio::test(flavor = "multi_thread")]
-    #[ignore = "needs dev/compose/mariadb.yml and FOSTA_KEY"]
+    #[ignore = "needs dev/compose/mariadb.yml and OPENAI_API_KEY"]
     async fn live_assistant_tools() {
-        let Ok(key) = std::env::var("FOSTA_KEY") else {
-            println!("FOSTA_KEY not set; skipped");
+        let Ok(key) = std::env::var("OPENAI_API_KEY") else {
+            println!("OPENAI_API_KEY not set; skipped");
             return;
         };
         let db = shop().await;
         let settings = crate::ai::AiSettings {
-            provider: crate::ai::AiProvider::Fosta,
+            provider: crate::ai::AiProvider::Openai,
             base_url: String::new(),
-            model: "cx/gpt-6-astra".into(),
+            model: "gpt-5".into(),
         };
         let seen = Arc::new(Mutex::new(Vec::<String>::new()));
         let sink = seen.clone();
@@ -832,7 +832,7 @@ mod tests {
     }
 
     fn named_env(engine: &str, name: &str, default: &str) -> String {
-        std::env::var(format!("FOSTA_CONTRACT_{engine}_{name}")).unwrap_or_else(|_| default.to_owned())
+        std::env::var(format!("DATASTUDIO_CONTRACT_{engine}_{name}")).unwrap_or_else(|_| default.to_owned())
     }
 
     /// SQL Server: tables sit under schema and folder nodes; `schema.T` and a bare `T` both resolve.

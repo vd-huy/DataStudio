@@ -1,6 +1,6 @@
 # Redis
 
-Fosta Studio talks to Redis 7.4 and 8.x, and to Valkey and other RESP servers, over the `redis` crate (rustls for TLS).
+DataStudio talks to Redis 7.4 and 8.x, and to Valkey and other RESP servers, over the `redis` crate (rustls for TLS).
 The engine id is `redis`; the code is in `src-tauri/src/engines/redis/` and the UI in `src/engines/redis/`.
 
 ## Scope
@@ -143,6 +143,6 @@ runs the classification, connect, query and cancel suites and adds its own: `SCA
 type, TTL set and remove, stream append, every guard, a change made between the comparison and `EXEC`, database routing and tree
 paging, `INFO` and `SLOWLOG`. CI runs them on Redis 7.4 and 8.2 (`ci/engines/redis.json`).
 
-`contract_redis_vector` runs the shared vector suite on `fosta_contract_vectors`, an HNSW cosine index over 300 HASH documents
-`fosta_contract:vec:<id>` that it recreates in database 0 (index and those keys only). Without the search module (Redis 7.4) it
+`contract_redis_vector` runs the shared vector suite on `datastudio_contract_vectors`, an HNSW cosine index over 300 HASH documents
+`datastudio_contract:vec:<id>` that it recreates in database 0 (index and those keys only). Without the search module (Redis 7.4) it
 prints a note and passes. The dev seed adds `products_idx` over `products:<id>` hashes with a 4-dimensional embedding.

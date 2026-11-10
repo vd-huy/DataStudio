@@ -36,7 +36,7 @@ SQLite's shared cache, so a long write in one tab can make another connection wa
 
 ## Running the contract tests
 
-No container is needed; the suites write a file in the temp folder (`fosta-contract-sqlite.db`, or `FOSTA_CONTRACT_SQLITE_FILE`):
+No container is needed; the suites write a file in the temp folder (`datastudio-contract-sqlite.db`, or `DATASTUDIO_CONTRACT_SQLITE_FILE`):
 
 ```sh
 cd src-tauri && cargo test contract_sqlite -- --ignored --test-threads=1

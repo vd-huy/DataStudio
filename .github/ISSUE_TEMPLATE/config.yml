@@ -4,5 +4,5 @@ contact_links:
     url: https://discord.gg/pBFkZD5mhN
     about: Ask questions and chat on Discord, so issues stay for real bugs and feature requests.
   - name: Security issue
-    url: https://github.com/caothanhphatit/fosta-dbclient/security/advisories/new
+    url: https://github.com/vd-huy/DataStudio/security/advisories/new
     about: Please report security problems privately instead of in a public issue.

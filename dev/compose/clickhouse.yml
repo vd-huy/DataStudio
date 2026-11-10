@@ -3,7 +3,7 @@
 # docker compose -f dev/compose/clickhouse.yml up -d --wait
 # 127.0.0.1:8123 (HTTP), 9000 (native)  studio / studio-root  database shop
 
-name: fosta-dev-sql
+name: datastudio-dev-sql
 
 services:
   clickhouse:

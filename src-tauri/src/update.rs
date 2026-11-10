@@ -1,6 +1,6 @@
 //! Update check, shared by every edition: asks GitHub for the latest release and compares it with this build.
 //!
-//! The request carries only a `User-Agent` of `fosta-studio/<version>`. The automatic check runs at most once a day
+//! The request carries only a `User-Agent` of `datastudio/<version>`. The automatic check runs at most once a day
 //! (Settings → Check for updates); the manual one always runs. Installing is the UI's job: the installed desktop app
 //! downloads through the Tauri updater, the portable app and the web edition only link to the release.
 
@@ -13,10 +13,10 @@ use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
 
 pub const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
-const LATEST_RELEASE_API: &str = "https://api.github.com/repos/caothanhphatit/fosta-dbclient/releases/latest";
+const LATEST_RELEASE_API: &str = "https://api.github.com/repos/vd-huy/DataStudio/releases/latest";
 /// The community Discord invite, the one link besides release pages that `open_release_page` opens.
 pub const COMMUNITY_URL: &str = "https://discord.gg/pBFkZD5mhN";
-const RELEASES_PAGE: &str = "https://github.com/caothanhphatit/fosta-dbclient/releases";
+const RELEASES_PAGE: &str = "https://github.com/vd-huy/DataStudio/releases";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 const CHECK_INTERVAL_HOURS: i64 = 24;
 /// The NSIS installer leaves its uninstaller next to the app; the portable exe has none.
@@ -174,7 +174,7 @@ pub async fn fetch_latest_release() -> AppResult<String> {
     let failed = |error: reqwest::Error| AppError::coded(CHECK_FAILED, format!("Could not reach GitHub: {error}"));
     let client = reqwest::Client::builder()
         .timeout(REQUEST_TIMEOUT)
-        .user_agent(format!("fosta-studio/{CURRENT_VERSION}"))
+        .user_agent(format!("datastudio/{CURRENT_VERSION}"))
         .build()
         .map_err(failed)?;
     let response = client
@@ -216,7 +216,7 @@ mod tests {
 
     #[test]
     fn reads_the_release_and_skips_drafts_and_prereleases() {
-        let body = r#"{ "tag_name": "v0.1.1", "html_url": "https://github.com/caothanhphatit/fosta-dbclient/releases/tag/v0.1.1",
+        let body = r#"{ "tag_name": "v0.1.1", "html_url": "https://github.com/vd-huy/DataStudio/releases/tag/v0.1.1",
             "published_at": "2026-11-10T08:00:00Z", "draft": false, "prerelease": false, "assets": [] }"#;
         let info = release_info("0.1.0", body).unwrap().unwrap();
         assert_eq!(info.latest, "0.1.1");
@@ -241,13 +241,13 @@ mod tests {
         let info = release_info("0.1.0", r#"{ "tag_name": "v0.1.1", "html_url": "https://evil.example/x" }"#)
             .unwrap()
             .unwrap();
-        assert_eq!(info.url, "https://github.com/caothanhphatit/fosta-dbclient/releases/tag/v0.1.1");
-        assert!(is_release_page("https://github.com/caothanhphatit/fosta-dbclient/releases/latest"));
+        assert_eq!(info.url, "https://github.com/vd-huy/DataStudio/releases/tag/v0.1.1");
+        assert!(is_release_page("https://github.com/vd-huy/DataStudio/releases/latest"));
         assert!(!is_release_page(
-            "https://github.com/caothanhphatit/fosta-dbclient/releases.evil.example"
+            "https://github.com/vd-huy/DataStudio/releases.evil.example"
         ));
         assert!(!is_release_page(
-            "https://github.com/caothanhphatit/fosta-dbclient/releases/x\" & calc"
+            "https://github.com/vd-huy/DataStudio/releases/x\" & calc"
         ));
     }
 
@@ -272,13 +272,13 @@ mod tests {
         assert!(remembered("0.1.0", &settings).is_none());
         settings.latest_version = Some("0.1.1".into());
         let info = remembered("0.1.0", &settings).unwrap();
-        assert_eq!(info.url, "https://github.com/caothanhphatit/fosta-dbclient/releases/tag/v0.1.1");
+        assert_eq!(info.url, "https://github.com/vd-huy/DataStudio/releases/tag/v0.1.1");
         assert!(remembered("0.1.1", &settings).is_none(), "gone once installed");
     }
 
     #[test]
     fn install_kind_follows_the_uninstaller() {
-        let dir = std::env::temp_dir().join(format!("fosta-install-kind-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("datastudio-install-kind-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         assert_eq!(install_kind_in(Some(&dir)), "portable");

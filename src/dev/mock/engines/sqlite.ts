@@ -1,7 +1,7 @@
 /**
  * SQLite 3.50 mock: a `main` database (contacts, a table without a primary key that is edited by rowid, a view, an
  * index and a trigger) and an attached `audit` database. There are no row versions: edits are checked by the original
- * values, so the conflict demo (`__fostaMock.touchRow`) still works.
+ * values, so the conflict demo (`__datastudioMock.touchRow`) still works.
  */
 import type { ConnectInfo, EngineDescriptor, ObjectDescription, ObjectNode, ObjectRef, TreeRequest } from "../../../core/contract";
 import { builtin, column, MockCatalog, queryAction, v, viewAction, type CatalogStyle, type TableSpec } from "../catalog";

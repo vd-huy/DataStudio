@@ -20,7 +20,7 @@ use axum::{
     },
     Json,
 };
-use fosta_studio::{
+use datastudio::{
     ai::{ChatEvent, ChatRequest},
     commands::{self, CommandOutput},
     error::{AppError, AppResult},
@@ -75,14 +75,14 @@ fn parse_args<T: DeserializeOwned>(command: &str, args: Value) -> Result<T, Invo
 
 macro_rules! call {
     ([sync] $name:expr, $function:path, $state:expr, ($($arg:expr),*)) => {
-        fosta_studio::logging::command_sync($name, || $function($state, $($arg),*))
+        datastudio::logging::command_sync($name, || $function($state, $($arg),*))
     };
     ([async] $name:expr, $function:path, $state:expr, ($($arg:expr),*)) => {
-        fosta_studio::logging::command($name, $function($state, $($arg),*)).await
+        datastudio::logging::command($name, $function($state, $($arg),*)).await
     };
     // A stream command called through plain `dispatch` runs with its events dropped (`invoke` streams them).
     ([stream] $name:expr, $function:path, $state:expr, ($($arg:expr),*)) => {
-        fosta_studio::logging::command($name, $function($state, $($arg,)* std::sync::Arc::new(|_| true))).await
+        datastudio::logging::command($name, $function($state, $($arg,)* std::sync::Arc::new(|_| true))).await
     };
 }
 
@@ -106,10 +106,10 @@ macro_rules! stream_call {
     };
     ([stream] $name:expr, $function:path, $state:expr, $events:expr, ($($arg:expr),*)) => {{
         let events = $events;
-        let sink: fosta_studio::events::EventSink<_> = std::sync::Arc::new(move |event| {
+        let sink: datastudio::events::EventSink<_> = std::sync::Arc::new(move |event| {
             serde_json::to_value(event).map(|value| events(value)).unwrap_or(true)
         });
-        Some(fosta_studio::logging::command($name, $function($state, $($arg,)* sink)).await.into_json())
+        Some(datastudio::logging::command($name, $function($state, $($arg,)* sink)).await.into_json())
     }};
 }
 
@@ -129,7 +129,7 @@ macro_rules! web_commands {
             state: &AppState,
             command: &str,
             args: Value,
-            events: fosta_studio::events::EventSink<Value>,
+            events: datastudio::events::EventSink<Value>,
         ) -> Option<Result<Value, InvokeError>> {
             match command {
                 $(stringify!($name) => {
@@ -168,7 +168,7 @@ macro_rules! web_commands {
     };
 }
 
-fosta_studio::for_each_command!(web_commands);
+datastudio::for_each_command!(web_commands);
 
 pub async fn invoke(State(server): State<Arc<Server>>, Path(command): Path<String>, headers: HeaderMap, body: Bytes) -> Response {
     let args = if body.iter().all(u8::is_ascii_whitespace) {
@@ -262,13 +262,13 @@ fn stream(state: Arc<AppState>, command: String, args: Value) -> Response {
 /// Streams `{ "event": … }` lines while `run` sends events, then its final line.
 fn ndjson<F, Fut>(run: F) -> Response
 where
-    F: FnOnce(fosta_studio::events::EventSink<Value>) -> Fut + Send + 'static,
+    F: FnOnce(datastudio::events::EventSink<Value>) -> Fut + Send + 'static,
     Fut: std::future::Future<Output = Value> + Send + 'static,
 {
     let (sender, receiver) = mpsc::unbounded_channel::<String>();
     tokio::spawn(async move {
         let events = sender.clone();
-        let sink: fosta_studio::events::EventSink<Value> = Arc::new(move |event| events.send(line(&json!({ "event": event }))).is_ok());
+        let sink: datastudio::events::EventSink<Value> = Arc::new(move |event| events.send(line(&json!({ "event": event }))).is_ok());
         let last = run(sink).await;
         let _ = sender.send(line(&last));
     });

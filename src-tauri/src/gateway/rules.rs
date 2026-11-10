@@ -1,6 +1,6 @@
 //! Safety rules per workspace: a preset (Open, Guarded, Read-only) or a Custom matrix of
 //! category → action, plus a few options. Stored as the `safety` object of a workspace in
-//! `fosta-studio.json`; the shapes mirror `SafetySettings` in `src/core/types.ts`.
+//! `datastudio.json`; the shapes mirror `SafetySettings` in `src/core/types.ts`.
 
 use serde::{Deserialize, Serialize};
 

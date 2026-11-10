@@ -429,7 +429,7 @@ export function createSearchMock(flavor: Flavor, base: EngineDescriptor) {
         status: 200,
         body: {
           name: "mock-node",
-          cluster_name: "fosta-dev",
+          cluster_name: "datastudio-dev",
           version: { number: flavor.version, ...(flavor.id === "opensearch" ? { distribution: "opensearch" } : {}) },
           tagline: flavor.id === "opensearch" ? "The OpenSearch Project" : "You Know, for Search",
         },
@@ -438,7 +438,7 @@ export function createSearchMock(flavor: Flavor, base: EngineDescriptor) {
       return {
         status: 200,
         body: {
-          cluster_name: "fosta-dev",
+          cluster_name: "datastudio-dev",
           status: "green",
           number_of_nodes: 1,
           number_of_data_nodes: 1,

@@ -187,7 +187,7 @@ pub fn check_server(engine: &EsEngine, flavor: Flavor) -> AppResult<()> {
         return Err(AppError::coded(
             "CONNECTION_ERROR",
             format!(
-                "{} {} is not supported; Fosta Studio needs {} {}.{} or newer.",
+                "{} {} is not supported; DataStudio needs {} {}.{} or newer.",
                 flavor.label(),
                 info.version,
                 flavor.label(),

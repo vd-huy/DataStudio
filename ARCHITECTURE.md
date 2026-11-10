@@ -1,6 +1,6 @@
-# Fosta Studio architecture
+# DataStudio architecture
 
-Fosta Studio is a [Tauri 2](https://tauri.app) desktop app: a Rust process owns the database connections, secrets and child processes, and a
+DataStudio is a [Tauri 2](https://tauri.app) desktop app: a Rust process owns the database connections, secrets and child processes, and a
 webview renders a plain TypeScript UI. They talk only through commands (request/response) and events/channels (streams). The same
 backend and UI also ship as a web edition in a Docker image (see [Two front-ends](#two-front-ends-desktop-and-web)).
 
@@ -15,9 +15,9 @@ backend and UI also ship as a web edition in a Docker image (see [Two front-ends
         ▼                               │                               common/        shared SQL toolkit
  core/api.ts ── invoke() ─────────────► │ ── gateway/ ── runtime/ ─────► contract/ (traits and DTOs)
              ◄─ events / Channel ────── │      ConnectionManager, registry, crash containment
-                                        ├─ ConfigStore (config.rs) → fosta-studio.json
-                                        ├─ HistoryStore (history.rs) → fosta-studio-history.jsonl
-                                        ├─ AuditLog (audit.rs) → fosta-studio-audit.jsonl
+                                        ├─ ConfigStore (config.rs) → datastudio.json
+                                        ├─ HistoryStore (history.rs) → datastudio-history.jsonl
+                                        ├─ AuditLog (audit.rs) → datastudio-audit.jsonl
                                         ├─ secrets.rs → Windows Credential Manager
                                         ├─ TaskManager (tasks.rs, job.rs) → child processes
                                         └─ ai/ → LLM provider HTTP APIs
@@ -52,14 +52,14 @@ backend and UI also ship as a web edition in a Docker image (see [Two front-ends
 `src-tauri` is one crate: a library with the whole backend (`lib.rs`: config, secrets, the contract, runtime and engines, assistant, history, tasks,
 vector tools and the command bodies) and two binaries.
 
-|                  | Desktop (`fosta-studio`, feature `desktop`, default) | Web (`fosta-studio-server`, feature `web`)            |
+|                  | Desktop (`datastudio`, feature `desktop`, default) | Web (`datastudio-server`, feature `web`)            |
 | ---------------- | ---------------------------------------------------- | ----------------------------------------------------- |
 | Entry            | `main.rs`: Tauri window                              | `server/main.rs`: axum + tokio, the Docker image      |
 | Commands         | `#[tauri::command]` wrappers                         | `POST /api/invoke/<command>` (`server/api.rs`)        |
 | Assistant stream | Tauri `Channel`                                      | NDJSON lines in the `ai_chat` response                |
 | Task events      | Tauri events (`listen`)                              | Server-Sent Events, `GET /api/events`                 |
 | Secrets          | Windows Credential Manager (`KeyringStore`)          | `secrets/file.rs`: XChaCha20-Poly1305 file in `/data` |
-| Data directory   | next to the `.exe`                                   | `FOSTA_STUDIO_DATA` (`/data` in the image)            |
+| Data directory   | next to the `.exe`                                   | `DATASTUDIO_DATA` (`/data` in the image)            |
 | Exports          | written to ~/Downloads, "Show in folder"             | downloaded by the browser                             |
 
 Both front-ends are generated from `for_each_command!`, so a command added there is reachable from both with the same name, arguments
@@ -83,20 +83,20 @@ mock installs it), otherwise HTTP. `api.ts` is unchanged apart from that.
 
 ### Web security
 
-- **Authentication**: one access token per server (`FOSTA_STUDIO_TOKEN`, or generated on first start, saved with owner-only
+- **Authentication**: one access token per server (`DATASTUDIO_TOKEN`, or generated on first start, saved with owner-only
   permissions and printed once in the log). `/?token=…` or the sign-in form exchanges it for an `HttpOnly`, `SameSite=Strict` session
   cookie carrying its issue time, signed with HMAC-SHA256 under a key derived from the token and a random signing key
-  (`fosta-studio-session-key`), valid 30 days. Signing out writes the time to `fosta-studio-sessions-since` and cookies issued before
-  it are refused, so it signs out every browser (one token per server). `fosta-studio-server rotate-token` replaces the token and the
+  (`datastudio-session-key`), valid 30 days. Signing out writes the time to `datastudio-sessions-since` and cookies issued before
+  it are refused, so it signs out every browser (one token per server). `datastudio-server rotate-token` replaces the token and the
   signing key; the running server re-reads these files when their modification time changes, so it takes effect on the next request
   without a restart. Failed attempts are
-  rate-limited per address and overall. `FOSTA_STUDIO_AUTH=off` disables this with a loud warning and restricts `Host` to loopback names.
-- **CSRF**: API calls need the `X-Fosta-Studio` header (cross-site pages cannot send it without a CORS preflight, which is never
-  approved), an `Origin` equal to the server's (or listed in `FOSTA_STUDIO_ALLOWED_ORIGINS`) and no cross-site `Sec-Fetch-Site`.
+  rate-limited per address and overall. `DATASTUDIO_AUTH=off` disables this with a loud warning and restricts `Host` to loopback names.
+- **CSRF**: API calls need the `X-DataStudio` header (cross-site pages cannot send it without a CORS preflight, which is never
+  approved), an `Origin` equal to the server's (or listed in `DATASTUDIO_ALLOWED_ORIGINS`) and no cross-site `Sec-Fetch-Site`.
   No CORS headers are sent.
 - **Headers**: a strict Content-Security-Policy (scripts only from the server; inline styles allowed for CodeMirror),
   `frame-ancestors 'none'`, `X-Content-Type-Options`, `Referrer-Policy: same-origin`, `Cache-Control: no-store` on the API.
-- **Workspace commands** run programs, so they are off in the web edition unless `FOSTA_STUDIO_TASKS=on`; `TaskManager` refuses to start
+- **Workspace commands** run programs, so they are off in the web edition unless `DATASTUDIO_TASKS=on`; `TaskManager` refuses to start
   them otherwise.
 
 ## Data flow
@@ -167,7 +167,7 @@ Code: `src-tauri/src/gateway/` (backend), `src/features/safety/` (dialogs, the S
 - **Filters** (`gateway/filter.rs`): a SQL filter must parse as exactly `SELECT 1 WHERE <condition>` — one statement, no comments, no
   `;`, no extra clauses, no functions that sleep, lock or read files. MariaDB/MySQL browse queries also run as prepared statements. A
   MongoDB filter must be a JSON query document without server-side JavaScript operators.
-- **Rules** (`gateway/rules.rs`), stored per workspace as `safety` in `fosta-studio.json` (and optionally per connection):
+- **Rules** (`gateway/rules.rs`), stored per workspace as `safety` in `datastudio.json` (and optionally per connection):
 
   | Preset    | Read                                                                                                          | Write   | DDL     | Destructive   | Administrative | Timeout |
   | --------- | ------------------------------------------------------------------------------------------------------------- | ------- | ------- | ------------- | -------------- | ------- |
@@ -201,17 +201,17 @@ categories, tables, statements, … }`; `BLOCKED` has the same shape without a t
 
 ## Audit log
 
-`audit.rs` appends one JSON object per blocked, confirmed or relaxed operation and per assistant query (outcome `ran`) to `fosta-studio-audit.jsonl` next to `fosta-studio.json`
+`audit.rs` appends one JSON object per blocked, confirmed or relaxed operation and per assistant query (outcome `ran`) to `datastudio-audit.jsonl` next to `datastudio.json`
 (time, caller, workspace, connection, category, statement excerpt, outcome, detail), with the same append-and-compact scheme as the query
 history (newest 20,000 entries). It stays on this machine and never holds passwords.
 
 ## Query history
 
-`history.rs` keeps every run in `fosta-studio-history.jsonl` next to `fosta-studio.json`: one JSON object per line, appended under a mutex
+`history.rs` keeps every run in `datastudio-history.jsonl` next to `datastudio.json`: one JSON object per line, appended under a mutex
 so runs from several tabs never interleave, on tokio's blocking pool so the UI never waits for the disk. When the file grows past
 5,000 entries plus 10% it is rewritten (temporary file, then rename) with the newest 5,000. Statements longer than 64 KiB are cut.
 The history **never leaves this machine**; it holds only what the user ran (never passwords), and `queryHistory: false` in
-`fosta-studio.json` (Settings → Record query history) stops recording without deleting what is there.
+`datastudio.json` (Settings → Record query history) stops recording without deleting what is there.
 
 ## The assistant
 
@@ -237,22 +237,22 @@ Code: `src-tauri/src/ai/` (backend) and `src/features/assistant/` (panel, provid
 - **Context** (`ai/prompt.rs`): the system prompt lists the engine, database, table names, and what the user shares from the active tab
   (editor text, last error, the tail of a task log), with size limits.
 - **Transport**: the user's own key goes straight from this machine to the provider. `ai/anthropic.rs` speaks the Messages API, and
-  `ai/openai.rs` speaks `chat/completions` (OpenAI, Gemini's compatibility endpoint, Fosta, and custom endpoints such as Ollama). Replies
+  `ai/openai.rs` speaks `chat/completions` (OpenAI, Gemini's compatibility endpoint, and custom endpoints such as Ollama). Replies
   stream to the UI over a Tauri `Channel`; the user can stop a run (`ai_cancel`).
 
 ## Config and secrets
 
-- **`fosta-studio.json`** next to the executable (portable): workspaces with their connections and commands (`tasks`), the active workspace, LLM
+- **`datastudio.json`** next to the executable (portable): workspaces with their connections and commands (`tasks`), the active workspace, LLM
   provider connections, the active model, the embedding API settings and the `queryHistory` switch. No secrets. Old layouts (flat
   `connections` + `tasks`, the single `ai` setting) are migrated on load (`config.rs`).
-- **Windows Credential Manager** (`secrets.rs`, service `fosta-studio`; secrets saved under the pre-rename service `db-studio` are moved on first read, and `db-studio.json` / `db-studio-history.jsonl` are renamed on first start): connection passwords under the connection id, LLM keys under
+- **Windows Credential Manager** (`secrets.rs`, service `datastudio`; secrets saved under the pre-rename service `db-studio` are moved on first read, and `db-studio.json` / `db-studio-history.jsonl` are renamed on first start): connection passwords under the connection id, LLM keys under
   `ai-key-<id>`, the embedding key under `embedding-api-key`. A password in a pasted connection string is moved there, never into the file.
-- **Web edition**: the same accounts in `fosta-studio-secrets.enc` in the data directory, a JSON map encrypted with XChaCha20-Poly1305;
-  the key comes from `FOSTA_STUDIO_SECRET_KEY` or `fosta-studio-secret.key` next to it (generated, owner-only). The server refuses
-  to start rather than overwrite a store it cannot decrypt. The access token is in `fosta-studio-token`, the cookie signing key in
-  `fosta-studio-session-key` and the last sign-out time in `fosta-studio-sessions-since`.
-- **`fosta-studio-history.jsonl`** next to the executable: the query history (see above). No secrets.
-- **`fosta-studio-audit.jsonl`** next to the executable: the safety audit log (see above). No secrets.
+- **Web edition**: the same accounts in `datastudio-secrets.enc` in the data directory, a JSON map encrypted with XChaCha20-Poly1305;
+  the key comes from `DATASTUDIO_SECRET_KEY` or `datastudio-secret.key` next to it (generated, owner-only). The server refuses
+  to start rather than overwrite a store it cannot decrypt. The access token is in `datastudio-token`, the cookie signing key in
+  `datastudio-session-key` and the last sign-out time in `datastudio-sessions-since`.
+- **`datastudio-history.jsonl`** next to the executable: the query history (see above). No secrets.
+- **`datastudio-audit.jsonl`** next to the executable: the safety audit log (see above). No secrets.
 - **localStorage** (`db-studio.*`): UI preferences only (theme, assistant panel open/closed, diagram node positions, hidden columns per
   table, the history panel and cell-editor wrap toggles).
 
@@ -260,7 +260,7 @@ Code: `src-tauri/src/ai/` (backend) and `src/features/assistant/` (panel, provid
 
 `tasks.rs` runs each task as a child process, streams stdout/stderr lines to the UI as events, marks it running when a line matches the
 "ready" pattern, and restarts it with backoff when it exits. On Windows `job.rs` puts children in a job object that is killed with the
-app, so a `kubectl port-forward` never outlives Fosta Studio. A connection may use one command of its workspace
+app, so a `kubectl port-forward` never outlives DataStudio. A connection may use one command of its workspace
 (`connection_command.rs`): connecting holds it and starts it "for connections" when it does not run; it stops with its last
 holder only if it was started that way, not when it started with the workspace or by hand.
 
@@ -291,7 +291,7 @@ example, `engines/mysql/` a large one.
    in `engines/common/` (splitter, classifier, builder, typed values) covers most of a SQL engine.
 3. **Register it**: `pub mod <id>;` behind a Cargo feature `engine-<id>` in `engines/mod.rs` (added to `engines-all`), and one line in
    `runtime/registry.rs`. Commands, the gateway and the assistant pick it up from the registry; they must not import the module.
-4. **Contract tests** (`engines/<id>/contract_tests.rs`): a `Fixture` (connection from `FOSTA_CONTRACT_<ID>_*` with defaults from the
+4. **Contract tests** (`engines/<id>/contract_tests.rs`): a `Fixture` (connection from `DATASTUDIO_CONTRACT_<ID>_*` with defaults from the
    compose file, the seeded `contract_items` table, typed columns, a sleep statement, classification samples) and
    `contract_tests!(contract_<id>, fixture())`, which generates the suites (connect, tree, describe, browse, edit, query, cancel,
    transactions, classify); a suite whose capability is not advertised asserts `UNSUPPORTED_CAPABILITY`. Engine-specific checks go in
@@ -306,5 +306,5 @@ example, `engines/mysql/` a large one.
 7. **Dev mock**: `src/dev/mock/engines/<id>.ts` (descriptor, sample tree, browse, run) and a sample connection in
    `src/dev/mock/state.ts`, so the UI can be reviewed without a server.
 8. **Contract fixtures**: if a contract type changed, regenerate the JSON samples with
-   `FOSTA_UPDATE_FIXTURES=1 cargo test contract::fixtures`; vitest checks them against `src/core/contract.ts`.
+   `DATASTUDIO_UPDATE_FIXTURES=1 cargo test contract::fixtures`; vitest checks them against `src/core/contract.ts`.
 9. **Docs**: list the engine in both READMEs.

@@ -1,4 +1,4 @@
-//! Query history: every run in a query tab, kept in `fosta-studio-history.jsonl` next to `fosta-studio.json`.
+//! Query history: every run in a query tab, kept in `datastudio-history.jsonl` next to `datastudio.json`.
 //!
 //! The file is append-only JSON Lines (one entry per line). All access goes through one mutex, so appends
 //! from several tabs never interleave. When the file grows past the cap plus some slack it is rewritten
@@ -22,8 +22,8 @@ use crate::{
     lock::lock,
 };
 
-pub const HISTORY_FILE: &str = "fosta-studio-history.jsonl";
-/// The history file's name before the rename to Fosta Studio; moved on first use.
+pub const HISTORY_FILE: &str = "datastudio-history.jsonl";
+/// The history file's name before the rename to DataStudio; moved on first use.
 const LEGACY_HISTORY_FILE: &str = "db-studio-history.jsonl";
 /// Entries kept after a compaction.
 pub const DEFAULT_CAP: usize = 5_000;
@@ -281,7 +281,7 @@ mod tests {
     impl TempDir {
         fn new(name: &str) -> Self {
             let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
-            let path = std::env::temp_dir().join(format!("fosta-studio-history-{name}-{}-{nanos}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("datastudio-history-{name}-{}-{nanos}", std::process::id()));
             fs::create_dir_all(&path).unwrap();
             Self(path)
         }
@@ -395,7 +395,7 @@ mod tests {
         assert_eq!(listed.last().unwrap().sql, "SELECT 2");
         let text = fs::read_to_string(dir.0.join(HISTORY_FILE)).unwrap();
         assert_eq!(text.lines().count(), 10);
-        assert!(!dir.0.join("fosta-studio-history.jsonl.tmp").exists());
+        assert!(!dir.0.join("datastudio-history.jsonl.tmp").exists());
     }
 
     #[test]

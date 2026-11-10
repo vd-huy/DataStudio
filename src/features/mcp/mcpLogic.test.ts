@@ -46,16 +46,16 @@ describe("MCP setup snippets", () => {
   const url = "http://127.0.0.1:3910/mcp";
 
   it("builds the Claude Code command with a quoted header", () => {
-    expect(claudeCodeCommand(url, "abc")).toBe(`claude mcp add --transport http fosta ${url} --header "Authorization: Bearer abc"`);
+    expect(claudeCodeCommand(url, "abc")).toBe(`claude mcp add --transport http datastudio ${url} --header "Authorization: Bearer abc"`);
   });
 
   it("builds Cursor's mcp.json", () => {
-    expect(JSON.parse(cursorConfig(url, "abc"))).toEqual({ mcpServers: { fosta: { url, headers: { Authorization: "Bearer abc" } } } });
+    expect(JSON.parse(cursorConfig(url, "abc"))).toEqual({ mcpServers: { datastudio: { url, headers: { Authorization: "Bearer abc" } } } });
   });
 
   it("builds Claude Desktop's stdio entry from the bridge command", () => {
-    const config = JSON.parse(claudeDesktopConfig(["C:\\Apps\\fosta-studio.exe", "mcp"])) as { mcpServers: { fosta: { command: string; args: string[] } } };
-    expect(config.mcpServers.fosta).toEqual({ command: "C:\\Apps\\fosta-studio.exe", args: ["mcp"] });
+    const config = JSON.parse(claudeDesktopConfig(["C:\\Apps\\datastudio.exe", "mcp"])) as { mcpServers: { datastudio: { command: string; args: string[] } } };
+    expect(config.mcpServers.datastudio).toEqual({ command: "C:\\Apps\\datastudio.exe", args: ["mcp"] });
   });
 
   it("makes the web endpoint absolute", () => {

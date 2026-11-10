@@ -12,7 +12,7 @@ export function aiDialog(existing: AiConnection | null): Promise<AppConfig | nul
   return new Promise((resolve) => {
     let saved: AppConfig | null = null;
     const id = existing?.id ?? crypto.randomUUID();
-    let preset = providerPreset(existing?.provider ?? "fosta");
+    let preset = providerPreset(existing?.provider ?? "openai");
     const name = textInput(existing?.name ?? preset.label, { placeholder: "e.g. Work OpenAI" });
     const baseUrl = textInput(existing?.provider === "custom" ? existing.baseUrl : "", { class: "input mono", placeholder: "http://localhost:11434/v1" });
     const apiKey = textInput("", { type: "password", placeholder: existing ? "Saved, leave empty to keep (same provider and URL only)" : "" });

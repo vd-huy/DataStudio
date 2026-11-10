@@ -27,7 +27,7 @@ export const descriptor: EngineDescriptor = {
         kind: { type: "text" },
         label: "Instant Client folder",
         placeholder: "C:\\oracle\\instantclient_23_26",
-        hint: "A folder with Oracle Instant Client 19c or newer (oci.dll, or libclntsh.so on Linux). Leave it empty to use PATH, ORACLE_HOME or the client Fosta Studio downloads. The first client loaded stays in use until the app restarts.",
+        hint: "A folder with Oracle Instant Client 19c or newer (oci.dll, or libclntsh.so on Linux). Leave it empty to use PATH, ORACLE_HOME or the client DataStudio downloads. The first client loaded stays in use until the app restarts.",
         section: "advanced",
         default: null,
         required: false,
@@ -412,7 +412,7 @@ function clientStatus() {
     available: clientInstalled,
     source: clientInstalled ? "downloaded" : "none",
     version: clientInstalled ? OFFER.version : null,
-    path: clientInstalled ? "C:\\Fosta Studio\\fosta-studio-oracle\\instantclient_23_26_4_0_0" : null,
+    path: clientInstalled ? "C:\\DataStudio\\datastudio-oracle\\instantclient_23_26_4_0_0" : null,
     loaded: clientInstalled,
     download: OFFER,
   };
@@ -451,7 +451,7 @@ export const connectInfo = (profile: ConnectionProfile): ConnectInfo => {
   if (!clientInstalled && !profile.options?.clientDir?.trim()) {
     throw mockError(
       "ORACLE_CLIENT",
-      "Oracle Instant Client was not found. Let Fosta Studio download it, or install Instant Client 19c or newer (Basic or Basic Light) and set its folder in the connection's Advanced settings or on PATH. (DPI-1047: Cannot locate a 64-bit Oracle Client library)",
+      "Oracle Instant Client was not found. Let DataStudio download it, or install Instant Client 19c or newer (Basic or Basic Light) and set its folder in the connection's Advanced settings or on PATH. (DPI-1047: Cannot locate a 64-bit Oracle Client library)",
       { engine: ENGINE, kind: "notInstalled", download: OFFER },
     );
   }

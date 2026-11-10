@@ -1,9 +1,9 @@
 /** Pure parts of the update item (`update.ts`): labels, download progress and the web edition's commands. */
 
-export const RELEASES_URL = "https://github.com/caothanhphatit/fosta-dbclient/releases";
+export const RELEASES_URL = "https://github.com/vd-huy/DataStudio/releases";
 /** The community Discord invite; the desktop backend opens exactly this link besides release pages. */
 export const COMMUNITY_URL = "https://discord.gg/pBFkZD5mhN";
-export const DOCKER_IMAGE = "ghcr.io/caothanhphatit/fosta-studio";
+export const DOCKER_IMAGE = "ghcr.io/vd-huy/datastudio";
 
 /**
  * Where an update stands. `available`: found, not being installed here (portable, web, or the updater could not get it);
@@ -39,7 +39,7 @@ export function downloadPercent(downloaded: number, total: number | null | undef
 export function dockerUpdateCommands(): string[] {
   return [
     `docker pull ${DOCKER_IMAGE}`,
-    "docker rm -f fosta-studio",
-    `docker run -d --name fosta-studio -p 127.0.0.1:8080:8080 -v fosta-studio-data:/data ${DOCKER_IMAGE}`,
+    "docker rm -f datastudio",
+    `docker run -d --name datastudio -p 127.0.0.1:8080:8080 -v datastudio-data:/data ${DOCKER_IMAGE}`,
   ];
 }

@@ -28,7 +28,7 @@ fn shop_db() -> PathBuf {
 
 /// A private copy for tests that change data.
 fn scratch_copy(name: &str) -> PathBuf {
-    let dst = std::env::temp_dir().join(format!("fosta-live-{name}-{}.sqlite", std::process::id()));
+    let dst = std::env::temp_dir().join(format!("datastudio-live-{name}-{}.sqlite", std::process::id()));
     std::fs::copy(shop_db(), &dst).expect("copy seed db");
     dst
 }

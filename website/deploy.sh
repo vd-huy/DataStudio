@@ -19,7 +19,7 @@ node "$HERE/build.mjs" "$OUT/site"
 
 # Upload to a fresh directory, then swap it in, so visitors never see a half-copied site.
 STAGE="$ROOT.new"
-tar -C "$OUT/site" --exclude=.fosta-site --exclude=README.md -czf - . |
+tar -C "$OUT/site" --exclude=.datastudio-site --exclude=README.md -czf - . |
   ssh -i "$KEY" -o BatchMode=yes "$TARGET" "sudo rm -rf $STAGE && sudo mkdir -p $STAGE && sudo tar -xzf - -C $STAGE &&
     sudo chown -R root:root $STAGE && sudo find $STAGE -type d -exec chmod 755 {} + && sudo find $STAGE -type f -exec chmod 644 {} + &&
     sudo rm -rf $ROOT.old && { [ -d $ROOT ] && sudo mv $ROOT $ROOT.old || true; } && sudo mv $STAGE $ROOT && sudo rm -rf $ROOT.old"

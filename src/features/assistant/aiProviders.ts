@@ -16,15 +16,6 @@ export interface ProviderPreset {
 }
 
 export const AI_PROVIDERS: ProviderPreset[] = [
-  {
-    value: "fosta",
-    label: "Fosta",
-    icon: "rocket",
-    url: "https://admin.fosta.app/v1",
-    model: "cx/gpt-6-astra",
-    hint: "Fosta gateway. Key from admin.fosta.app.",
-    wire: "openai",
-  },
   { value: "openai", label: "OpenAI", icon: "bolt", url: "https://api.openai.com/v1", model: "gpt-5", hint: "Key from platform.openai.com.", wire: "openai" },
   {
     value: "gemini",

@@ -3,7 +3,7 @@
 # docker compose -f dev/compose/opensearch.yml up -d --wait   then: sh dev/seed-nosql.sh
 # http://127.0.0.1:9201  security plugin disabled (plain HTTP, no auth)
 
-name: fosta-dev-nosql
+name: datastudio-dev-nosql
 
 services:
   opensearch:
@@ -13,7 +13,7 @@ services:
       DISABLE_SECURITY_PLUGIN: "true"
       DISABLE_INSTALL_DEMO_CONFIG: "true"
       OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
-      cluster.name: fosta-dev-os
+      cluster.name: datastudio-dev-os
       cluster.routing.allocation.disk.threshold_enabled: "false"
     ports:
       - "127.0.0.1:9201:9200"

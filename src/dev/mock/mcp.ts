@@ -1,6 +1,6 @@
 /**
  * The MCP server in the dev mock: Settings → MCP server works (on/off, port, token, rotate), and
- * `__fostaMock.mcpApproval()` (or `mcpApproval("typed")`, or `?mcpApproval` in the address) simulates an incoming
+ * `__datastudioMock.mcpApproval()` (or `mcpApproval("typed")`, or `?mcpApproval` in the address) simulates an incoming
  * `run_query` from Claude Code, so the approval dialog can be previewed. Answers are logged to the console.
  */
 import { emit } from "@tauri-apps/api/event";
@@ -28,7 +28,7 @@ export function mockMcpStatus(): McpStatus {
     error: null,
     url: `http://127.0.0.1:${port}/mcp`,
     calls,
-    bridgeCommand: ["C:\\Program Files\\Fosta Studio\\fosta-studio.exe", "mcp"],
+    bridgeCommand: ["C:\\Program Files\\DataStudio\\datastudio.exe", "mcp"],
     clients: enabled && calls > 0 ? ["Claude Code"] : [],
     pending: [...pending.values()],
   };

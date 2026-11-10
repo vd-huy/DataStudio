@@ -1,7 +1,7 @@
 //! Contract suites for SQL Server against `dev/compose/mssql.yml` (data from `dev/seed/mssql/contract.sql`), plus
 //! SQL Server checks on the `ERP` demo database (`dev/seed/mssql.sql`): catalog, batches with row counts, transactions,
 //! the schema graph, typed values, edits on a table without rowversion, the statement timeout and TLS errors.
-//! Override the server with FOSTA_CONTRACT_MSSQL_HOST / _PORT / _USER / _PASSWORD.
+//! Override the server with DATASTUDIO_CONTRACT_MSSQL_HOST / _PORT / _USER / _PASSWORD.
 
 use std::{sync::Arc, time::Duration};
 
@@ -16,7 +16,7 @@ use crate::{
 };
 
 fn env(name: &str, default: &str) -> String {
-    std::env::var(format!("FOSTA_CONTRACT_MSSQL_{name}")).unwrap_or_else(|_| default.to_owned())
+    std::env::var(format!("DATASTUDIO_CONTRACT_MSSQL_{name}")).unwrap_or_else(|_| default.to_owned())
 }
 
 fn seed() -> Vec<String> {
@@ -62,8 +62,8 @@ pub fn fixture() -> Fixture {
         // The seed creates the database, so connect to master.
         spec: spec("master", true),
         secrets: secrets(),
-        table: ObjectRef::new(Some("fosta_contract"), Some("dbo"), "contract_items", NodeKind::TABLE),
-        child: ObjectRef::new(Some("fosta_contract"), Some("dbo"), "contract_children", NodeKind::TABLE),
+        table: ObjectRef::new(Some("datastudio_contract"), Some("dbo"), "contract_items", NodeKind::TABLE),
+        child: ObjectRef::new(Some("datastudio_contract"), Some("dbo"), "contract_children", NodeKind::TABLE),
         key_column: "id",
         name_column: "name",
         seed: seed(),
@@ -71,10 +71,10 @@ pub fn fixture() -> Fixture {
         key_filter,
         sleep_statement: Some("WAITFOR DELAY '00:00:30'"),
         syntax_error: "SELEC * FORM contract_items",
-        constraint_violation: "INSERT INTO fosta_contract.dbo.contract_items (id, name, price, active) VALUES (1, 'dup', 1, 1)",
-        multi_statement: "SELECT 1 AS one; SELECT TOP 3 id, name FROM fosta_contract.dbo.contract_items ORDER BY id",
-        insert_probe: "INSERT INTO fosta_contract.dbo.contract_items (id, name, price, active) VALUES (5000, 'probe', 1, 1)",
-        count_probe: "SELECT COUNT(*) AS n FROM fosta_contract.dbo.contract_items WHERE id = 5000",
+        constraint_violation: "INSERT INTO datastudio_contract.dbo.contract_items (id, name, price, active) VALUES (1, 'dup', 1, 1)",
+        multi_statement: "SELECT 1 AS one; SELECT TOP 3 id, name FROM datastudio_contract.dbo.contract_items ORDER BY id",
+        insert_probe: "INSERT INTO datastudio_contract.dbo.contract_items (id, name, price, active) VALUES (5000, 'probe', 1, 1)",
+        count_probe: "SELECT COUNT(*) AS n FROM datastudio_contract.dbo.contract_items WHERE id = 5000",
         classify_samples: &[
             ("SELECT TOP 5 * FROM t", Category::Read),
             ("UPDATE t SET a = 1 WHERE id = 2", Category::Write),
@@ -403,7 +403,7 @@ async fn contract_mssql_transactions() {
                 &handle,
                 &tab,
                 "SELECT COUNT(*) FROM dbo.contract_children WHERE id > 900",
-                "fosta_contract",
+                "datastudio_contract",
                 RunOptions::default(),
             )
             .await
@@ -418,7 +418,7 @@ async fn contract_mssql_transactions() {
         &handle,
         &tab,
         "INSERT INTO dbo.contract_children VALUES (901, 1, 'tx')",
-        "fosta_contract",
+        "datastudio_contract",
         options.clone(),
     )
     .await
@@ -436,7 +436,7 @@ async fn contract_mssql_transactions() {
         &handle,
         &tab,
         "INSERT INTO dbo.contract_children VALUES (902, 1, 'tx')",
-        "fosta_contract",
+        "datastudio_contract",
         options.clone(),
     )
     .await
@@ -464,16 +464,16 @@ async fn contract_mssql_read_only_runs_are_rolled_back() {
     let count = |tab: Arc<dyn Session>| {
         let handle = handle.clone();
         async move {
-            let sink = run(&handle, &tab, "SELECT COUNT(*) FROM #fosta_ro", "ERP", RunOptions::default())
+            let sink = run(&handle, &tab, "SELECT COUNT(*) FROM #datastudio_ro", "ERP", RunOptions::default())
                 .await
                 .unwrap();
             sink.sets[0].rows[0][0].clone()
         }
     };
-    run(&handle, &tab, "CREATE TABLE #fosta_ro (id INT)", "ERP", options.clone())
+    run(&handle, &tab, "CREATE TABLE #datastudio_ro (id INT)", "ERP", options.clone())
         .await
         .unwrap();
-    run(&handle, &tab, "INSERT INTO #fosta_ro VALUES (1)", "ERP", read_only.clone())
+    run(&handle, &tab, "INSERT INTO #datastudio_ro VALUES (1)", "ERP", read_only.clone())
         .await
         .unwrap();
     assert_eq!(count(Arc::clone(&tab)).await, Value::Int(0));
@@ -482,7 +482,7 @@ async fn contract_mssql_read_only_runs_are_rolled_back() {
     run(
         &handle,
         &tab,
-        "INSERT INTO #fosta_ro VALUES (2); SELECT 1/0",
+        "INSERT INTO #datastudio_ro VALUES (2); SELECT 1/0",
         "ERP",
         read_only.clone(),
     )
@@ -491,10 +491,10 @@ async fn contract_mssql_read_only_runs_are_rolled_back() {
     assert_eq!(count(Arc::clone(&tab)).await, Value::Int(0));
     // Inside the user's own transaction: the user's row survives, the read-only run's row does not.
     tab.transaction(TransactionOp::Begin, &options).await.unwrap();
-    run(&handle, &tab, "INSERT INTO #fosta_ro VALUES (3)", "ERP", options.clone())
+    run(&handle, &tab, "INSERT INTO #datastudio_ro VALUES (3)", "ERP", options.clone())
         .await
         .unwrap();
-    run(&handle, &tab, "INSERT INTO #fosta_ro VALUES (4)", "ERP", read_only.clone())
+    run(&handle, &tab, "INSERT INTO #datastudio_ro VALUES (4)", "ERP", read_only.clone())
         .await
         .unwrap();
     assert!(tab.transaction_state().await.open, "the user's transaction is still open");
@@ -633,7 +633,7 @@ async fn contract_mssql_typed_values() {
         &handle,
         &tab,
         "SELECT * FROM dbo.contract_items WHERE id = 6",
-        "fosta_contract",
+        "datastudio_contract",
         RunOptions::default(),
     )
     .await
@@ -686,12 +686,12 @@ async fn contract_mssql_original_values_without_rowversion() {
            ratio REAL NULL); \
          INSERT INTO dbo.contract_plain VALUES (1, NULL, '2026-01-01T08:00:00.003', N'<a n=\"1\"/>', 0.1), \
            (2, N'two', NULL, NULL, NULL)",
-        "fosta_contract",
+        "datastudio_contract",
         RunOptions::default(),
     )
     .await
     .expect("create contract_plain");
-    let plain = table("fosta_contract", "dbo", "contract_plain");
+    let plain = table("datastudio_contract", "dbo", "contract_plain");
     let mut request = BrowseRequest::new(plain.clone(), 10);
     request.sort = vec![crate::contract::SortKey::asc("id")];
     let page = browse(&handle, request.clone()).await;
@@ -737,7 +737,7 @@ async fn contract_mssql_original_values_without_rowversion() {
         &handle,
         &tab,
         "DROP TABLE dbo.contract_plain",
-        "fosta_contract",
+        "datastudio_contract",
         RunOptions::default(),
     )
     .await

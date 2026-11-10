@@ -12,7 +12,7 @@ use crate::{
 const MAX_TABLES_IN_PROMPT: usize = 400;
 const MAX_EDITOR_CHARS: usize = 6000;
 
-const INTRO: &str = "You are the assistant built into Fosta Studio, a desktop database client. You help the user write and \
+const INTRO: &str = "You are the assistant built into DataStudio, a desktop database client. You help the user write and \
 understand queries for the database they have open.\n\nRules:\n";
 
 const RULES: &str = "\

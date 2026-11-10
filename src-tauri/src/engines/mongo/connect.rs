@@ -77,7 +77,7 @@ pub async fn build_options(request: &ConnectRequest) -> AppResult<ClientOptions>
     if let Some(tls) = &spec.tls {
         apply_tls(&mut options, tls);
     }
-    options.app_name = Some("Fosta Studio".to_owned());
+    options.app_name = Some("DataStudio".to_owned());
     options.connect_timeout = Some(request.connect_timeout);
     options.server_selection_timeout = Some(request.connect_timeout);
     Ok(options)

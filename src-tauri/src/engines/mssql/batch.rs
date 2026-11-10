@@ -2,12 +2,12 @@
 //!
 //! tiberius streams the result sets of a batch but drops the DONE tokens that carry "N rows affected", and its `execute`
 //! keeps the counts but drops the rows. So a query tab runs the batch as a stream and asks for the count itself: after
-//! every top-level INSERT, UPDATE, DELETE or MERGE it adds `SELECT @@ROWCOUNT AS [__fosta_rowcount]` on the same line
+//! every top-level INSERT, UPDATE, DELETE or MERGE it adds `SELECT @@ROWCOUNT AS [__datastudio_rowcount]` on the same line
 //! (server error line numbers stay those of the user's text). The batch stays one batch, so variables declared in it keep
 //! their scope; those one-cell result sets become "N row(s) affected" results again.
 
 /// Column name of the injected row-count result sets.
-pub const ROWCOUNT_COLUMN: &str = "__fosta_rowcount";
+pub const ROWCOUNT_COLUMN: &str = "__datastudio_rowcount";
 
 const DML: [&str; 4] = ["insert", "update", "delete", "merge"];
 /// `BEGIN` followed by one of these opens no block (`BEGIN TRANSACTION`, `BEGIN DIALOG CONVERSATION`…).
@@ -364,7 +364,7 @@ pub fn statement_at_line(sql: &str, line: u32) -> Option<(usize, String)> {
 mod tests {
     use super::*;
 
-    const COUNT: &str = "; SELECT @@ROWCOUNT AS [__fosta_rowcount]";
+    const COUNT: &str = "; SELECT @@ROWCOUNT AS [__datastudio_rowcount]";
 
     #[test]
     fn counts_follow_each_data_change() {

@@ -17,7 +17,7 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use fosta_studio::{
+use datastudio::{
     commands::gateway_context,
     contract::CancellationToken,
     error::{AppError, AppResult},

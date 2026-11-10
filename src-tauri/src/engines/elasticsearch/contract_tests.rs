@@ -2,13 +2,13 @@
 //! self-signed certificate) and OpenSearch (`dev/compose/opensearch.yml`, plain http on 9201, security plugin off).
 //!
 //! Before each suite the fixture recreates `contract_items` (1,000 documents, keys 1..=1000, the key declared in the
-//! mapping as `_meta.fosta.key = "id"`, a 4-dimension `embedding` vector with an HNSW cosine graph: `dense_vector` on
+//! mapping as `_meta.datastudio.key = "id"`, a 4-dimension `embedding` vector with an HNSW cosine graph: `dense_vector` on
 //! Elasticsearch, `knn_vector` on OpenSearch) and `contract_children` through console requests. Plus engine checks: the
 //! gateway (read-only workspace, refused paths, filter scripts), point-in-time paging past 10,000 hits on the seeded
 //! `logs-app` data stream, edits through an alias, error mapping, and the tree.
 //!
-//! Override the servers with FOSTA_CONTRACT_ELASTICSEARCH_HOST / _PORT / _USER / _PASSWORD and
-//! FOSTA_CONTRACT_OPENSEARCH_HOST / _PORT.
+//! Override the servers with DATASTUDIO_CONTRACT_ELASTICSEARCH_HOST / _PORT / _USER / _PASSWORD and
+//! DATASTUDIO_CONTRACT_OPENSEARCH_HOST / _PORT.
 
 use std::sync::Arc;
 
@@ -34,7 +34,7 @@ use crate::{
 };
 
 fn env(engine: &str, name: &str, default: &str) -> String {
-    std::env::var(format!("FOSTA_CONTRACT_{engine}_{name}")).unwrap_or_else(|_| default.to_owned())
+    std::env::var(format!("DATASTUDIO_CONTRACT_{engine}_{name}")).unwrap_or_else(|_| default.to_owned())
 }
 
 fn item(i: i64) -> serde_json::Value {
@@ -88,7 +88,7 @@ fn seed(opensearch: bool) -> Vec<String> {
     let items_mapping = json!({
         "settings": items_settings,
         "mappings": {
-            "_meta": { "fosta": { "key": "id" } },
+            "_meta": { "datastudio": { "key": "id" } },
             "properties": {
                 "id": { "type": "long" },
                 "name": { "type": "keyword" },
@@ -103,7 +103,7 @@ fn seed(opensearch: bool) -> Vec<String> {
     let children_mapping = json!({
         "settings": { "number_of_shards": 1, "number_of_replicas": 0 },
         "mappings": {
-            "_meta": { "fosta": { "key": "id" } },
+            "_meta": { "datastudio": { "key": "id" } },
             "properties": { "id": { "type": "long" }, "item_id": { "type": "long" }, "label": { "type": "keyword" } }
         }
     });
@@ -358,7 +358,7 @@ async fn error_checks(f: Fixture) {
     .await
     .expect_err("bad number");
     assert!(mapping_error.field("cause").is_some(), "{mapping_error:?}");
-    let missing = run(&handle, &console, "GET /no_such_index_fosta/_search")
+    let missing = run(&handle, &console, "GET /no_such_index_datastudio/_search")
         .await
         .expect_err("missing index");
     assert_eq!(

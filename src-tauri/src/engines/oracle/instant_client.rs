@@ -5,15 +5,15 @@
 //! Resolution order (first hit wins):
 //! 1. a directory the user configured explicitly;
 //! 2. a system install: `PATH` (Windows), `LD_LIBRARY_PATH` (Linux), `DYLD_LIBRARY_PATH` (macOS), `ORACLE_HOME`;
-//! 3. a client this module downloaded, in `<data dir>/fosta-studio-oracle/instantclient_<version>` on the desktop (next to
-//!    `fosta-studio.json`) or `<FOSTA_STUDIO_DATA>/oracle` in the web edition (`/data/oracle` in the Docker image).
+//! 3. a client this module downloaded, in `<data dir>/datastudio-oracle/instantclient_<version>` on the desktop (next to
+//!    `datastudio.json`) or `<DATASTUDIO_DATA>/oracle` in the web edition (`/data/oracle` in the Docker image).
 //!
 //! ODPI-C loads the client once per process, the first time it is initialised; a failed load leaves it uninitialised, so a
 //! download after a "client not found" error takes effect without restarting the app. [`initialize`] must run before the first
 //! `oracle::Connector::connect`, or ODPI-C falls back to its default search and ignores the downloaded copy.
 //!
 //! License: Instant Client is distributed by Oracle under the "Oracle Technology Network Development and Distribution License
-//! Terms for Instant Client" (https://www.oracle.com/downloads/licenses/instant-client-lic.html). Fosta Studio never bundles or
+//! Terms for Instant Client" (https://www.oracle.com/downloads/licenses/instant-client-lic.html). DataStudio never bundles or
 //! redistributes the binaries (none are in the repository); the app downloads them from Oracle's official server on the user's
 //! request, onto the user's machine, under those terms. The UI must tell the user that the download comes from Oracle and is
 //! covered by Oracle's license, and link to the terms above, before starting it.
@@ -87,7 +87,7 @@ const PACKAGES: &[Package] = &[
 ];
 
 /// Written into an installed client folder after a verified extraction; holds the archive's SHA-256.
-const MARKER_FILE: &str = ".fosta-instantclient";
+const MARKER_FILE: &str = ".datastudio-instantclient";
 
 /// The pinned package for `os` / `arch` (values of [`std::env::consts::OS`] / [`std::env::consts::ARCH`]).
 pub fn package_for(os: &str, arch: &str) -> Option<&'static Package> {
@@ -101,7 +101,7 @@ pub fn current_package() -> Result<&'static Package, ClientError> {
         ClientError::new(
             ClientErrorKind::UnsupportedPlatform,
             format!(
-                "Fosta Studio cannot download Oracle Instant Client for {}-{} yet. Install it from {INSTANT_CLIENT_URL} and add its \
+                "DataStudio cannot download Oracle Instant Client for {}-{} yet. Install it from {INSTANT_CLIENT_URL} and add its \
                  folder to the library path.",
                 std::env::consts::OS,
                 std::env::consts::ARCH
@@ -211,7 +211,7 @@ fn is_disk_full(e: &io::Error) -> bool {
 pub enum ClientSource {
     /// Installed on the machine (PATH, ORACLE_HOME, ...) or a folder the user configured.
     System,
-    /// Downloaded by Fosta Studio into the data directory.
+    /// Downloaded by DataStudio into the data directory.
     Downloaded,
     None,
 }
@@ -274,10 +274,10 @@ impl SearchEnv {
     }
 }
 
-/// Where downloaded clients live for a data directory: `<data>/oracle` in the web edition (`FOSTA_STUDIO_DATA` set), otherwise
-/// `<data>/fosta-studio-oracle` next to the desktop config.
+/// Where downloaded clients live for a data directory: `<data>/oracle` in the web edition (`DATASTUDIO_DATA` set), otherwise
+/// `<data>/datastudio-oracle` next to the desktop config.
 pub fn install_root_for(data_dir: &Path, web: bool) -> PathBuf {
-    data_dir.join(if web { "oracle" } else { "fosta-studio-oracle" })
+    data_dir.join(if web { "oracle" } else { "datastudio-oracle" })
 }
 
 /// The install root for this process, from [`crate::config::data_dir`].
@@ -297,7 +297,7 @@ pub fn resolve(configured: Option<&Path>, env: &SearchEnv, install_root: &Path) 
     }
     if let Some(dir) = find_system(env) {
         // The web edition puts its download folder on LD_LIBRARY_PATH (Linux needs it there from the start), so a client
-        // found there can still be the one Fosta Studio downloaded.
+        // found there can still be the one DataStudio downloaded.
         let source = if dir.starts_with(install_root) && !install_root.as_os_str().is_empty() {
             ClientSource::Downloaded
         } else {
@@ -453,7 +453,7 @@ pub fn initialize_at(configured: Option<&Path>, env: &SearchEnv, install_root: O
 fn linux_library_path_hint(dir: &Path, error: &str) -> String {
     if cfg!(target_os = "linux") && error.contains("cannot open shared object file") {
         format!(
-            " On Linux, start Fosta Studio with this folder on LD_LIBRARY_PATH (LD_LIBRARY_PATH={}) and install libaio.",
+            " On Linux, start DataStudio with this folder on LD_LIBRARY_PATH (LD_LIBRARY_PATH={}) and install libaio.",
             dir.display()
         )
     } else {
@@ -587,7 +587,7 @@ async fn fetch(
     let client = reqwest::Client::builder()
         .connect_timeout(Duration::from_secs(20))
         .read_timeout(Duration::from_secs(60))
-        .user_agent(concat!("fosta-studio/", env!("CARGO_PKG_VERSION")))
+        .user_agent(concat!("datastudio/", env!("CARGO_PKG_VERSION")))
         .build()
         .map_err(network)?;
     let mut request = client.get(package.url);
@@ -764,7 +764,7 @@ mod tests {
         fn new(tag: &str) -> Self {
             static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
             let n = N.fetch_add(1, Ordering::SeqCst);
-            let dir = std::env::temp_dir().join(format!("fosta-ic-{tag}-{}-{n}", std::process::id()));
+            let dir = std::env::temp_dir().join(format!("datastudio-ic-{tag}-{}-{n}", std::process::id()));
             let _ = fs::remove_dir_all(&dir);
             fs::create_dir_all(&dir).unwrap();
             Self(dir)
@@ -850,7 +850,7 @@ mod tests {
     #[test]
     fn install_roots() {
         let data = Path::new("data");
-        assert_eq!(install_root_for(data, false), data.join("fosta-studio-oracle"));
+        assert_eq!(install_root_for(data, false), data.join("datastudio-oracle"));
         assert_eq!(install_root_for(data, true), data.join("oracle"));
     }
 
@@ -1121,7 +1121,7 @@ mod tests {
         assert_eq!(e.kind, ClientErrorKind::Network);
     }
 
-    /// Downloads the real package for this platform into the default install root (target/<profile>/deps/fosta-studio-oracle
+    /// Downloads the real package for this platform into the default install root (target/<profile>/deps/datastudio-oracle
     /// for the test binary), so the Oracle live tests find it. Run with
     /// `cargo test live_oracle_instant_client_download -- --ignored --nocapture`.
     #[tokio::test]

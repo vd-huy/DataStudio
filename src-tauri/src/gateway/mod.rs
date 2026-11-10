@@ -832,7 +832,7 @@ mod tests {
     use super::{rules::Preset, *};
 
     fn gateway() -> (Gateway, std::path::PathBuf) {
-        let path = std::env::temp_dir().join(format!("fosta-gateway-{}-{}.jsonl", std::process::id(), new_token()));
+        let path = std::env::temp_dir().join(format!("datastudio-gateway-{}-{}.jsonl", std::process::id(), new_token()));
         (Gateway::with_audit(AuditLog::new(path.clone(), 1000)), path)
     }
 

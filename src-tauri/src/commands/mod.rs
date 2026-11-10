@@ -226,5 +226,5 @@ infallible_output!(
 
 /// Rejects a command the current front-end does not offer.
 pub fn unsupported(command: &str) -> AppError {
-    AppError::new(format!("'{command}' is not available in this edition of Fosta Studio"))
+    AppError::new(format!("'{command}' is not available in this edition of DataStudio"))
 }

@@ -11,7 +11,7 @@ use crate::{
 };
 
 /// The default `CLIENT SETNAME`.
-pub const CLIENT_NAME: &str = "Fosta Studio";
+pub const CLIENT_NAME: &str = "DataStudio";
 
 fn read_pem(path: &Option<String>, what: &str) -> AppResult<Option<String>> {
     let Some(path) = path.as_deref().map(str::trim).filter(|path| !path.is_empty()) else {

@@ -1,6 +1,6 @@
 //! Connection options from a `ConnectRequest` (the endpoint the manager prepared, possibly an SSH tunnel's local port; the
 //! password from the secrets; `spec.tls` as `tcps`) and Oracle Instant Client: it is loaded before the first connection,
-//! from the profile's "Instant Client folder" when set, else from PATH / ORACLE_HOME or a copy Fosta Studio downloaded.
+//! from the profile's "Instant Client folder" when set, else from PATH / ORACLE_HOME or a copy DataStudio downloaded.
 //!
 //! Without a client, connecting fails with the code `ORACLE_CLIENT` and `kind` (`notInstalled`, `load`, …), the same shape
 //! as the `oracle_client_*` commands use, plus `download` (what the pinned package for this platform would fetch, absent
@@ -201,7 +201,7 @@ mod tests {
         if oracle::InitParams::is_initialized() {
             return;
         }
-        let empty = std::env::temp_dir().join("fosta-oracle-no-client");
+        let empty = std::env::temp_dir().join("datastudio-oracle-no-client");
         std::fs::create_dir_all(&empty).unwrap();
         let error = ensure_client(Some(empty.to_str().unwrap())).await.unwrap_err();
         assert_eq!(error.code(), Some("ORACLE_CLIENT"));

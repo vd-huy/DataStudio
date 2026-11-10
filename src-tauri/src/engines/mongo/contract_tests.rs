@@ -1,9 +1,9 @@
 //! Contract suites for MongoDB against `dev/compose/mongo.yml`. The fixture writes the same typed documents as
-//! `dev/seed/mongo/contract.js` (database fosta_contract; Decimal128 prices, dates, binary) through database commands
+//! `dev/seed/mongo/contract.js` (database datastudio_contract; Decimal128 prices, dates, binary) through database commands
 //! in Extended JSON before each suite. Plus MongoDB checks on the `events` demo database (`dev/seed/mongo.js`): catalog,
 //! edits keeping BSON types, cursors read with getMore, connection strings without a password, the gateway, and the
 //! compensation of a failed apply on a standalone server.
-//! Override the server with FOSTA_CONTRACT_MONGO_HOST / _PORT / _USER / _PASSWORD.
+//! Override the server with DATASTUDIO_CONTRACT_MONGO_HOST / _PORT / _USER / _PASSWORD.
 
 use std::sync::Arc;
 
@@ -27,7 +27,7 @@ use crate::{
 };
 
 fn env(name: &str, default: &str) -> String {
-    std::env::var(format!("FOSTA_CONTRACT_MONGO_{name}")).unwrap_or_else(|_| default.to_owned())
+    std::env::var(format!("DATASTUDIO_CONTRACT_MONGO_{name}")).unwrap_or_else(|_| default.to_owned())
 }
 
 /// One contract item as `dev/seed/mongo/contract.js` writes it, in Extended JSON.
@@ -95,12 +95,12 @@ pub fn fixture() -> Fixture {
         engine: "mongodb",
         spec: spec(),
         secrets: secrets(),
-        table: ObjectRef::new(Some("fosta_contract"), None, "contract_items", NodeKind::COLLECTION),
-        child: ObjectRef::new(Some("fosta_contract"), None, "contract_children", NodeKind::COLLECTION),
+        table: ObjectRef::new(Some("datastudio_contract"), None, "contract_items", NodeKind::COLLECTION),
+        child: ObjectRef::new(Some("datastudio_contract"), None, "contract_children", NodeKind::COLLECTION),
         key_column: "_id",
         name_column: "name",
         seed: seed(),
-        seed_database: Some("fosta_contract"),
+        seed_database: Some("datastudio_contract"),
         key_filter,
         sleep_statement: None,
         syntax_error: r#"{ "find": "#,
@@ -435,7 +435,7 @@ async fn contract_mongo_types_and_cursors() {
         &handle,
         &tab,
         r#"{ "count": "contract_items", "query": { "_id": 7, "price": { "$type": "decimal" }, "born": { "$type": "date" }, "blob_data": { "$type": "binData" }, "meta.n": { "$type": "int" }, "meta.tags": "c" } }"#,
-        "fosta_contract",
+        "datastudio_contract",
     )
     .await
     .unwrap();

@@ -279,12 +279,12 @@ fn query_err(e: oracle::Error) -> EngineError {
     let mut err = map_err(e);
     if vector {
         err.kind = ErrorKind::Input;
-        err.message = "This result has a VECTOR column, which Fosta Studio cannot read directly. Select it as text with \
+        err.message = "This result has a VECTOR column, which DataStudio cannot read directly. Select it as text with \
                        FROM_VECTOR(column), e.g. SELECT FROM_VECTOR(embedding) AS embedding FROM ..."
             .into();
     } else if json {
         err.kind = ErrorKind::Input;
-        err.message = "This result has a JSON column, which Fosta Studio cannot read directly yet. Select it as text with \
+        err.message = "This result has a JSON column, which DataStudio cannot read directly yet. Select it as text with \
                        JSON_SERIALIZE(column), e.g. SELECT JSON_SERIALIZE(doc PRETTY) AS doc FROM ..."
             .into();
     }

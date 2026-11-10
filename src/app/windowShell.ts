@@ -78,9 +78,9 @@ export async function confirmQuit(tabs: TabManager, action: "Close" | "Restart",
   if (open === 0 && edited === 0 && kept.length === 0 && dropped.length === 0) return true;
   const doing = action === "Close" ? "Closing" : "Restarting";
   const lost = [
-    open > 0 ? `${open} query tab(s) have an open transaction. ${doing} Fosta Studio rolls them back, so uncommitted changes are lost.` : "",
+    open > 0 ? `${open} query tab(s) have an open transaction. ${doing} DataStudio rolls them back, so uncommitted changes are lost.` : "",
     edited > 0 ? `${edited} tab(s) have unsaved edits, which are lost.` : "",
-    kept.length > 0 ? `Query text not run yet: ${kept.join(", ")}. It is kept and comes back with its tabs the next time Fosta Studio starts.` : "",
+    kept.length > 0 ? `Query text not run yet: ${kept.join(", ")}. It is kept and comes back with its tabs the next time DataStudio starts.` : "",
     dropped.length > 0 ? `Query text too large to keep: ${dropped.join(", ")}. It is lost; save it to a file first.` : "",
   ];
   return confirmDialog(`${lost.filter(Boolean).join("\n")}\n${action} now?`, action);

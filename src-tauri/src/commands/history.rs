@@ -37,7 +37,7 @@ pub async fn history_clear(state: &AppState) -> AppResult<()> {
     with_store(state, |store| store.clear()).await
 }
 
-/// Turns recording on or off (`queryHistory` in `fosta-studio.json`); existing entries are kept.
+/// Turns recording on or off (`queryHistory` in `datastudio.json`); existing entries are kept.
 pub fn set_query_history(state: &AppState, enabled: bool) -> AppResult<AppConfig> {
     state.config.update(|config| {
         config.query_history = enabled;

@@ -1,8 +1,8 @@
-//! The web server's secret store: one file, `fosta-studio-secrets.enc` in the data directory, holding every
+//! The web server's secret store: one file, `datastudio-secrets.enc` in the data directory, holding every
 //! saved password and API key as a JSON map encrypted with XChaCha20-Poly1305.
 //!
-//! The 32-byte key comes from `FOSTA_STUDIO_SECRET_KEY` (64 hex characters) or, when that is not set, from
-//! `fosta-studio-secret.key` next to the store, generated on first start with owner-only permissions.
+//! The 32-byte key comes from `DATASTUDIO_SECRET_KEY` (64 hex characters) or, when that is not set, from
+//! `datastudio-secret.key` next to the store, generated on first start with owner-only permissions.
 //! Losing the key loses the saved passwords: the store cannot be decrypted without it.
 
 use std::{
@@ -24,13 +24,13 @@ use crate::{
     lock::lock,
 };
 
-pub const STORE_FILE: &str = "fosta-studio-secrets.enc";
-pub const KEY_FILE: &str = "fosta-studio-secret.key";
-pub const KEY_ENV: &str = "FOSTA_STUDIO_SECRET_KEY";
+pub const STORE_FILE: &str = "datastudio-secrets.enc";
+pub const KEY_FILE: &str = "datastudio-secret.key";
+pub const KEY_ENV: &str = "DATASTUDIO_SECRET_KEY";
 const KEY_LEN: usize = 32;
 const NONCE_LEN: usize = 24;
 /// Binds the ciphertext to its purpose and format version.
-const AAD: &[u8] = b"fosta-studio-secrets-v1";
+const AAD: &[u8] = b"datastudio-secrets-v1";
 
 #[derive(Serialize, Deserialize)]
 struct Envelope {
@@ -181,7 +181,7 @@ mod tests {
     use super::*;
 
     fn scratch(name: &str) -> PathBuf {
-        let directory = std::env::temp_dir().join(format!("fosta-secrets-{name}-{}", std::process::id()));
+        let directory = std::env::temp_dir().join(format!("datastudio-secrets-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&directory);
         fs::create_dir_all(&directory).unwrap();
         directory

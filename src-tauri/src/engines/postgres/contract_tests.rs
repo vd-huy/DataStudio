@@ -1,7 +1,7 @@
 //! Contract suites for PostgreSQL against `dev/compose/postgres.yml` (database `shop`; the suite data is
 //! `dev/seed/postgres/contract.sql`, schema `shop`), plus PostgreSQL-specific checks on the demo schemas: typed values,
 //! row versions, the tree, relations, EXPLAIN and the read-only backstop. Override the server with
-//! FOSTA_CONTRACT_POSTGRES_HOST / _PORT / _USER / _PASSWORD / _DATABASE.
+//! DATASTUDIO_CONTRACT_POSTGRES_HOST / _PORT / _USER / _PASSWORD / _DATABASE.
 
 use std::sync::Arc;
 
@@ -15,7 +15,7 @@ use crate::{
 };
 
 fn env(name: &str, default: &str) -> String {
-    std::env::var(format!("FOSTA_CONTRACT_POSTGRES_{name}")).unwrap_or_else(|_| default.to_owned())
+    std::env::var(format!("DATASTUDIO_CONTRACT_POSTGRES_{name}")).unwrap_or_else(|_| default.to_owned())
 }
 
 fn seed() -> Vec<String> {

@@ -21,7 +21,7 @@ use axum::{
     routing::{get, post},
     Form, Router,
 };
-use fosta_studio::AppState;
+use datastudio::AppState;
 use serde::Deserialize;
 use tokio::sync::broadcast;
 use tower_http::{
@@ -36,7 +36,7 @@ use crate::{
 
 /// Header every API call must send. A cross-site form or `<img>` cannot set it, and a cross-site `fetch`
 /// that sets it needs a CORS preflight this server never approves.
-pub const CSRF_HEADER: &str = "x-fosta-studio";
+pub const CSRF_HEADER: &str = "x-datastudio";
 
 const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; \
      img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; \
@@ -46,14 +46,14 @@ pub struct Server {
     pub state: Arc<AppState>,
     pub events: broadcast::Sender<WebEvent>,
     pub auth: Auth,
-    /// Extra origins allowed to call the API (`FOSTA_STUDIO_ALLOWED_ORIGINS`), e.g. a reverse proxy's.
+    /// Extra origins allowed to call the API (`DATASTUDIO_ALLOWED_ORIGINS`), e.g. a reverse proxy's.
     pub allowed_origins: Vec<String>,
     /// Host names requests may be addressed to; empty means any.
     pub allowed_hosts: Vec<String>,
     pub ui_dir: PathBuf,
 }
 
-/// `FOSTA_STUDIO_ALLOWED_HOSTS`, or only loopback names when authentication is off (a DNS-rebinding page
+/// `DATASTUDIO_ALLOWED_HOSTS`, or only loopback names when authentication is off (a DNS-rebinding page
 /// could otherwise drive an unauthenticated server through the victim's browser).
 pub fn allowed_hosts(configured: &[String], auth_off: bool) -> Vec<String> {
     if !configured.is_empty() {
@@ -87,7 +87,7 @@ pub fn router(server: Server) -> Router {
     // token, never the session cookie, so neither a web page nor an MCP client can reach the UI or `/api` through it.
     // With authentication off the endpoint refuses everything.
     let (allow_server, failed_server) = (Arc::clone(&server), Arc::clone(&server));
-    let mcp_gate = fosta_studio::mcp::http::WebGate {
+    let mcp_gate = datastudio::mcp::http::WebGate {
         allow: Arc::new(move |client| !allow_server.auth.is_off() && allow_server.auth.mcp_may_attempt(client)),
         failed: Arc::new(move |client| failed_server.auth.record_mcp_failure(client)),
     };
@@ -96,7 +96,7 @@ pub fn router(server: Server) -> Router {
         .fallback_service(ui)
         .layer(middleware::from_fn_with_state(Arc::clone(&server), require_session_for_pages))
         .route("/healthz", get(|| async { "ok" }))
-        .route("/mcp", fosta_studio::mcp::http::web_route(Arc::downgrade(&server.state), mcp_gate));
+        .route("/mcp", datastudio::mcp::http::web_route(Arc::downgrade(&server.state), mcp_gate));
     app.layer(middleware::from_fn_with_state(Arc::clone(&server), check_host))
         .layer(SetResponseHeaderLayer::overriding(
             header::CONTENT_SECURITY_POLICY,
@@ -152,7 +152,7 @@ async fn check_host(State(server): State<Arc<Server>>, request: Request, next: N
         if !server.allowed_hosts.contains(&name) && request.uri().path() != "/healthz" {
             return error_response(
                 StatusCode::MISDIRECTED_REQUEST,
-                &format!("Host '{host}' is not allowed; add it to FOSTA_STUDIO_ALLOWED_HOSTS"),
+                &format!("Host '{host}' is not allowed; add it to DATASTUDIO_ALLOWED_HOSTS"),
             );
         }
     }
@@ -184,7 +184,7 @@ async fn check_csrf(State(server): State<Arc<Server>>, request: Request, next: N
         return error_response(StatusCode::FORBIDDEN, "Cross-site requests are not allowed");
     }
     if request.method() != Method::GET && headers.get(CSRF_HEADER).is_none() {
-        return error_response(StatusCode::FORBIDDEN, "Missing the X-Fosta-Studio request header");
+        return error_response(StatusCode::FORBIDDEN, "Missing the X-DataStudio request header");
     }
     next.run(request).await
 }
@@ -336,7 +336,7 @@ async fn logout(State(server): State<Arc<Server>>) -> Response {
     let mut response = match server.auth.revoke_sessions() {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(error) => {
-            eprintln!("fosta-studio-server: cannot sign out: {error}");
+            eprintln!("datastudio-server: cannot sign out: {error}");
             error_response(StatusCode::INTERNAL_SERVER_ERROR, "Could not end the sessions; see the server log")
         }
     };
@@ -354,7 +354,7 @@ fn login_page(status: StatusCode, message: Option<&str>) -> Response {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sign in · Fosta Studio</title>
+<title>Sign in · DataStudio</title>
 <style>
   :root {{ color-scheme: light dark; font-family: system-ui, sans-serif; }}
   body {{ margin: 0; min-height: 100vh; display: grid; place-items: center; background: Canvas; color: CanvasText; }}
@@ -370,7 +370,7 @@ fn login_page(status: StatusCode, message: Option<&str>) -> Response {
 </head>
 <body>
 <main>
-  <h1>Fosta Studio</h1>
+  <h1>DataStudio</h1>
   <p>Enter the access token, or open the sign-in address printed in the server log
   (<code>docker logs &lt;container&gt;</code>).</p>
   {message}
@@ -396,7 +396,7 @@ fn escape(text: &str) -> String {
         .replace('"', "&quot;")
 }
 
-/// `fosta-studio-server healthcheck` (the image's HEALTHCHECK): `GET /healthz` on the local port.
+/// `datastudio-server healthcheck` (the image's HEALTHCHECK): `GET /healthz` on the local port.
 pub fn healthcheck(listen: SocketAddr) -> Result<(), String> {
     let ip = if listen.ip().is_unspecified() {
         IpAddr::V4(Ipv4Addr::LOCALHOST)
@@ -498,7 +498,7 @@ mod tests {
     mod mcp_routes {
         use std::sync::OnceLock;
 
-        use fosta_studio::{
+        use datastudio::{
             config::DATA_DIR_ENV,
             secrets::{self, file::FileStore},
             Capabilities,
@@ -514,7 +514,7 @@ mod tests {
         fn data_dir() -> &'static PathBuf {
             static DIR: OnceLock<PathBuf> = OnceLock::new();
             DIR.get_or_init(|| {
-                let dir = std::env::temp_dir().join(format!("fosta-web-mcp-{}", std::process::id()));
+                let dir = std::env::temp_dir().join(format!("datastudio-web-mcp-{}", std::process::id()));
                 let _ = std::fs::remove_dir_all(&dir);
                 std::fs::create_dir_all(&dir).unwrap();
                 std::env::set_var(DATA_DIR_ENV, &dir);

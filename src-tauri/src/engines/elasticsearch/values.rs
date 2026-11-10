@@ -222,7 +222,7 @@ mod tests {
     #[test]
     fn columns_follow_the_mapping() {
         let mappings = json!({
-            "_meta": { "fosta": { "key": "id" } },
+            "_meta": { "datastudio": { "key": "id" } },
             "properties": {
                 "active": { "type": "boolean" },
                 "born": { "type": "date" },

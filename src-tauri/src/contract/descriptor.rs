@@ -15,7 +15,7 @@ pub enum EngineFamily {
 }
 
 /// `planned` engines are registered (descriptor, classifier, URL parser) but cannot connect yet; the UI hides them unless
-/// `localStorage["fosta.dev.showPlannedEngines"] === "1"`.
+/// `localStorage["datastudio.dev.showPlannedEngines"] === "1"`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum EngineStatus {

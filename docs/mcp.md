@@ -1,7 +1,7 @@
 # MCP server
 
-Fosta Studio can act as a [Model Context Protocol](https://modelcontextprotocol.io) server, so AI clients such as Claude Code,
-Claude Desktop, Cursor, VS Code and Zed can use your saved connections. Clients never see passwords, hosts or users: they ask Fosta
+DataStudio can act as a [Model Context Protocol](https://modelcontextprotocol.io) server, so AI clients such as Claude Code,
+Claude Desktop, Cursor, VS Code and Zed can use your saved connections. Clients never see passwords, hosts or users: they ask DataStudio
 Studio, which connects with the saved secrets, applies the workspace's safety rules and writes every call to the audit log.
 
 It is **off by default**, twice over: the server is off until you turn it on, and each workspace stays invisible to clients until
@@ -15,7 +15,7 @@ you allow it.
 2. **Edit workspace → MCP clients** for each workspace clients may use:
    - **Off** (default): its connections do not exist for clients.
    - **Read-only**: schema tools and `run_read_query`.
-   - **Ask before writes**: also `run_query`; you approve every statement in Fosta Studio.
+   - **Ask before writes**: also `run_query`; you approve every statement in DataStudio.
 
    Production workspaces (shield icon) and workspaces with Read-only rules allow at most **Read-only**, and so does a connection
    whose own rules are Read-only.
@@ -29,31 +29,31 @@ Replace `<token>` with the token from _Settings → MCP server_ (the dialog's sn
 **Claude Code**
 
 ```sh
-claude mcp add --transport http fosta http://127.0.0.1:3910/mcp --header "Authorization: Bearer <token>"
+claude mcp add --transport http datastudio http://127.0.0.1:3910/mcp --header "Authorization: Bearer <token>"
 ```
 
 **Cursor** (`~/.cursor/mcp.json`), and other clients that take a URL and headers:
 
 ```json
-{ "mcpServers": { "fosta": { "url": "http://127.0.0.1:3910/mcp", "headers": { "Authorization": "Bearer <token>" } } } }
+{ "mcpServers": { "datastudio": { "url": "http://127.0.0.1:3910/mcp", "headers": { "Authorization": "Bearer <token>" } } } }
 ```
 
 **VS Code** (`.vscode/mcp.json`):
 
 ```json
-{ "servers": { "fosta": { "type": "http", "url": "http://127.0.0.1:3910/mcp", "headers": { "Authorization": "Bearer <token>" } } } }
+{ "servers": { "datastudio": { "type": "http", "url": "http://127.0.0.1:3910/mcp", "headers": { "Authorization": "Bearer <token>" } } } }
 ```
 
 **Claude Desktop** and other clients that only start a command (stdio): use the bridge, which reads the port and the token itself.
 It exits with a message when the MCP server is off, without sending the token anywhere.
 
 ```json
-{ "mcpServers": { "fosta": { "command": "C:\\path\\to\\fosta-studio.exe", "args": ["mcp"] } } }
+{ "mcpServers": { "datastudio": { "command": "C:\\path\\to\\datastudio.exe", "args": ["mcp"] } } }
 ```
 
 **Zed** (`settings.json` → `context_servers`): the same command and arguments as Claude Desktop.
 
-Fosta Studio must be running for any of these to work; otherwise every call answers that it is not reachable.
+DataStudio must be running for any of these to work; otherwise every call answers that it is not reachable.
 
 ## Tools
 
@@ -70,14 +70,14 @@ Fosta Studio must be running for any of these to work; otherwise every call answ
 Every tool except `list_connections` takes `connection` (an id from `list_connections`) and optionally `database` (default: the
 connection's database). A connection that is not open yet is opened on demand with its saved password; without one, the client is
 told to ask you to connect once. MCP clients **never start a workspace command**: if the connection needs one (a port-forward, for
-example) and it is not running, the client is told to ask you to start it in Fosta Studio. A running command is reused.
+example) and it is not running, the client is told to ask you to start it in DataStudio. A running command is reused.
 
 `run_read_query` and `run_query` take one statement of at most 20,000 characters; longer ones are refused, so the approval dialog
 always shows the whole statement that would run.
 
 ## Approving `run_query`
 
-When a client calls `run_query`, Fosta Studio shows a dialog naming the client ("Claude Code wants to run a statement"), with the
+When a client calls `run_query`, DataStudio shows a dialog naming the client ("Claude Code wants to run a statement"), with the
 full statement and its category (write, DDL, destructive, admin):
 
 - _Run_ runs it once. Where the workspace's rules ask for a typed confirmation (for example destructive statements under Guarded
@@ -97,18 +97,18 @@ does, not who sent it.
 The web server serves the same endpoint at `/mcp` on its own port, still gated per workspace:
 
 - Turn it on in _Settings → MCP server_. Clients authenticate with a separate **MCP token**, created when you turn the server on
-  and kept in the server's encrypted secret store (`fosta-studio-secrets.enc`). The dialog shows it and rotates it, as on the
+  and kept in the server's encrypted secret store (`datastudio-secrets.enc`). The dialog shows it and rotates it, as on the
   desktop.
 - The MCP token works only for `/mcp`: it cannot sign in (`/?token=`, the sign-in form) and `/api` refuses it, so a client holding
   it cannot open the app, approve its own statements or change a workspace. In turn `/mcp` refuses the access token and the session
   cookie, and an `Origin` header must name the server itself.
-- With `FOSTA_STUDIO_AUTH=off` the endpoint refuses every request.
+- With `DATASTUDIO_AUTH=off` the endpoint refuses every request.
 - `run_query` approvals appear in every open browser session; the first answer wins. With no browser open, it is denied after
   120 seconds.
-- Stdio clients use `docker exec -i <container> /app/fosta-studio-server mcp`, which reads the MCP token from the secret store.
+- Stdio clients use `docker exec -i <container> /app/datastudio-server mcp`, which reads the MCP token from the secret store.
 
 ```sh
-claude mcp add --transport http fosta https://studio.example.com/mcp --header "Authorization: Bearer <MCP token>"
+claude mcp add --transport http datastudio https://studio.example.com/mcp --header "Authorization: Bearer <MCP token>"
 ```
 
 ## Security model
@@ -126,7 +126,7 @@ claude mcp add --transport http fosta https://studio.example.com/mcp --header "A
   only statements the engine classifies as reads, in a read-only session, with the rules' own row limit and timeout when lower.
 - **Untrusted data.** Table names, rows and database errors come back inside `<untrusted_data>` blocks, so a prompt hidden in a row
   is marked as data for the client's model.
-- **Audit log.** Every tool call goes to `fosta-studio-audit.jsonl` with caller `mcp` and the client's name, including refusals
+- **Audit log.** Every tool call goes to `datastudio-audit.jsonl` with caller `mcp` and the client's name, including refusals
   (unknown tools, bad arguments, statements too long), approvals, denials, timeouts and withdrawn approvals. Turning the server on
   and allowing MCP in a workspace are recorded too.
 - **Scope.** A client sees every database on the connections it may use. Allow only the workspaces you would hand to the client, and

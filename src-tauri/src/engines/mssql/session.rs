@@ -111,7 +111,7 @@ async fn transaction_state(client: &mut TdsClient) -> TransactionState {
 }
 
 /// The savepoint a read-only run sets inside a transaction the tab already has open.
-const READ_ONLY_SAVEPOINT: &str = "fosta_read_only";
+const READ_ONLY_SAVEPOINT: &str = "datastudio_read_only";
 
 /// SQL Server has no read-only session. A read-only run (the assistant, a Read-only workspace) is wrapped in a transaction
 /// that is rolled back afterwards, so anything the gateway let through by mistake (DML reached through a procedure or a

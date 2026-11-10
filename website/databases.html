@@ -8,11 +8,11 @@
       files are written relative to the site root, and the build adds "../" for each folder level. See website/README.md.
       Facts come from docs/engines/*.md, docs/features.md, CHANGELOG.md and ci/engines/*.json (tested versions).
     -->
-    <title data-i18n="dbp.meta.title">Databases: what Fosta Studio supports on each engine</title>
+    <title data-i18n="dbp.meta.title">Databases: what DataStudio supports on each engine</title>
     <meta
       name="description"
       data-i18n-attr="content:dbp.meta.description"
-      content="The 11 engines of Fosta Studio, from MariaDB and PostgreSQL to Redis, Elasticsearch and Oracle: tested versions, what works on each, engine-specific views and vector tools."
+      content="The 11 engines of DataStudio, from MariaDB and PostgreSQL to Redis, Elasticsearch and Oracle: tested versions, what works on each, engine-specific views and vector tools."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
@@ -22,12 +22,12 @@
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Fosta Studio" />
-    <meta property="og:title" data-i18n-attr="content:dbp.meta.title" content="Databases: what Fosta Studio supports on each engine" />
+    <meta property="og:site_name" content="DataStudio" />
+    <meta property="og:title" data-i18n-attr="content:dbp.meta.title" content="Databases: what DataStudio supports on each engine" />
     <meta
       property="og:description"
       data-i18n-attr="content:dbp.meta.description"
-      content="The 11 engines of Fosta Studio, from MariaDB and PostgreSQL to Redis, Elasticsearch and Oracle: tested versions, what works on each, engine-specific views and vector tools."
+      content="The 11 engines of DataStudio, from MariaDB and PostgreSQL to Redis, Elasticsearch and Oracle: tested versions, what works on each, engine-specific views and vector tools."
     />
     <meta property="og:url" content="https://dbcl.fosta.app/databases/" />
     <!-- i18n:og-locale -->
@@ -37,14 +37,14 @@
     <meta
       property="og:image:alt"
       data-i18n-attr="content:meta.ogImageAlt"
-      content="Fosta Studio logo, an F made of data rows, with the text: free, open-source database client for 11 engines, built in Rust"
+      content="DataStudio logo, an F made of data rows, with the text: free, open-source database client for 11 engines, built in Rust"
     />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" data-i18n-attr="content:dbp.meta.title" content="Databases: what Fosta Studio supports on each engine" />
+    <meta name="twitter:title" data-i18n-attr="content:dbp.meta.title" content="Databases: what DataStudio supports on each engine" />
     <meta
       name="twitter:description"
       data-i18n-attr="content:dbp.meta.description"
-      content="The 11 engines of Fosta Studio, from MariaDB and PostgreSQL to Redis, Elasticsearch and Oracle: tested versions, what works on each, engine-specific views and vector tools."
+      content="The 11 engines of DataStudio, from MariaDB and PostgreSQL to Redis, Elasticsearch and Oracle: tested versions, what works on each, engine-specific views and vector tools."
     />
     <meta name="twitter:image" content="https://dbcl.fosta.app/assets/og-image.png" />
 
@@ -106,9 +106,9 @@
 
     <header class="site-header">
       <div class="container header-inner">
-        <a class="brand" href="./" data-i18n-attr="aria-label:a11y.home" aria-label="Fosta Studio home">
+        <a class="brand" href="./" data-i18n-attr="aria-label:a11y.home" aria-label="DataStudio home">
           <img src="assets/logo.svg" alt="" width="28" height="28" />
-          <span>Fosta Studio</span>
+          <span>DataStudio</span>
         </a>
         <nav class="site-nav" data-i18n-attr="aria-label:nav.label" aria-label="Primary">
           <ul>
@@ -118,7 +118,7 @@
             <li class="nav-optional"><a href="databases/" aria-current="page" data-i18n="nav.databases">Databases</a></li>
             <li class="nav-optional"><a href="donate/" data-i18n="nav.support">Support</a></li>
             <li>
-              <a class="nav-github" href="https://github.com/caothanhphatit/fosta-dbclient">
+              <a class="nav-github" href="https://github.com/vd-huy/DataStudio">
                 <svg class="icon" aria-hidden="true"><use href="#i-code" /></svg><span class="nav-github-text">GitHub</span>
               </a>
             </li>
@@ -330,7 +330,7 @@
                 <dt data-i18n="dbp.notes">Notes</dt>
                 <dd data-i18n="dbp.mariadb.notes">A Read-only workspace also opens read-only sessions.</dd>
               </dl>
-              <a class="db-doc" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/features.md"
+              <a class="db-doc" href="https://github.com/vd-huy/DataStudio/blob/main/docs/features.md"
                 ><span data-i18n="dbp.featureDocs">Feature list</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
               ></a>
             </li>
@@ -351,7 +351,7 @@
                 <dt data-i18n="dbp.notes">Notes</dt>
                 <dd data-i18n="dbp.mysql.notes">Same driver as MariaDB (<code>mysql_async</code>). The vector tools are for MariaDB 11.7+ only.</dd>
               </dl>
-              <a class="db-doc" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/features.md"
+              <a class="db-doc" href="https://github.com/vd-huy/DataStudio/blob/main/docs/features.md"
                 ><span data-i18n="dbp.featureDocs">Feature list</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
               ></a>
             </li>
@@ -372,7 +372,7 @@
                 <dt data-i18n="dbp.notes">Notes</dt>
                 <dd data-i18n="dbp.mssql.notes">TLS is on by default. An untrusted certificate shows an “Accept invalid certificates” hint.</dd>
               </dl>
-              <a class="db-doc" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/features.md"
+              <a class="db-doc" href="https://github.com/vd-huy/DataStudio/blob/main/docs/features.md"
                 ><span data-i18n="dbp.featureDocs">Feature list</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
               ></a>
             </li>
@@ -400,7 +400,7 @@
                   Client key files must be unencrypted. <code>LISTEN/NOTIFY</code>, <code>COPY</code> streams and logical replication are not supported.
                 </dd>
               </dl>
-              <a class="db-doc" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/engines/postgres.md"
+              <a class="db-doc" href="https://github.com/vd-huy/DataStudio/blob/main/docs/engines/postgres.md"
                 ><span data-i18n="dbp.engineDocs">Engine notes</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
               ></a>
             </li>
@@ -430,7 +430,7 @@
                   MB, pinned checksum) or to use a folder with an installed client. TLS is <code>tcps</code> with a wallet.
                 </dd>
               </dl>
-              <a class="db-doc" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/engines/oracle.md"
+              <a class="db-doc" href="https://github.com/vd-huy/DataStudio/blob/main/docs/engines/oracle.md"
                 ><span data-i18n="dbp.engineDocs">Engine notes</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
               ></a>
             </li>
@@ -451,7 +451,7 @@
                 <dt data-i18n="dbp.notes">Notes</dt>
                 <dd data-i18n="dbp.mongo.notes">No transactions, and no Stop for a running command.</dd>
               </dl>
-              <a class="db-doc" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/features.md"
+              <a class="db-doc" href="https://github.com/vd-huy/DataStudio/blob/main/docs/features.md"
                 ><span data-i18n="dbp.featureDocs">Feature list</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
               ></a>
             </li>
@@ -481,7 +481,7 @@
                   Also Valkey and other RESP servers. One standalone server: Redis Cluster and Sentinel are not supported yet.
                 </dd>
               </dl>
-              <a class="db-doc" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/engines/redis.md"
+              <a class="db-doc" href="https://github.com/vd-huy/DataStudio/blob/main/docs/engines/redis.md"
                 ><span data-i18n="dbp.engineDocs">Engine notes</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
               ></a>
             </li>
@@ -505,7 +505,7 @@
                   supported.
                 </dd>
               </dl>
-              <a class="db-doc" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/engines/sqlite.md"
+              <a class="db-doc" href="https://github.com/vd-huy/DataStudio/blob/main/docs/engines/sqlite.md"
                 ><span data-i18n="dbp.engineDocs">Engine notes</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
               ></a>
             </li>
@@ -537,7 +537,7 @@
                   Uses the HTTP interface. No transactions, and no ER diagram (ClickHouse has no foreign keys); mutations cannot be rolled back.
                 </dd>
               </dl>
-              <a class="db-doc" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/engines/clickhouse.md"
+              <a class="db-doc" href="https://github.com/vd-huy/DataStudio/blob/main/docs/engines/clickhouse.md"
                 ><span data-i18n="dbp.engineDocs">Engine notes</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
               ></a>
             </li>
@@ -564,7 +564,7 @@
                   Elasticsearch 7.10 or newer. No transactions: a save checks each document's version and stops with a conflict if it changed.
                 </dd>
               </dl>
-              <a class="db-doc" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/engines/elasticsearch.md"
+              <a class="db-doc" href="https://github.com/vd-huy/DataStudio/blob/main/docs/engines/elasticsearch.md"
                 ><span data-i18n="dbp.engineDocs">Engine notes</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
               ></a>
             </li>
@@ -586,7 +586,7 @@
                 <dt data-i18n="dbp.notes">Notes</dt>
                 <dd data-i18n="dbp.os.notes">OpenSearch 1.0 or newer; point-in-time paging past 10,000 hits needs 2.4.</dd>
               </dl>
-              <a class="db-doc" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/engines/opensearch.md"
+              <a class="db-doc" href="https://github.com/vd-huy/DataStudio/blob/main/docs/engines/opensearch.md"
                 ><span data-i18n="dbp.engineDocs">Engine notes</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
               ></a>
             </li>
@@ -635,13 +635,13 @@
                 <h3 data-i18n="dbp.shared.mcp.title">MCP server</h3>
                 <p data-i18n="dbp.shared.mcp.text">
                   AI agents such as Claude Desktop, Claude Code or Cursor can use your connections through MCP. Off by default; every write needs approval and
-                  every call is audited. <a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/mcp.md">MCP guide</a>
+                  every call is audited. <a href="https://github.com/vd-huy/DataStudio/blob/main/docs/mcp.md">MCP guide</a>
                 </p>
               </div>
             </li>
           </ul>
           <p class="section-more">
-            <a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/features.md"
+            <a href="https://github.com/vd-huy/DataStudio/blob/main/docs/features.md"
               ><span data-i18n="dbp.shared.link">Read the full feature list</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
             ></a>
           </p>
@@ -652,8 +652,8 @@
     <footer class="site-footer">
       <div class="container footer-inner">
         <div class="footer-brand">
-          <a class="brand" href="./" data-i18n-attr="aria-label:a11y.home" aria-label="Fosta Studio home"
-            ><img src="assets/logo.svg" alt="" width="24" height="24" /><span>Fosta Studio</span></a
+          <a class="brand" href="./" data-i18n-attr="aria-label:a11y.home" aria-label="DataStudio home"
+            ><img src="assets/logo.svg" alt="" width="24" height="24" /><span>DataStudio</span></a
           >
           <p data-i18n="footer.tagline">Free and open-source database client. GPL-3.0.</p>
         </div>
@@ -661,18 +661,18 @@
           <ul class="footer-links">
             <li><a href="databases/" data-i18n="footer.databases">Databases</a></li>
             <li><a href="donate/" data-i18n="footer.support">Support the project</a></li>
-            <li><a href="https://github.com/caothanhphatit/fosta-dbclient">GitHub</a></li>
+            <li><a href="https://github.com/vd-huy/DataStudio">GitHub</a></li>
             <li><a href="https://discord.gg/pBFkZD5mhN">Discord</a></li>
-            <li><a href="https://github.com/caothanhphatit/fosta-dbclient/releases" data-i18n="footer.releases">Releases</a></li>
-            <li><a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/CONTRIBUTING.md" data-i18n="footer.contributing">Contributing</a></li>
-            <li><a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/ROADMAP.md" data-i18n="footer.roadmap">Roadmap</a></li>
-            <li><a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/LICENSE" data-i18n="footer.license">License</a></li>
-            <li><a href="https://github.com/caothanhphatit/fosta-dbclient/issues" data-i18n="footer.issues">Issues</a></li>
+            <li><a href="https://github.com/vd-huy/DataStudio/releases" data-i18n="footer.releases">Releases</a></li>
+            <li><a href="https://github.com/vd-huy/DataStudio/blob/main/CONTRIBUTING.md" data-i18n="footer.contributing">Contributing</a></li>
+            <li><a href="https://github.com/vd-huy/DataStudio/blob/main/ROADMAP.md" data-i18n="footer.roadmap">Roadmap</a></li>
+            <li><a href="https://github.com/vd-huy/DataStudio/blob/main/LICENSE" data-i18n="footer.license">License</a></li>
+            <li><a href="https://github.com/vd-huy/DataStudio/issues" data-i18n="footer.issues">Issues</a></li>
           </ul>
         </nav>
         <!-- i18n:lang-footer -->
         <p class="footer-note" data-i18n="footer.trademarks">
-          Database names and logos are trademarks of their respective owners; their use does not imply endorsement. Fosta Studio is an independent project and
+          Database names and logos are trademarks of their respective owners; their use does not imply endorsement. DataStudio is an independent project and
           is not affiliated with them.
         </p>
       </div>

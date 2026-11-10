@@ -1,7 +1,7 @@
 //! Contract suites for ClickHouse against `dev/compose/clickhouse.yml` (data from `dev/seed/clickhouse/contract.sql`),
 //! plus ClickHouse-specific checks: edits only on MergeTree tables, the asynchronous-mutation guard, the lazy tree with
 //! sizes, the operations behind the ClickHouse views, error positions, read-only sessions and the database of a run.
-//! Override the server with FOSTA_CONTRACT_CLICKHOUSE_HOST / _PORT / _USER / _PASSWORD.
+//! Override the server with DATASTUDIO_CONTRACT_CLICKHOUSE_HOST / _PORT / _USER / _PASSWORD.
 //! Run: `cargo test contract_clickhouse -- --ignored --test-threads=1`.
 
 use std::sync::Arc;
@@ -17,7 +17,7 @@ use crate::{
 };
 
 fn env(name: &str, default: &str) -> String {
-    std::env::var(format!("FOSTA_CONTRACT_CLICKHOUSE_{name}")).unwrap_or_else(|_| default.to_owned())
+    std::env::var(format!("DATASTUDIO_CONTRACT_CLICKHOUSE_{name}")).unwrap_or_else(|_| default.to_owned())
 }
 
 /// The chunks of the seed: lines that read `GO` separate them (whatever the line endings).
@@ -60,7 +60,7 @@ fn secrets() -> ConnectSecrets {
 }
 
 fn items() -> ObjectRef {
-    ObjectRef::new(Some("fosta_contract"), None, "contract_items", NodeKind::TABLE)
+    ObjectRef::new(Some("datastudio_contract"), None, "contract_items", NodeKind::TABLE)
 }
 
 pub fn fixture() -> Fixture {
@@ -69,7 +69,7 @@ pub fn fixture() -> Fixture {
         spec: spec(),
         secrets: secrets(),
         table: items(),
-        child: ObjectRef::new(Some("fosta_contract"), None, "contract_children", NodeKind::TABLE),
+        child: ObjectRef::new(Some("datastudio_contract"), None, "contract_children", NodeKind::TABLE),
         key_column: "id",
         name_column: "name",
         seed: seed(),
@@ -79,10 +79,10 @@ pub fn fixture() -> Fixture {
         sleep_statement: Some("SELECT sleepEachRow(0.5) FROM numbers(60) SETTINGS max_block_size = 1"),
         syntax_error: "SELEC * FORM contract_items",
         // The table has a CHECK constraint on the price (ClickHouse has no unique keys).
-        constraint_violation: "INSERT INTO fosta_contract.contract_items (id, name, price, active) VALUES (1, 'dup', -1, 1)",
-        multi_statement: "SELECT 1; SELECT id, name FROM fosta_contract.contract_items ORDER BY id LIMIT 3",
-        insert_probe: "INSERT INTO fosta_contract.contract_items (id, name, price, active) VALUES (5000, 'probe', 1, 1)",
-        count_probe: "SELECT count() FROM fosta_contract.contract_items WHERE id = 5000",
+        constraint_violation: "INSERT INTO datastudio_contract.contract_items (id, name, price, active) VALUES (1, 'dup', -1, 1)",
+        multi_statement: "SELECT 1; SELECT id, name FROM datastudio_contract.contract_items ORDER BY id LIMIT 3",
+        insert_probe: "INSERT INTO datastudio_contract.contract_items (id, name, price, active) VALUES (5000, 'probe', 1, 1)",
+        count_probe: "SELECT count() FROM datastudio_contract.contract_items WHERE id = 5000",
         classify_samples: &[
             ("SELECT * FROM t", Category::Read),
             ("SHOW TABLES", Category::Read),
@@ -204,7 +204,7 @@ async fn contract_clickhouse_tree_shows_engine_rows_and_size() {
     let top = children(None).await;
     let names: Vec<&str> = top.nodes.iter().map(|node| node.label.as_str()).collect();
     assert_eq!(names.last(), Some(&"system"), "system database last: {names:?}");
-    let database = top.nodes.iter().find(|node| node.label == "fosta_contract").expect("database");
+    let database = top.nodes.iter().find(|node| node.label == "datastudio_contract").expect("database");
     let folders = children(Some(database.key.clone())).await;
     assert_eq!(
         folders.nodes.iter().map(|node| node.label.as_str()).collect::<Vec<_>>(),
@@ -220,7 +220,7 @@ async fn contract_clickhouse_tree_shows_engine_rows_and_size() {
     );
     assert!(detail.ends_with("KiB") || detail.ends_with(" B"), "{detail}");
     assert!(item.badges.is_empty(), "MergeTree tables are editable");
-    assert_eq!(item.key.id, "db:fosta_contract/folder:tables/table:contract_items");
+    assert_eq!(item.key.id, "db:datastudio_contract/folder:tables/table:contract_items");
     // The shop database of the dev seed has all four kinds; Log tables and views carry no edit rights.
     if let Some(shop) = top.nodes.iter().find(|node| node.label == "shop") {
         let folders = children(Some(shop.key.clone())).await;
@@ -251,11 +251,11 @@ async fn contract_clickhouse_tree_shows_engine_rows_and_size() {
 async fn contract_clickhouse_only_mergetree_tables_are_editable() {
     let (_manager, handle) = connected().await;
     let session = open(&handle, None).await;
-    let log = ObjectRef::new(Some("fosta_contract"), None, "contract_log", NodeKind::TABLE);
+    let log = ObjectRef::new(Some("datastudio_contract"), None, "contract_log", NodeKind::TABLE);
     for sql in [
-        "DROP TABLE IF EXISTS fosta_contract.contract_log SYNC",
-        "CREATE TABLE fosta_contract.contract_log (id Int32, name String) ENGINE = Log",
-        "INSERT INTO fosta_contract.contract_log VALUES (1, 'a')",
+        "DROP TABLE IF EXISTS datastudio_contract.contract_log SYNC",
+        "CREATE TABLE datastudio_contract.contract_log (id Int32, name String) ENGINE = Log",
+        "INSERT INTO datastudio_contract.contract_log VALUES (1, 'a')",
     ] {
         run(&handle, &session, sql, None, RunOptions::default()).await.expect(sql);
     }
@@ -311,7 +311,7 @@ async fn contract_clickhouse_only_mergetree_tables_are_editable() {
     run(
         &handle,
         &session,
-        "DROP TABLE IF EXISTS fosta_contract.contract_log SYNC",
+        "DROP TABLE IF EXISTS datastudio_contract.contract_log SYNC",
         None,
         RunOptions::default(),
     )
@@ -360,7 +360,7 @@ async fn contract_clickhouse_edits_check_nullable_originals_and_duplicate_keys()
     run(
         &handle,
         &session,
-        "INSERT INTO fosta_contract.contract_items (id, name, price, active) VALUES (7, 'twin', 1, 0)",
+        "INSERT INTO datastudio_contract.contract_items (id, name, price, active) VALUES (7, 'twin', 1, 0)",
         None,
         RunOptions::default(),
     )
@@ -424,7 +424,7 @@ async fn contract_clickhouse_browse_totals() {
 #[ignore = "needs the engine's container (dev/compose)"]
 async fn contract_clickhouse_operations_for_the_views() {
     let (_manager, handle) = connected().await;
-    let args = serde_json::json!({ "database": "fosta_contract", "table": "contract_items" });
+    let args = serde_json::json!({ "database": "datastudio_contract", "table": "contract_items" });
     let parts = invoke(&handle, "clickhouse.parts", args.clone()).await.unwrap();
     assert_eq!(parts["columns"][0], "part");
     assert!(parts["rows"].as_array().is_some_and(|rows| !rows.is_empty()));
@@ -508,7 +508,7 @@ async fn contract_clickhouse_operations_for_the_views() {
 #[ignore = "needs the engine's container (dev/compose)"]
 async fn contract_clickhouse_errors_sessions_and_limits() {
     let (_manager, handle) = connected().await;
-    let session = open(&handle, Some("fosta_contract")).await;
+    let session = open(&handle, Some("datastudio_contract")).await;
     // The tab's database applies to unqualified names; a run's own database wins.
     let sink = run(&handle, &session, "SELECT count() FROM contract_items", None, RunOptions::default())
         .await
@@ -547,7 +547,7 @@ async fn contract_clickhouse_errors_sessions_and_limits() {
     let error = run(
         &handle,
         &session,
-        "INSERT INTO fosta_contract.contract_items (id, name, price, active) VALUES (9000, 'ro', 1, 1)",
+        "INSERT INTO datastudio_contract.contract_items (id, name, price, active) VALUES (9000, 'ro', 1, 1)",
         None,
         options.clone(),
     )
@@ -581,7 +581,7 @@ async fn contract_clickhouse_creates_databases() {
     let _ = run(
         &handle,
         &session,
-        "DROP DATABASE IF EXISTS fosta_contract_new SYNC",
+        "DROP DATABASE IF EXISTS datastudio_contract_new SYNC",
         None,
         RunOptions::default(),
     )
@@ -590,19 +590,19 @@ async fn contract_clickhouse_creates_databases() {
         .call("created", |conn| async move {
             conn.admin()
                 .unwrap()
-                .create_database("fosta_contract_new", None, &CallContext::default())
+                .create_database("datastudio_contract_new", None, &CallContext::default())
                 .await
         })
         .await
         .unwrap();
-    let sink = run(&handle, &session, "EXISTS DATABASE fosta_contract_new", None, RunOptions::default())
+    let sink = run(&handle, &session, "EXISTS DATABASE datastudio_contract_new", None, RunOptions::default())
         .await
         .unwrap();
     assert_eq!(text(&sink.sets[0].rows[0][0]), "1");
     run(
         &handle,
         &session,
-        "DROP DATABASE fosta_contract_new SYNC",
+        "DROP DATABASE datastudio_contract_new SYNC",
         None,
         RunOptions::default(),
     )
@@ -610,13 +610,13 @@ async fn contract_clickhouse_creates_databases() {
     .unwrap();
 }
 
-/// The shared vector suite on `fosta_contract.contract_vectors` (`Array(Float32)`, 4 dimensions, an HNSW cosine
+/// The shared vector suite on `datastudio_contract.contract_vectors` (`Array(Float32)`, 4 dimensions, an HNSW cosine
 /// `vector_similarity` index), plus ClickHouse specifics.
 #[tokio::test(flavor = "multi_thread")]
 #[ignore = "needs dev/compose/clickhouse.yml"]
 async fn contract_clickhouse_vector() {
     let vectors = VectorFixture {
-        database: "fosta_contract",
+        database: "datastudio_contract",
         table: "contract_vectors",
         column: "embedding",
         dims: 4,
@@ -643,7 +643,7 @@ async fn contract_clickhouse_vector() {
     let (_manager, handle) = connected().await;
     let session = open(&handle, None).await;
     let search = |table: &str, text: &str, metric: &str| {
-        serde_json::json!({ "database": "fosta_contract", "table": table, "column": "embedding", "k": 3, "metric": metric,
+        serde_json::json!({ "database": "datastudio_contract", "table": table, "column": "embedding", "k": 3, "metric": metric,
                             "filter": null, "query": { "kind": "literal", "text": text } })
     };
     // A query vector of integers is cast to Array(Float32), so the index still serves it.
@@ -675,7 +675,7 @@ async fn contract_clickhouse_vector() {
         params: "dims=4".into(),
     };
     let key = ["id".to_owned()];
-    let table = crate::contract::vector::TableRef::parse("fosta_contract", "contract_vectors", false);
+    let table = crate::contract::vector::TableRef::parse("datastudio_contract", "contract_vectors", false);
     let plan_of = |exact| {
         let request = crate::contract::vector::NearestRequest {
             column: &column,
@@ -700,14 +700,14 @@ async fn contract_clickhouse_vector() {
     // Rows of another length (an empty array) are skipped where no index serves the search, and where an index was
     // added after them (the search runs again without the index).
     for statement in [
-        "DROP TABLE IF EXISTS fosta_contract.contract_vectors_ragged SYNC",
-        "CREATE TABLE fosta_contract.contract_vectors_ragged (id Int32, embedding Array(Float32)) ENGINE = MergeTree ORDER BY id",
-        "INSERT INTO fosta_contract.contract_vectors_ragged VALUES (1, [1, 0, 0, 0]), (2, []), (3, [1, 2]), (4, [0, 1, 0, 0])",
-        "DROP TABLE IF EXISTS fosta_contract.contract_vectors_late SYNC",
-        "CREATE TABLE fosta_contract.contract_vectors_late (id Int32, embedding Array(Float32)) ENGINE = MergeTree ORDER BY id",
-        "INSERT INTO fosta_contract.contract_vectors_late VALUES (1, [1, 0, 0, 0]), (2, []), (3, [1, 2])",
-        "ALTER TABLE fosta_contract.contract_vectors_late ADD INDEX embedding_idx embedding TYPE vector_similarity('hnsw', 'cosineDistance', 4)",
-        "INSERT INTO fosta_contract.contract_vectors_late VALUES (4, [0, 1, 0, 0])",
+        "DROP TABLE IF EXISTS datastudio_contract.contract_vectors_ragged SYNC",
+        "CREATE TABLE datastudio_contract.contract_vectors_ragged (id Int32, embedding Array(Float32)) ENGINE = MergeTree ORDER BY id",
+        "INSERT INTO datastudio_contract.contract_vectors_ragged VALUES (1, [1, 0, 0, 0]), (2, []), (3, [1, 2]), (4, [0, 1, 0, 0])",
+        "DROP TABLE IF EXISTS datastudio_contract.contract_vectors_late SYNC",
+        "CREATE TABLE datastudio_contract.contract_vectors_late (id Int32, embedding Array(Float32)) ENGINE = MergeTree ORDER BY id",
+        "INSERT INTO datastudio_contract.contract_vectors_late VALUES (1, [1, 0, 0, 0]), (2, []), (3, [1, 2])",
+        "ALTER TABLE datastudio_contract.contract_vectors_late ADD INDEX embedding_idx embedding TYPE vector_similarity('hnsw', 'cosineDistance', 4)",
+        "INSERT INTO datastudio_contract.contract_vectors_late VALUES (4, [0, 1, 0, 0])",
     ] {
         run(&handle, &session, statement, None, RunOptions::default())
             .await
@@ -749,7 +749,7 @@ async fn contract_clickhouse_vector() {
         run(
             &handle,
             &session,
-            &format!("DROP TABLE fosta_contract.{table} SYNC"),
+            &format!("DROP TABLE datastudio_contract.{table} SYNC"),
             None,
             RunOptions::default(),
         )

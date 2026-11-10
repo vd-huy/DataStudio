@@ -166,7 +166,7 @@ pub fn new_query_id() -> String {
         .map(|d| d.as_nanos())
         .unwrap_or(0);
     format!(
-        "fosta-{:x}-{:x}-{}",
+        "datastudio-{:x}-{:x}-{}",
         std::process::id(),
         nanos,
         NEXT.fetch_add(1, Ordering::Relaxed)

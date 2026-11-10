@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Fosta Studio are documented in this file.
+All notable changes to DataStudio are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `COMMAND_FAILED` with the log tail; the log opens from the connection's menu.
 - **MCP server**: Claude Code, Claude Desktop, Cursor, VS Code and Zed can use saved connections without seeing passwords
   (Settings → MCP server, off by default). Streamable HTTP on `127.0.0.1` with a bearer token kept in Credential Manager, a stdio
-  bridge (`fosta-studio mcp`, `fosta-studio-server mcp`), and `/mcp` on the web edition behind its access token. Each workspace
+  bridge (`datastudio mcp`, `datastudio-server mcp`), and `/mcp` on the web edition behind its access token. Each workspace
   opts in (*MCP clients: Off / Read-only / Ask before writes*; Production and Read-only workspaces at most Read-only). Tools:
   `list_connections`, `list_databases`, `list_tables`, `describe_table`, `schema_overview`, `run_read_query` and `run_query`, which
   the user approves statement by statement in a dialog naming the client. Every call is audited; see [docs/mcp.md](docs/mcp.md).
@@ -40,9 +40,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - **Redis 8**: search indexes with `VECTOR` fields (FLAT or HNSW), KNN search.
   - **ClickHouse**: `Array(Float32)` columns and `vector_similarity` indexes.
 - **Tabs come back after a restart**: each workspace's open tabs (tables, query tabs with their text, language and database,
-  diagrams, command logs) and the active tab are saved in `fosta-studio-tabs.json` next to the config (the data volume on the web) and
+  diagrams, command logs) and the active tab are saved in `datastudio-tabs.json` next to the config (the data volume on the web) and
   restored on start. A restored tab connects only when it is shown; a tab whose connection is gone is dropped with a note. A file
-  that cannot be read is never overwritten; one that does not parse is moved to `fosta-studio-tabs.json.corrupt`. Two windows of the
+  that cannot be read is never overwritten; one that does not parse is moved to `datastudio-tabs.json.corrupt`. Two windows of the
   web edition merge their tabs instead of overwriting each other's (a tab closed in one window but open in the other comes back).
 - **Unsaved query text**: closing a query tab whose text was edited and not run asks first, and quitting lists those tabs (once:
   restored text left unchanged is not listed again). *Close all*, and deleting a workspace or a connection, ask one question for
@@ -162,7 +162,7 @@ First public release for Windows, plus a web edition for Docker.
 - **Saved secrets stay with their server**: changing a connection's host, port, user, SSH route or TLS settings (or an AI or
   embedding endpoint) without typing the password or key again forgets the saved one, so it is never sent to the new target.
   Certificate pinning checks the server's own certificate only.
-- **AI agent** (`Ctrl+Shift+A`) with the provider of your choice (Fosta, OpenAI, Gemini, Claude or any OpenAI-compatible endpoint such
+- **AI agent** (`Ctrl+Shift+A`) with the provider of your choice (OpenAI, Gemini, Claude or any OpenAI-compatible endpoint such
   as Ollama) and your own key. It looks up tables, columns and relations on every ready engine, writes and explains queries, fixes
   errors, reads task logs and opens tables, diagrams or query tabs.
   - Every code block has **Run**, Insert and New tab. Run is your own run: it follows the workspace safety rules and shows up to 200
@@ -170,8 +170,8 @@ First public release for Windows, plus a web edition for Docker.
   - An optional read-only query tool lets the assistant look at real data (one statement, at most 50 rows, 10 seconds, cancelled with
     Stop). Writes, schema changes and administration are refused and handed back as a code block. Each run is shown in the chat and
     written to the audit log. Turn it off in Settings or per workspace; the rows it reads go to your AI provider.
-- **Web edition**: run Fosta Studio in a browser from one Docker image
-  (`docker run -p 8080:8080 -v fosta-studio-data:/data ghcr.io/caothanhphatit/fosta-studio`), protected by an access token, with encrypted
+- **Web edition**: run DataStudio in a browser from one Docker image
+  (`docker run -p 8080:8080 -v datastudio-data:/data ghcr.io/vd-huy/datastudio`), protected by an access token, with encrypted
   secrets in the data volume and a sign-out that ends every session.
 - **Workspaces**: each workspace has its own connections, startup tasks and tabs. Switch from the rail or with `Ctrl+1…9`.
 - **Startup tasks**: background commands such as `kubectl port-forward` that start with their workspace, restart with backoff, show live
@@ -184,8 +184,8 @@ First public release for Windows, plus a web edition for Docker.
 - **Query tabs**: syntax highlighting, several statements per run, Begin / Commit / Rollback with an auto-commit switch, a warning
   before closing a tab with an open transaction, and per-tab history with search that stays on this machine.
 - **Design view** with columns and DDL, and an interactive **ER diagram** per database.
-- Light, dark and system themes. Settings are stored in `fosta-studio.json` next to the executable.
+- Light, dark and system themes. Settings are stored in `datastudio.json` next to the executable.
 
-[Unreleased]: https://github.com/caothanhphatit/fosta-dbclient/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/caothanhphatit/fosta-dbclient/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/caothanhphatit/fosta-dbclient/releases/tag/v0.1.0
+[Unreleased]: https://github.com/vd-huy/DataStudio/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/vd-huy/DataStudio/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/vd-huy/DataStudio/releases/tag/v0.1.0

@@ -1,5 +1,5 @@
 //! The engine contract (ADR 0001/0002): the types and traits every engine implements and the core, the commands and the
-//! UI speak. A future `fosta-engine` crate; it depends only on serde, async-trait, tokio, chrono, futures and
+//! UI speak. A future `datastudio-engine` crate; it depends only on serde, async-trait, tokio, chrono, futures and
 //! `crate::error` (a source-scanning test enforces it).
 //!
 //! - [`value`]: the typed cell (`{ "t", "v" }` on the wire) and parsing of user input.

@@ -143,7 +143,7 @@ export async function fetchModels(settings: AiSettings, key: string): Promise<st
 
 function systemPrompt(context: ChatRequest["context"]): string {
   const lines = [
-    "You are the assistant built into Fosta Studio, a desktop database client. You cannot run anything: put every runnable query in a fenced code block (```sql, or ```json for MongoDB commands) for the user to run from the editor. Answer in the user's language and keep prose short.",
+    "You are the assistant built into DataStudio, a desktop database client. You cannot run anything: put every runnable query in a fenced code block (```sql, or ```json for MongoDB commands) for the user to run from the editor. Answer in the user's language and keep prose short.",
     "Context:",
     context.connectionId
       ? `- Connection: ${context.connectionName ?? "connection"} (${context.driverLabel ?? "unknown"} ${context.serverVersion ?? ""})`

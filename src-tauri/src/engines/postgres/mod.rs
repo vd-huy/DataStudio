@@ -68,7 +68,7 @@ impl Default for PgOptions {
             database: "postgres".into(),
             tls: TlsMode::Disable,
             connect_timeout: Duration::from_secs(10),
-            application_name: "Fosta Studio".into(),
+            application_name: "DataStudio".into(),
             tls_spec: None,
         }
     }

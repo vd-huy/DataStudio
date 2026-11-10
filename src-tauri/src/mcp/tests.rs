@@ -108,7 +108,7 @@ struct Harness {
 impl Harness {
     fn new(name: &str) -> Self {
         let mut state = AppState::for_test(&format!("mcp-{name}"), Capabilities::desktop(), config());
-        let audit = std::env::temp_dir().join(format!("fosta-mcp-audit-{name}-{}.jsonl", std::process::id()));
+        let audit = std::env::temp_dir().join(format!("datastudio-mcp-audit-{name}-{}.jsonl", std::process::id()));
         let _ = std::fs::remove_file(&audit);
         state.engines.gateway = Gateway::with_audit(AuditLog::new(audit.clone(), 1000));
         let engine = FakeEngine::leak();
@@ -259,7 +259,7 @@ impl Server {
         .await;
         assert_eq!(status, 200, "{body}");
         assert_eq!(body["result"]["protocolVersion"], "2025-06-18", "the client's version is echoed");
-        assert_eq!(body["result"]["serverInfo"]["name"], "fosta-studio");
+        assert_eq!(body["result"]["serverInfo"]["name"], "datastudio");
         assert!(body["result"]["capabilities"]["tools"].is_object());
         headers[http::SESSION_HEADER].to_str().unwrap().to_owned()
     }
@@ -928,7 +928,7 @@ async fn every_tools_call_is_audited_also_when_refused() {
 #[tokio::test(flavor = "multi_thread")]
 async fn mcp_never_starts_a_workspace_command() {
     let harness = Harness::new("command");
-    let def = crate::connection_command::testing::command("pf", "fosta-no-such-program", &[], None, 5);
+    let def = crate::connection_command::testing::command("pf", "datastudio-no-such-program", &[], None, 5);
     change(&harness, |config| {
         let mut with_command = workspace("cmd", "laptop", SafetySettings::preset(Preset::Open), McpAccess::ReadOnly, &[]);
         with_command.tasks = vec![def.clone()];
@@ -965,7 +965,7 @@ async fn the_bridge_initializes_again_after_a_404() {
         "protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": { "name": "claude-ai", "version": "1" } } });
     relay.forward(initialize, &output).await;
     let answer: Value = serde_json::from_str(&lines.recv().await.unwrap()).unwrap();
-    assert_eq!(answer["result"]["serverInfo"]["name"], "fosta-studio", "{answer}");
+    assert_eq!(answer["result"]["serverInfo"]["name"], "datastudio", "{answer}");
     let first = relay.session().expect("a session");
 
     // The app restarted (or the session expired): the next request gets 404 and the bridge initializes again.

@@ -2,7 +2,7 @@
 //! (`src/core/contract.test.ts`) checks them against the TypeScript mirrors in `src/core/contract.ts`, so a change on
 //! either side that the other does not follow fails a test.
 //!
-//! When a contract type changes on purpose, regenerate with `FOSTA_UPDATE_FIXTURES=1 cargo test contract::fixtures`.
+//! When a contract type changes on purpose, regenerate with `DATASTUDIO_UPDATE_FIXTURES=1 cargo test contract::fixtures`.
 
 use std::path::PathBuf;
 
@@ -393,7 +393,7 @@ fn fixtures() -> Vec<(&'static str, serde_json::Value)> {
 
 #[test]
 fn contract_fixtures_match_the_checked_in_json() {
-    let update = std::env::var("FOSTA_UPDATE_FIXTURES").is_ok_and(|v| v == "1");
+    let update = std::env::var("DATASTUDIO_UPDATE_FIXTURES").is_ok_and(|v| v == "1");
     let dir = dir();
     let mut stale = Vec::new();
     for (name, value) in fixtures() {
@@ -408,7 +408,7 @@ fn contract_fixtures_match_the_checked_in_json() {
     }
     assert!(
         stale.is_empty(),
-        "contract fixtures changed: {stale:?}. If intended, run FOSTA_UPDATE_FIXTURES=1 cargo test contract::fixtures and update src/core/contract.ts"
+        "contract fixtures changed: {stale:?}. If intended, run DATASTUDIO_UPDATE_FIXTURES=1 cargo test contract::fixtures and update src/core/contract.ts"
     );
 }
 

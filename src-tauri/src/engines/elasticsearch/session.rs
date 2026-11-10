@@ -143,7 +143,7 @@ async fn cancel_tasks(engine: &EsEngine, opaque_id: &str) {
 impl EsSession {
     /// Sends a request; a cancel drops it at once.
     async fn send(&self, mut request: EsRequest, cancel: &mut watch::Receiver<u64>) -> AppResult<EsResponse> {
-        let opaque_id = format!("fosta-{}-{}", std::process::id(), NEXT_RUN.fetch_add(1, Ordering::Relaxed));
+        let opaque_id = format!("datastudio-{}-{}", std::process::id(), NEXT_RUN.fetch_add(1, Ordering::Relaxed));
         request.opaque_id = Some(opaque_id.clone());
         self.state.set_in_flight(Some(opaque_id));
         let outcome = tokio::select! {

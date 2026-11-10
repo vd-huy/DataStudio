@@ -273,7 +273,7 @@ delete products
         assert!(requests[0].classification.refused.is_some());
         let error = requests[0].to_es_request(Duration::from_secs(1), None).unwrap_err();
         assert_eq!(error.code(), Some("INVALID_REQUEST"));
-        assert!(requests[1].to_es_request(Duration::from_secs(1), Some("fosta-1".into())).is_ok());
+        assert!(requests[1].to_es_request(Duration::from_secs(1), Some("datastudio-1".into())).is_ok());
         let kibana = parse("GET kbn:/api/status").unwrap();
         assert!(kibana[0].to_es_request(Duration::from_secs(1), None).is_err());
     }
@@ -281,29 +281,29 @@ delete products
     #[test]
     fn parses_bulk_with_raw_strings_between_requests() {
         let input = r#"
-PUT fosta-test-console
+PUT datastudio-test-console
 { "settings": { "number_of_replicas": 0 } }
 
 POST _bulk?refresh=true
-{ "index": { "_index": "fosta-test-console", "_id": "1" } }
+{ "index": { "_index": "datastudio-test-console", "_id": "1" } }
 { "title": """multi
 line""" }
-{ "index": { "_index": "fosta-test-console", "_id": "2" } }
+{ "index": { "_index": "datastudio-test-console", "_id": "2" } }
 { "title": "two" }
 
-GET fosta-test-console/_doc/404
+GET datastudio-test-console/_doc/404
 
-DELETE fosta-test-console
+DELETE datastudio-test-console
 "#;
         let requests = parse(input).unwrap();
         let summary: Vec<_> = requests.iter().map(|r| format!("{} {} {}", r.line, r.method, r.path)).collect();
         assert_eq!(
             summary,
             vec![
-                "2 PUT /fosta-test-console",
+                "2 PUT /datastudio-test-console",
                 "5 POST /_bulk?refresh=true",
-                "12 GET /fosta-test-console/_doc/404",
-                "14 DELETE /fosta-test-console"
+                "12 GET /datastudio-test-console/_doc/404",
+                "14 DELETE /datastudio-test-console"
             ]
         );
         let Some(EsBody::NdJson(lines)) = &requests[1].body else {

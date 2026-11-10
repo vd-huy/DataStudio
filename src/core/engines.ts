@@ -12,7 +12,7 @@ import type { ConnectionProfile } from "./types";
 export type EngineInfo = EngineDescriptor & { unknown?: true };
 
 /** Set to "1" in localStorage to list planned (not yet connectable) engines in pickers. */
-export const SHOW_PLANNED_KEY = "fosta.dev.showPlannedEngines";
+export const SHOW_PLANNED_KEY = "datastudio.dev.showPlannedEngines";
 
 let descriptors: EngineDescriptor[] = [];
 let byId = new Map<string, EngineDescriptor>();

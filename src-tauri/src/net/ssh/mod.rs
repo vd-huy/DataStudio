@@ -385,7 +385,7 @@ mod tests {
 
     fn ctx() -> NetContext {
         NetContext {
-            known_hosts: std::env::temp_dir().join("fosta-net-unit-known_hosts"),
+            known_hosts: std::env::temp_dir().join("datastudio-net-unit-known_hosts"),
             user_known_hosts: None,
             connect_timeout: Duration::from_secs(5),
         }

@@ -54,7 +54,7 @@ function snippet(title: string, text: string): HTMLElement {
 
 function tokenHint(web: boolean, enabled: boolean): string {
   if (!enabled) return "Created when the server is turned on.";
-  if (web) return "MCP clients only: it never signs in to Fosta Studio. Kept in the server's encrypted secret store. Treat it like a password.";
+  if (web) return "MCP clients only: it never signs in to DataStudio. Kept in the server's encrypted secret store. Treat it like a password.";
   return "Kept in Windows Credential Manager. Treat it like a password.";
 }
 
@@ -75,7 +75,7 @@ export async function openMcpSettings(): Promise<void> {
   const url = web ? webEndpoint(window.location.origin, current.url) : current.url;
   const renderSnippets = () => {
     const shown = token || "<token>";
-    const bridge = web ? ["docker", "exec", "-i", "<container>", "/app/fosta-studio-server", "mcp"] : current.bridgeCommand;
+    const bridge = web ? ["docker", "exec", "-i", "<container>", "/app/datastudio-server", "mcp"] : current.bridgeCommand;
     snippets.replaceChildren(
       snippet("Claude Code", claudeCodeCommand(url, shown)),
       snippet("Cursor (mcp.json)", cursorConfig(url, shown)),

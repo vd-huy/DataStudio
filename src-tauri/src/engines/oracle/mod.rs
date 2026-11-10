@@ -184,7 +184,7 @@ impl OraOptions {
 /// The error for a machine without Oracle Instant Client.
 pub fn missing_client_error(detail: &str) -> EngineError {
     EngineError::connect(format!(
-        "Oracle Instant Client was not found. Let Fosta Studio download it, or install Instant Client 19c or newer (Basic or \
+        "Oracle Instant Client was not found. Let DataStudio download it, or install Instant Client 19c or newer (Basic or \
          Basic Light) from {INSTANT_CLIENT_URL} and set its folder in the connection's Advanced settings or on PATH. ({detail})"
     ))
 }
@@ -522,7 +522,7 @@ impl OraEngine {
 /// The optimizer's cardinality for the filter (EXPLAIN PLAN into the session's PLAN_TABLE). EXPLAIN PLAN takes no bind values
 /// (binding fails with "invalid bind index"): the placeholders stay in the text and the optimizer estimates without them.
 fn estimate(c: &Connection, obj: &ObjectRef, built: &sqlbuild::BrowseSql) -> Option<i64> {
-    let id = format!("fosta{}", std::process::id());
+    let id = format!("datastudio{}", std::process::id());
     let sql = format!(
         "EXPLAIN PLAN SET STATEMENT_ID = '{id}' FOR SELECT 1 FROM {} WHERE {}",
         OraDialect.table_sql(obj),

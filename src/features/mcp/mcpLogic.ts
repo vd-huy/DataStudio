@@ -31,18 +31,18 @@ function shellQuote(value: string): string {
 
 /** The `claude mcp add` command for the HTTP endpoint. */
 export function claudeCodeCommand(url: string, token: string): string {
-  return `claude mcp add --transport http fosta ${url} --header ${shellQuote(`Authorization: Bearer ${token}`)}`;
+  return `claude mcp add --transport http datastudio ${url} --header ${shellQuote(`Authorization: Bearer ${token}`)}`;
 }
 
 /** Cursor's `mcp.json` (also VS Code's `servers` shape with `type`). */
 export function cursorConfig(url: string, token: string): string {
-  return JSON.stringify({ mcpServers: { fosta: { url, headers: { Authorization: `Bearer ${token}` } } } }, null, 2);
+  return JSON.stringify({ mcpServers: { datastudio: { url, headers: { Authorization: `Bearer ${token}` } } } }, null, 2);
 }
 
 /** Claude Desktop's `claude_desktop_config.json`: the stdio bridge, which reads the token itself. */
 export function claudeDesktopConfig(command: string[]): string {
-  const [program = "fosta-studio", ...args] = command;
-  return JSON.stringify({ mcpServers: { fosta: { command: program, args } } }, null, 2);
+  const [program = "datastudio", ...args] = command;
+  return JSON.stringify({ mcpServers: { datastudio: { command: program, args } } }, null, 2);
 }
 
 /** The web edition's endpoint, absolute. */

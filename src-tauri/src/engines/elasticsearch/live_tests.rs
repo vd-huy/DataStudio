@@ -21,7 +21,7 @@ use super::{
 
 const ES_URL: &str = "https://127.0.0.1:9200";
 const OS_URL: &str = "http://127.0.0.1:9201";
-const TEST_INDEX: &str = "fosta-test-docs";
+const TEST_INDEX: &str = "datastudio-test-docs";
 
 fn es_options() -> EsConnectOptions {
     let mut options = EsConnectOptions::single(ES_URL);
@@ -45,7 +45,7 @@ fn ca_pem() -> Option<String> {
     let output = std::process::Command::new("docker")
         .args([
             "exec",
-            "fosta-dev-nosql-elasticsearch-1",
+            "datastudio-dev-nosql-elasticsearch-1",
             "cat",
             "/usr/share/elasticsearch/config/certs/http_ca.crt",
         ])
@@ -150,12 +150,12 @@ async fn live_engine_elasticsearch_catalog_and_mappings() {
         .find(|template| template.name == "logs-template")
         .unwrap();
     assert!(template.data_stream);
-    assert_eq!(template.composed_of, vec!["fosta-logs-mappings"]);
+    assert_eq!(template.composed_of, vec!["datastudio-logs-mappings"]);
     assert!(catalog
         .component_templates
         .items
         .iter()
-        .any(|template| template.name == "fosta-logs-mappings"));
+        .any(|template| template.name == "datastudio-logs-mappings"));
     let pipeline = catalog
         .pipelines
         .items
@@ -526,22 +526,22 @@ async fn live_engine_elasticsearch_dev_tools_console() {
     let engine = es().await;
     let input = r#"
 # Dev Tools console
-PUT fosta-test-console
+PUT datastudio-test-console
 { "settings": { "number_of_replicas": 0 } }
 
 POST _bulk?refresh=true
-{ "index": { "_index": "fosta-test-console", "_id": "1" } }
+{ "index": { "_index": "datastudio-test-console", "_id": "1" } }
 { "title": """multi
 line""" }
-{ "index": { "_index": "fosta-test-console", "_id": "2" } }
+{ "index": { "_index": "datastudio-test-console", "_id": "2" } }
 { "title": "two" }
 
-GET fosta-test-console/_search
+GET datastudio-test-console/_search
 { "query": { "match_all": {} } }
 
-GET fosta-test-console/_doc/404
+GET datastudio-test-console/_doc/404
 
-DELETE fosta-test-console
+DELETE datastudio-test-console
 "#;
     let results = engine.run_console(input, Duration::from_secs(30)).await.unwrap();
     assert_eq!(results.len(), 5);

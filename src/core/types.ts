@@ -58,7 +58,7 @@ export interface CategoryRules {
   admin: SafetyAction;
 }
 
-/** The `safety` object of a workspace in fosta-studio.json. */
+/** The `safety` object of a workspace in datastudio.json. */
 export interface SafetySettings {
   preset: SafetyPreset;
   /** The Custom matrix (kept while another preset is selected). */
@@ -211,7 +211,7 @@ export interface Workspace extends WorkspaceMeta {
   tasks: TaskDef[];
 }
 
-export type AiProvider = "fosta" | "openai" | "gemini" | "anthropic" | "custom";
+export type AiProvider = "openai" | "gemini" | "anthropic" | "custom";
 
 export interface AiSettings {
   provider: AiProvider;
@@ -485,7 +485,7 @@ export interface HistoryResult {
   truncated: boolean;
 }
 
-/** A run in a query tab, stored by the backend in fosta-studio-history.jsonl on this machine. */
+/** A run in a query tab, stored by the backend in datastudio-history.jsonl on this machine. */
 export interface HistoryEntry {
   /** Assigned by the backend; empty when appending. */
   id: string;

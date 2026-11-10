@@ -92,7 +92,7 @@ describe("formatError", () => {
     expect(text).toContain("Retryable: no");
     expect(text).toContain('"kind": "server"');
     expect(text).toContain("--- Diagnostics ---");
-    expect(text).toContain("Fosta Studio 0.2.0 (desktop)");
+    expect(text).toContain("DataStudio 0.2.0 (desktop)");
     expect(text).toContain("Open connections: mariadb 11.8.2");
   });
 

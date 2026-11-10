@@ -1,12 +1,12 @@
 [package]
-name = "fosta-studio"
+name = "datastudio"
 version = "0.2.0"
 license = "GPL-3.0-only"
-repository = "https://github.com/caothanhphatit/fosta-dbclient"
+repository = "https://github.com/vd-huy/DataStudio"
 description = "Lightweight desktop database client for MariaDB, MySQL, SQL Server and MongoDB, with workspaces and workspace commands"
 edition = "2021"
 rust-version = "1.88"
-default-run = "fosta-studio"
+default-run = "datastudio"
 
 # The backend core (config, secrets, drivers, assistant, history, tasks and the command bodies) is a library
 # with two front-ends: the Tauri desktop app (`desktop`, the default) and the web server of the Docker image
@@ -50,16 +50,16 @@ engine-redis = ["dep:redis"]
 engine-elastic = []
 
 [lib]
-name = "fosta_studio"
+name = "datastudio"
 path = "src/lib.rs"
 
 [[bin]]
-name = "fosta-studio"
+name = "datastudio"
 path = "src/main.rs"
 required-features = ["desktop"]
 
 [[bin]]
-name = "fosta-studio-server"
+name = "datastudio-server"
 path = "src/server/main.rs"
 required-features = ["web"]
 

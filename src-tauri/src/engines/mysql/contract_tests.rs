@@ -1,6 +1,6 @@
 //! Contract suites for MariaDB against `dev/compose/mariadb.yml` (data from `dev/seed/mariadb/contract.sql`), plus
 //! MariaDB-specific checks on the `shop` demo database (`dev/seed/mariadb.sql`): typed values, transactions, the schema
-//! graph and the vector operations. Override the server with FOSTA_CONTRACT_MARIADB_HOST / _PORT / _USER / _PASSWORD.
+//! graph and the vector operations. Override the server with DATASTUDIO_CONTRACT_MARIADB_HOST / _PORT / _USER / _PASSWORD.
 
 use std::{sync::Arc, time::Duration};
 
@@ -22,7 +22,7 @@ use crate::{
 };
 
 fn env(name: &str, default: &str) -> String {
-    std::env::var(format!("FOSTA_CONTRACT_MARIADB_{name}")).unwrap_or_else(|_| default.to_owned())
+    std::env::var(format!("DATASTUDIO_CONTRACT_MARIADB_{name}")).unwrap_or_else(|_| default.to_owned())
 }
 
 fn seed() -> Vec<String> {
@@ -61,8 +61,8 @@ pub fn fixture() -> Fixture {
         // The seed creates the database, so connect without one.
         spec: spec(None),
         secrets: secrets(),
-        table: ObjectRef::new(Some("fosta_contract"), None, "contract_items", NodeKind::TABLE),
-        child: ObjectRef::new(Some("fosta_contract"), None, "contract_children", NodeKind::TABLE),
+        table: ObjectRef::new(Some("datastudio_contract"), None, "contract_items", NodeKind::TABLE),
+        child: ObjectRef::new(Some("datastudio_contract"), None, "contract_children", NodeKind::TABLE),
         key_column: "id",
         name_column: "name",
         seed: seed(),
@@ -70,10 +70,10 @@ pub fn fixture() -> Fixture {
         key_filter,
         sleep_statement: Some("SELECT SLEEP(30)"),
         syntax_error: "SELEC * FORM contract_items",
-        constraint_violation: "INSERT INTO fosta_contract.contract_items (id, name, price, active) VALUES (1, 'dup', 1, 1)",
-        multi_statement: "SELECT 1; SELECT id, name FROM fosta_contract.contract_items ORDER BY id LIMIT 3",
-        insert_probe: "INSERT INTO fosta_contract.contract_items (id, name, price, active) VALUES (5000, 'probe', 1, 1)",
-        count_probe: "SELECT COUNT(*) FROM fosta_contract.contract_items WHERE id = 5000",
+        constraint_violation: "INSERT INTO datastudio_contract.contract_items (id, name, price, active) VALUES (1, 'dup', 1, 1)",
+        multi_statement: "SELECT 1; SELECT id, name FROM datastudio_contract.contract_items ORDER BY id LIMIT 3",
+        insert_probe: "INSERT INTO datastudio_contract.contract_items (id, name, price, active) VALUES (5000, 'probe', 1, 1)",
+        count_probe: "SELECT COUNT(*) FROM datastudio_contract.contract_items WHERE id = 5000",
         classify_samples: &[
             ("SELECT * FROM t", Category::Read),
             ("UPDATE t SET a = 1 WHERE id = 2", Category::Write),
@@ -325,7 +325,7 @@ async fn contract_mariadb_typed_values() {
     let tab = session(&handle).await;
     let mut sink = CollectSink::default();
     let query = RunRequest {
-        text: "SELECT * FROM fosta_contract.contract_items WHERE id = 6".into(),
+        text: "SELECT * FROM datastudio_contract.contract_items WHERE id = 6".into(),
         database: None,
         offset: 0,
     };
@@ -381,7 +381,7 @@ async fn contract_mariadb_transactions_and_backstops() {
             let sink = run(
                 &handle,
                 &tab,
-                "SELECT COUNT(*) FROM fosta_contract.contract_children WHERE id > 900",
+                "SELECT COUNT(*) FROM datastudio_contract.contract_children WHERE id > 900",
                 RunOptions::default(),
             )
             .await
@@ -395,7 +395,7 @@ async fn contract_mariadb_transactions_and_backstops() {
     run(
         &handle,
         &tab,
-        "INSERT INTO fosta_contract.contract_children VALUES (901, 1, 'tx')",
+        "INSERT INTO datastudio_contract.contract_children VALUES (901, 1, 'tx')",
         options.clone(),
     )
     .await
@@ -412,7 +412,7 @@ async fn contract_mariadb_transactions_and_backstops() {
     run(
         &handle,
         &tab,
-        "INSERT INTO fosta_contract.contract_children VALUES (902, 1, 'tx')",
+        "INSERT INTO datastudio_contract.contract_children VALUES (902, 1, 'tx')",
         options.clone(),
     )
     .await
@@ -431,7 +431,7 @@ async fn contract_mariadb_transactions_and_backstops() {
     let refused = run(
         &handle,
         &tab,
-        "INSERT INTO fosta_contract.contract_children VALUES (903, 1, 'ro')",
+        "INSERT INTO datastudio_contract.contract_children VALUES (903, 1, 'ro')",
         read_only,
     )
     .await

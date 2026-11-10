@@ -3,7 +3,7 @@
 //! Two files are consulted: the app's own file (read and written) and, read only, the user's
 //! `~/.ssh/known_hosts`, so hosts the user already trusts with OpenSSH work without a prompt. The app file
 //! is authoritative: when it has an entry for the host, the user file is not looked at. That way a key the
-//! user re-confirmed in Fosta wins over a stale OpenSSH entry, and nothing is ever written to `~/.ssh`.
+//! user re-confirmed in DataStudio wins over a stale OpenSSH entry, and nothing is ever written to `~/.ssh`.
 
 use std::borrow::Cow;
 use std::io::Write;
@@ -211,7 +211,7 @@ mod tests {
 
     impl Files {
         fn new(tag: &str) -> Self {
-            let dir = std::env::temp_dir().join(format!("fosta-net-known-{tag}-{}", std::process::id()));
+            let dir = std::env::temp_dir().join(format!("datastudio-net-known-{tag}-{}", std::process::id()));
             let _ = std::fs::remove_dir_all(&dir);
             std::fs::create_dir_all(&dir).unwrap();
             Self { dir }

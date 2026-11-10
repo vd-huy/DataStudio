@@ -3,7 +3,7 @@
 # docker compose -f dev/compose/postgres.yml up -d --wait
 # 127.0.0.1:5432  postgres / studio-root  database shop (schemas public, sales)
 
-name: fosta-dev-sql
+name: datastudio-dev-sql
 
 services:
   postgres:

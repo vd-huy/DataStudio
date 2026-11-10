@@ -402,15 +402,15 @@ mod tests {
     }
 
     fn pki(tag: &str) -> Pki {
-        let dir = std::env::temp_dir().join(format!("fosta-net-tls-{tag}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("datastudio-net-tls-{tag}-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
-        let server_ca = ca("Fosta Test CA");
+        let server_ca = ca("DataStudio Test CA");
         let server_key = KeyPair::generate().unwrap();
         let server_cert = CertificateParams::new(vec!["db.test".to_string(), "127.0.0.1".to_string()])
             .unwrap()
             .signed_by(&server_key, &server_ca)
             .unwrap();
-        let client_ca = ca("Fosta Client CA");
+        let client_ca = ca("DataStudio Client CA");
         let client_key = KeyPair::generate().unwrap();
         let client_cert = CertificateParams::new(vec!["client".to_string()])
             .unwrap()

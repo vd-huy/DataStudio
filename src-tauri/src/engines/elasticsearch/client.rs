@@ -97,7 +97,7 @@ impl EsClient {
             .connect_timeout(Duration::from_millis(
                 options.connect_timeout_ms.unwrap_or(DEFAULT_CONNECT_TIMEOUT_MS),
             ))
-            .user_agent(concat!("fosta-studio/", env!("CARGO_PKG_VERSION")));
+            .user_agent(concat!("datastudio/", env!("CARGO_PKG_VERSION")));
         if let Some(config) = tls {
             builder = builder.use_preconfigured_tls(config);
         } else if let Some(fingerprint) = options.tls.ca_fingerprint.as_deref().filter(|text| !text.trim().is_empty()) {

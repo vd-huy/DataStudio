@@ -262,7 +262,7 @@ fn index_in_plan(objects: &[(String, String)], known: &[&str]) -> Option<String>
 
 /// The statement id of this process's rows in PLAN_TABLE.
 fn plan_id() -> String {
-    format!("fosta-vector-{}", std::process::id())
+    format!("datastudio-vector-{}", std::process::id())
 }
 
 /// A plan: its objects (`OPERATION`, `OBJECT_NAME`) and its DBMS_XPLAN text.

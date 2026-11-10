@@ -329,9 +329,9 @@ mod tests {
     #[tokio::test]
     async fn a_missing_program_fails() {
         let tasks = manager();
-        let def = command("missing", "fosta-no-such-program", &[], None, 5);
+        let def = command("missing", "datastudio-no-such-program", &[], None, 5);
         let error = acquire(&tasks, "a", &def, ReadyCheck::Spawned).await.unwrap_err();
-        assert!(error.to_string().contains("cannot start 'fosta-no-such-program'"), "{error}");
+        assert!(error.to_string().contains("cannot start 'datastudio-no-such-program'"), "{error}");
     }
 
     #[tokio::test]

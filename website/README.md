@@ -1,6 +1,6 @@
-# Fosta Studio website
+# DataStudio website
 
-The marketing page for Fosta Studio, published at https://dbcl.fosta.app in English (default, at `/`), Vietnamese (`/vi/`),
+The marketing page for DataStudio, published at https://dbcl.fosta.app in English (default, at `/`), Vietnamese (`/vi/`),
 Simplified Chinese (`/zh/`) and Japanese (`/ja/`). It is a static site with no dependencies. A small Node script renders the
 four languages from English templates; nothing is translated in the browser.
 
@@ -130,7 +130,7 @@ Vietnamese).
 ### Language choice
 
 The header menu and footer list link to every language (each link has `lang` and `hreflang`). A click is remembered in
-`localStorage` (`fosta-studio-site-lang`). On the English page only, `main.js` shows a small dismissible banner ("Xem bằng
+`localStorage` (`datastudio-site-lang`). On the English page only, `main.js` shows a small dismissible banner ("Xem bằng
 tiếng Việt?") when the visitor previously picked another language, or has never picked one and their browser prefers
 Vietnamese, Chinese (Simplified) or Japanese over English. Nothing ever redirects.
 
@@ -193,7 +193,7 @@ Server layout (installed once; kept next to the other sites without touching the
 ## Editing notes
 
 - Stick to facts from `README.md`, `ROADMAP.md` and `ARCHITECTURE.md`. Roadmap items are labelled "coming".
-- Links to repository files must be absolute GitHub URLs (`https://github.com/caothanhphatit/fosta-dbclient/blob/main/...`),
+- Links to repository files must be absolute GitHub URLs (`https://github.com/vd-huy/DataStudio/blob/main/...`),
   because the site is served from dbcl.fosta.app, not from the repository.
 - Engine logos in the home page chip strip are Simple Icons marks (CC0, v16.35.0), inlined as `i-db-*` symbols; Oracle and SQL
   Server are not in Simple Icons and use the app's own glyphs. They sit on a light tile in both themes. Keep the trademark

@@ -302,7 +302,7 @@ pub(crate) fn protocol_error(error: russh::Error, peer: &Peer) -> AppError {
         ),
         E::NoCommonAlgo { kind, ours, theirs } => ssh_error(
             SSH_PROTOCOL,
-            format!("The {label} supports no {kind:?} algorithm Fosta knows. Ours: {ours:?}; the server's: {theirs:?}."),
+            format!("The {label} supports no {kind:?} algorithm DataStudio knows. Ours: {ours:?}; the server's: {theirs:?}."),
             peer.detail(),
         ),
         other => ssh_error(SSH_PROTOCOL, format!("SSH error with the {label}: {other}"), peer.detail()),
@@ -327,7 +327,7 @@ fn auth_outcome(result: AuthResult, user: &str, auth: &SshAuth, peer: &Peer) -> 
             let methods: Vec<&'static str> = remaining_methods.iter().map(<&'static str>::from).collect();
             let message = if partial_success {
                 format!(
-                    "The {} accepted the {} but asks for a second factor ({}), which Fosta does not support yet.",
+                    "The {} accepted the {} but asks for a second factor ({}), which DataStudio does not support yet.",
                     peer.label(),
                     method_name(auth),
                     methods.join(", ")

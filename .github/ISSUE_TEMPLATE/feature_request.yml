@@ -1,5 +1,5 @@
 name: Feature request
-description: An idea for something Fosta Studio should do.
+description: An idea for something DataStudio should do.
 labels: ["enhancement"]
 body:
   - type: textarea

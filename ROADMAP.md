@@ -1,6 +1,6 @@
 # Roadmap
 
-Where Fosta Studio is heading. Plans change; open an issue to discuss an item or to offer help before starting on it.
+Where DataStudio is heading. Plans change; open an issue to discuss an item or to offer help before starting on it.
 
 ## Available today
 
@@ -17,7 +17,7 @@ Where Fosta Studio is heading. Plans change; open an issue to discuss an item or
 - A built-in AI agent with the model of your choice: it explores your schema, writes and explains queries, runs code blocks under the
   safety rules, optionally runs read-only queries itself, and opens views for you.
 - Vector search tools for MariaDB and PostgreSQL (pgvector).
-- A web edition: one Docker image to use Fosta Studio in a browser.
+- A web edition: one Docker image to use DataStudio in a browser.
 
 ## Next
 

@@ -38,7 +38,7 @@ function instructions(web: boolean): HTMLElement {
       {},
       web
         ? "Unpack it on the server (Docker: into /data) and enter that folder below, or add it to LD_LIBRARY_PATH and restart."
-        : "Unpack it and enter that folder below, or add it to PATH and restart Fosta Studio.",
+        : "Unpack it and enter that folder below, or add it to PATH and restart DataStudio.",
     ),
     h("li", {}, "On Linux the client also needs libaio (libaio1 or libaio1t64)."),
   );
@@ -49,7 +49,7 @@ export async function promptForClient(error: AppError, context: ConnectErrorCont
   const offer = offerOf(error, status);
   const web = capabilities().edition === "web";
   const kind = clientErrorKind(error);
-  const where = web ? "on the Fosta Studio server" : "on this computer";
+  const where = web ? "on the DataStudio server" : "on this computer";
 
   const message = h(
     "p",

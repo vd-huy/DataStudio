@@ -1,5 +1,5 @@
 //! Application log: `tracing` events written to a daily rolling file in the data directory (14 files kept), plus stderr
-//! in debug builds. The level comes from `FOSTA_STUDIO_LOG` (an `EnvFilter` directive, default `info`) and can be raised
+//! in debug builds. The level comes from `DATASTUDIO_LOG` (an `EnvFilter` directive, default `info`) and can be raised
 //! to `debug` at run time from Settings.
 //!
 //! What is logged: one span per command and per engine call (engine id, a hash of the connection id, the operation, its
@@ -29,8 +29,8 @@ use tracing_subscriber::{
 
 use crate::{error::AppResult, lock::lock};
 
-/// Environment variable with the log filter (`info`, `debug`, `fosta_studio=trace,warn`, …).
-pub const LOG_ENV: &str = "FOSTA_STUDIO_LOG";
+/// Environment variable with the log filter (`info`, `debug`, `datastudio=trace,warn`, …).
+pub const LOG_ENV: &str = "DATASTUDIO_LOG";
 const RECENT_ERRORS: usize = 50;
 const STATEMENT_EXCERPT: usize = 300;
 const KEEP_FILES: usize = 14;
@@ -38,7 +38,7 @@ const KEEP_FILES: usize = 14;
 /// Where the log files go for each front-end.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LogLocation {
-    /// `<data dir>/fosta-studio-logs`, next to `fosta-studio.json`.
+    /// `<data dir>/datastudio-logs`, next to `datastudio.json`.
     Desktop,
     /// `<data dir>/logs` (`/data/logs` in the Docker image).
     Web,
@@ -68,7 +68,7 @@ pub struct RecentError {
 /// directory without changing anything. Returns the log directory.
 pub fn init(data_dir: &Path, location: LogLocation) -> PathBuf {
     let dir = match location {
-        LogLocation::Desktop => data_dir.join("fosta-studio-logs"),
+        LogLocation::Desktop => data_dir.join("datastudio-logs"),
         LogLocation::Web => data_dir.join("logs"),
     };
     if let Some(state) = STATE.get() {
@@ -83,7 +83,7 @@ pub fn init(data_dir: &Path, location: LogLocation) -> PathBuf {
     let file = std::fs::create_dir_all(&dir).ok().and_then(|_| {
         tracing_appender::rolling::Builder::new()
             .rotation(tracing_appender::rolling::Rotation::DAILY)
-            .filename_prefix("fosta-studio")
+            .filename_prefix("datastudio")
             .filename_suffix("log")
             .max_log_files(KEEP_FILES)
             .build(&dir)
@@ -107,7 +107,7 @@ pub fn init(data_dir: &Path, location: LogLocation) -> PathBuf {
         tracing::info!(
             version = env!("CARGO_PKG_VERSION"),
             os = std::env::consts::OS,
-            "Fosta Studio started"
+            "DataStudio started"
         );
     }
     dir
@@ -118,7 +118,7 @@ pub fn log_dir() -> Option<PathBuf> {
     STATE.get().map(|state| state.dir.clone())
 }
 
-/// Raises the level to `debug` (Settings → Debug logging) or returns to `FOSTA_STUDIO_LOG`.
+/// Raises the level to `debug` (Settings → Debug logging) or returns to `DATASTUDIO_LOG`.
 pub fn set_debug(enabled: bool) -> AppResult<()> {
     let Some(state) = STATE.get() else { return Ok(()) };
     let directive = if enabled { "debug" } else { state.base.as_str() };

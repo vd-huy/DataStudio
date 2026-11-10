@@ -8,7 +8,7 @@
       data-i18n-attr="attr:key; attr:key" (attributes); the strings live in website/i18n/*.json.
       Run `node website/build.mjs <outdir>` to render every language; see website/README.md.
     -->
-    <title data-i18n="meta.title">Fosta Studio: a small, fast, open-source database client</title>
+    <title data-i18n="meta.title">DataStudio: a small, fast, open-source database client</title>
     <meta
       name="description"
       data-i18n-attr="content:meta.description"
@@ -22,8 +22,8 @@
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Fosta Studio" />
-    <meta property="og:title" data-i18n-attr="content:meta.title" content="Fosta Studio: a small, fast, open-source database client" />
+    <meta property="og:site_name" content="DataStudio" />
+    <meta property="og:title" data-i18n-attr="content:meta.title" content="DataStudio: a small, fast, open-source database client" />
     <meta
       property="og:description"
       data-i18n-attr="content:meta.socialDescription"
@@ -37,10 +37,10 @@
     <meta
       property="og:image:alt"
       data-i18n-attr="content:meta.ogImageAlt"
-      content="Fosta Studio logo, an F made of data rows, with the text: free, open-source database client for 11 engines, built in Rust"
+      content="DataStudio logo, an F made of data rows, with the text: free, open-source database client for 11 engines, built in Rust"
     />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" data-i18n-attr="content:meta.title" content="Fosta Studio: a small, fast, open-source database client" />
+    <meta name="twitter:title" data-i18n-attr="content:meta.title" content="DataStudio: a small, fast, open-source database client" />
     <meta
       name="twitter:description"
       data-i18n-attr="content:meta.socialDescription"
@@ -213,9 +213,9 @@
 
     <header class="site-header">
       <div class="container header-inner">
-        <a class="brand" href="#top" data-i18n-attr="aria-label:a11y.backToTop" aria-label="Fosta Studio, back to top">
+        <a class="brand" href="#top" data-i18n-attr="aria-label:a11y.backToTop" aria-label="DataStudio, back to top">
           <img src="assets/logo.svg" alt="" width="28" height="28" />
-          <span>Fosta Studio</span>
+          <span>DataStudio</span>
         </a>
         <nav class="site-nav" data-i18n-attr="aria-label:nav.label" aria-label="Primary">
           <ul>
@@ -226,7 +226,7 @@
             <li class="nav-optional"><a href="databases/" data-i18n="nav.databases">Databases</a></li>
             <li class="nav-optional"><a href="donate/" data-i18n="nav.support">Support</a></li>
             <li>
-              <a class="nav-github" href="https://github.com/caothanhphatit/fosta-dbclient">
+              <a class="nav-github" href="https://github.com/vd-huy/DataStudio">
                 <svg class="icon" aria-hidden="true"><use href="#i-code" /></svg><span class="nav-github-text">GitHub</span>
               </a>
             </li>
@@ -263,7 +263,7 @@
             <span class="pill" data-i18n="hero.pill">Free &amp; open source</span>
             <span data-i18n="hero.facts">Windows · 9 MB installer · GPL-3.0</span>
           </p>
-          <h1 id="hero-title">Fosta Studio</h1>
+          <h1 id="hero-title">DataStudio</h1>
           <p class="lede" data-i18n="hero.lede">A Rust-built database client with an AI agent and MCP: isolated workspaces, SSH tunnels and port-forwards that start on connect. Free and open source. Supports 11 databases, from MariaDB and PostgreSQL to MongoDB, Redis and Oracle.</p>
           <div class="cta-row">
             <a class="btn btn-primary" href="{installer-url}" data-download-toggle aria-controls="download" aria-expanded="false">
@@ -275,14 +275,14 @@
             <a class="btn btn-secondary" href="#docker" data-docker-toggle aria-controls="docker" aria-expanded="false">
               <svg class="icon icon-brand" aria-hidden="true"><use href="#i-docker" /></svg><span data-i18n="hero.docker">Run with Docker</span>
             </a>
-            <a class="btn btn-secondary" href="https://github.com/caothanhphatit/fosta-dbclient">
+            <a class="btn btn-secondary" href="https://github.com/vd-huy/DataStudio">
               <svg class="icon" aria-hidden="true"><use href="#i-code" /></svg><span data-i18n="hero.github">View on GitHub</span>
             </a>
           </div>
           <div class="docker-panel download-panel" id="download">
             <div class="docker-panel-head">
               <span class="docker-panel-title"
-                ><svg class="icon" aria-hidden="true"><use href="#i-windows" /></svg><span data-i18n="hero.dlTitle">Fosta Studio for Windows</span></span
+                ><svg class="icon" aria-hidden="true"><use href="#i-windows" /></svg><span data-i18n="hero.dlTitle">DataStudio for Windows</span></span
               >
             </div>
             <div class="download-panel-body">
@@ -293,7 +293,7 @@
               <p>
                 <span data-i18n="hero.dlVersion">Version {version}</span> ·
                 <a href="{portable-url}" data-i18n="hero.dlPortable">Portable .exe (no install)</a> ·
-                <a href="https://github.com/caothanhphatit/fosta-dbclient/releases/tag/v{version}" data-i18n="hero.dlNotes">Release notes</a>
+                <a href="https://github.com/vd-huy/DataStudio/releases/tag/v{version}" data-i18n="hero.dlNotes">Release notes</a>
               </p>
               <p>
                 <span data-i18n="hero.dlOther">On macOS or Linux, use the web edition:</span>
@@ -313,7 +313,7 @@
               </button>
             </div>
             <p class="docker-panel-mac" data-i18n="hero.macNote">
-              <strong>On a Mac?</strong> There is no native macOS app yet, but the web edition runs on your Mac: install Docker Desktop, run these commands, then use Fosta Studio in your browser.
+              <strong>On a Mac?</strong> There is no native macOS app yet, but the web edition runs on your Mac: install Docker Desktop, run these commands, then use DataStudio in your browser.
             </p>
             <pre
               class="docker-commands"
@@ -321,11 +321,11 @@
               id="docker-commands"
               data-i18n-attr="aria-label:hero.dockerLabel"
               aria-label="Docker commands"
-            ><code><span class="line"><span class="prompt">$ </span>docker run -d --name fosta-studio -p 127.0.0.1:8080:8080 -v fosta-studio-data:/data ghcr.io/caothanhphatit/fosta-studio</span>
-<span class="line"><span class="prompt">$ </span>docker logs fosta-studio</span></code></pre>
+            ><code><span class="line"><span class="prompt">$ </span>docker run -d --name datastudio -p 127.0.0.1:8080:8080 -v datastudio-data:/data ghcr.io/vd-huy/datastudio</span>
+<span class="line"><span class="prompt">$ </span>docker logs datastudio</span></code></pre>
             <p class="docker-panel-note" data-i18n="hero.dockerNote">
               Then open the sign-in address printed in the log.
-              <a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/web-edition.md">Web edition guide</a>
+              <a href="https://github.com/vd-huy/DataStudio/blob/main/docs/web-edition.md">Web edition guide</a>
             </p>
           </div>
         </div>
@@ -378,11 +378,11 @@
                   class="app-mock"
                   role="img"
                   data-i18n-attr="aria-label:hero.mockLabel"
-                  aria-label="Illustration of the Fosta Studio window: a workspace rail on the left, a tree of connections and tables, the orders table open in a data grid with column type badges and two pending changes, and the assistant panel on the right showing a suggested SQL query with Insert and New tab buttons."
+                  aria-label="Illustration of the DataStudio window: a workspace rail on the left, a tree of connections and tables, the orders table open in a data grid with column type badges and two pending changes, and the assistant panel on the right showing a suggested SQL query with Insert and New tab buttons."
                 >
                   <div class="am-titlebar" aria-hidden="true">
                     <img src="assets/logo.svg" alt="" width="14" height="14" />
-                    <span>Fosta Studio</span>
+                    <span>DataStudio</span>
                     <span class="am-win"><i></i><i></i><i></i></span>
                   </div>
                   <div class="am-body" aria-hidden="true">
@@ -651,7 +651,7 @@
                 >
                   <div class="am-titlebar" aria-hidden="true">
                     <img src="assets/logo.svg" alt="" width="14" height="14" />
-                    <span>Fosta Studio</span>
+                    <span>DataStudio</span>
                     <span class="am-win"><i></i><i></i><i></i></span>
                   </div>
                   <div class="am-body" aria-hidden="true">
@@ -973,7 +973,7 @@
                   data-spot="6.9,80.8,22.7,16"
                   data-spot-label="Commands · 1/2 running"
                   data-i18n-attr="data-shot-alt:carousel.shotAlt4; data-spot-label:carousel.spot4"
-                  data-shot-alt="Fosta Studio with the Commands panel of a workspace showing a running SSH tunnel and a stopped port-forward, and the Staging connection bound to the tunnel and connected."
+                  data-shot-alt="DataStudio with the Commands panel of a workspace showing a running SSH tunnel and a stopped port-forward, and the Staging connection bound to the tunnel and connected."
                 >
                   <div class="shot-mock" aria-hidden="true"></div>
                 </figure>
@@ -994,7 +994,7 @@
                   class="shot slide-shot"
                   data-shot="assets/screenshots/commands-dialog.png"
                   data-i18n-attr="data-shot-alt:carousel.shotAlt5"
-                  data-shot-alt="The Edit command dialog of Fosta Studio with an ssh -N -L tunnel command, a ready check, and the choice to start with the workspace or when a connection needs it."
+                  data-shot-alt="The Edit command dialog of DataStudio with an ssh -N -L tunnel command, a ready check, and the choice to start with the workspace or when a connection needs it."
                 >
                   <div class="shot-mock" aria-hidden="true"></div>
                 </figure>
@@ -1018,14 +1018,14 @@
       <section class="section" id="why" aria-labelledby="why-title">
         <div class="container">
           <header class="section-head">
-            <p class="kicker" data-i18n="why.kicker">Why Fosta Studio</p>
+            <p class="kicker" data-i18n="why.kicker">Why DataStudio</p>
             <h2 id="why-title" data-i18n="why.title">Fast where it counts, careful where it matters</h2>
             <p data-i18n="why.intro">
               A native client for developers who move between projects, engines and environments all day, and would rather not break production on the way.
             </p>
           </header>
           <!-- Key numbers; main.js counts them up once when they scroll into view (not with reduced motion). -->
-          <ul class="stats" data-i18n-attr="aria-label:stats.label" aria-label="Fosta Studio in numbers">
+          <ul class="stats" data-i18n-attr="aria-label:stats.label" aria-label="DataStudio in numbers">
             <li>
               <b class="stat-num">~<span data-count-to="9">9</span>&nbsp;MB</b><span data-i18n="stats.size">installer download; a portable .exe needs no install</span>
             </li>
@@ -1083,7 +1083,7 @@
               ></span>
               <h3 data-i18n="why.ai.title">An AI agent that knows your schema</h3>
               <p data-i18n="why.ai.text">
-                Ask in plain words. The agent explores tables and relations, writes and explains queries, opens the right view and reads task logs to help you debug. Use Claude, GPT, Gemini, Fosta or a local Ollama model.
+                Ask in plain words. The agent explores tables and relations, writes and explains queries, opens the right view and reads task logs to help you debug. Use Claude, GPT, Gemini or a local Ollama model.
               </p>
             </li>
             <li class="why-card">
@@ -1219,7 +1219,7 @@
               class="shot"
               data-shot="assets/screenshots/workspaces.png"
               data-i18n-attr="data-shot-alt:ws.shotAlt"
-              data-shot-alt="Fosta Studio with several workspaces in the rail and the startup task log of a kubectl port-forward."
+              data-shot-alt="DataStudio with several workspaces in the rail and the startup task log of a kubectl port-forward."
             >
               <div class="shot-mock mock-tasks" aria-hidden="true">
                 <div class="mt-rail">
@@ -1280,7 +1280,7 @@
               class="shot"
               data-shot="assets/screenshots/grid.png"
               data-i18n-attr="data-shot-alt:grid.shotAlt"
-              data-shot-alt="The Fosta Studio data grid with column filters, type badges, an edited cell and the pending changes bar."
+              data-shot-alt="The DataStudio data grid with column filters, type badges, an edited cell and the pending changes bar."
             >
               <div class="shot-mock mock-grid" aria-hidden="true">
                 <table>
@@ -1361,7 +1361,7 @@
               class="shot"
               data-shot="assets/screenshots/diagram.png"
               data-i18n-attr="data-shot-alt:diagram.shotAlt"
-              data-shot-alt="An ER diagram of a shop database in Fosta Studio, with tables connected by foreign keys."
+              data-shot-alt="An ER diagram of a shop database in DataStudio, with tables connected by foreign keys."
             >
               <div class="shot-mock mock-diagram" aria-hidden="true">
                 <svg viewBox="0 0 480 300" preserveAspectRatio="xMidYMid meet">
@@ -1440,20 +1440,20 @@
                 >
               </p>
               <ul class="checks">
-                <li data-i18n="ai.item1">Bring your own model: Fosta, OpenAI, Gemini, Claude, or any OpenAI-compatible endpoint such as a local Ollama</li>
+                <li data-i18n="ai.item1">Bring your own model: OpenAI, Gemini, Claude, or any OpenAI-compatible endpoint such as a local Ollama</li>
                 <li data-i18n="ai.item2">Your key is stored in Windows Credential Manager and requests go straight from your machine to the provider</li>
                 <li data-i18n="ai.item3">It sees metadata and what you share; the optional read-only query tool can read up to 50 rows, which go to your provider</li>
               </ul>
               <p class="fineprint" data-i18n="ai.disclosure">
-                Disclosure: Fosta, the default provider, is a separate AI API service run by the author of Fosta Studio. It is listed first for convenience
-                only; nothing in Fosta Studio requires a Fosta account, and requests only go to the provider you configure.
+                Disclosure: DataStudio, the default provider, is a separate AI API service run by the author of DataStudio. It is listed first for convenience
+                only; nothing in DataStudio requires a DataStudio account, and requests only go to the provider you configure.
               </p>
             </div>
             <figure
               class="shot"
               data-shot="assets/screenshots/assistant.png"
               data-i18n-attr="data-shot-alt:ai.shotAlt"
-              data-shot-alt="The Fosta Studio assistant panel with a question, a suggested SQL query and the Insert and New tab buttons."
+              data-shot-alt="The DataStudio assistant panel with a question, a suggested SQL query and the Insert and New tab buttons."
             >
               <div class="shot-mock mock-assistant" aria-hidden="true">
                 <div class="am-asst-head">
@@ -1527,7 +1527,7 @@
               <div>
                 <h3 data-i18n="mini.mcp.title">MCP server for AI agents</h3>
                 <p data-i18n="mini.mcp.text">
-                  AI agents such as Claude Desktop, Claude Code or Cursor can use your connections through MCP. It is off by default, and each workspace is set to Off, Read-only or Ask before writes. Every write needs your approval in the app, every call is audited, and Production workspaces are always read-only. <a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/mcp.md">MCP guide</a>
+                  AI agents such as Claude Desktop, Claude Code or Cursor can use your connections through MCP. It is off by default, and each workspace is set to Off, Read-only or Ask before writes. Every write needs your approval in the app, every call is audited, and Production workspaces are always read-only. <a href="https://github.com/vd-huy/DataStudio/blob/main/docs/mcp.md">MCP guide</a>
                 </p>
               </div>
             </li>
@@ -1672,7 +1672,7 @@
           <header class="section-head">
             <p class="kicker" data-i18n="privacy.kicker">Privacy &amp; safety</p>
             <h2 id="privacy-title" data-i18n="privacy.title">Your data stays yours</h2>
-            <p data-i18n="privacy.intro">Fosta Studio talks to your databases and to the AI provider you configure. Nothing else.</p>
+            <p data-i18n="privacy.intro">DataStudio talks to your databases and to the AI provider you configure. Nothing else.</p>
           </header>
           <ul class="privacy-grid">
             <li>
@@ -1680,7 +1680,7 @@
               <div>
                 <h3 data-i18n="privacy.config.title">Local, portable config</h3>
                 <p data-i18n="privacy.config.text">
-                  Workspaces, connections and tasks live in <code>fosta-studio.json</code> next to the executable. No secrets are written to it.
+                  Workspaces, connections and tasks live in <code>datastudio.json</code> next to the executable. No secrets are written to it.
                 </p>
               </div>
             </li>
@@ -1718,7 +1718,7 @@
             </li>
           </ul>
           <p class="section-link">
-            <a class="link-arrow" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/docs/security.md"
+            <a class="link-arrow" href="https://github.com/vd-huy/DataStudio/blob/main/docs/security.md"
               ><span data-i18n="privacy.link">Security details: what is stored where, and what is sent</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
             ></a>
           </p>
@@ -1760,7 +1760,7 @@
             </li>
           </ol>
           <p class="section-link">
-            <a class="link-arrow" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/ROADMAP.md"
+            <a class="link-arrow" href="https://github.com/vd-huy/DataStudio/blob/main/ROADMAP.md"
               ><span data-i18n="roadmap.link">Read the full roadmap</span><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg
             ></a>
           </p>
@@ -1774,20 +1774,20 @@
             <p class="kicker" data-i18n="oss.kicker">Open source</p>
             <h2 id="oss-title" data-i18n="oss.title">Free software, built in the open</h2>
             <p data-i18n="oss.license">
-              Fosta Studio is licensed under the
-              <a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/LICENSE">GNU General Public License v3.0</a>. Use it, study it, change it and
+              DataStudio is licensed under the
+              <a href="https://github.com/vd-huy/DataStudio/blob/main/LICENSE">GNU General Public License v3.0</a>. Use it, study it, change it and
               share it.
             </p>
             <p data-i18n="oss.cla">
               Contributions are welcome. On your first pull request you are asked to sign the
-              <a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/CLA.md">Contributor License Agreement</a>: you keep the copyright in your
+              <a href="https://github.com/vd-huy/DataStudio/blob/main/CLA.md">Contributor License Agreement</a>: you keep the copyright in your
               work, and the maintainer may also offer commercial licenses while the project itself stays GPL.
             </p>
             <div class="cta-row">
-              <a class="btn btn-primary" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/CONTRIBUTING.md" data-i18n="oss.contributing"
+              <a class="btn btn-primary" href="https://github.com/vd-huy/DataStudio/blob/main/CONTRIBUTING.md" data-i18n="oss.contributing"
                 >Contributing guide</a
               >
-              <a class="btn btn-secondary" href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/ARCHITECTURE.md" data-i18n="oss.architecture"
+              <a class="btn btn-secondary" href="https://github.com/vd-huy/DataStudio/blob/main/ARCHITECTURE.md" data-i18n="oss.architecture"
                 >Architecture</a
               >
             </div>
@@ -1795,19 +1795,19 @@
           <div class="build" id="build">
             <h3 data-i18n="build.title">Build from source</h3>
             <p data-i18n="build.text">
-              Prefer to build it yourself? You need Node 20+, Rust 1.88+ and the MSVC or GNU toolchain (<a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/CONTRIBUTING.md#toolchain">toolchain details</a>).
+              Prefer to build it yourself? You need Node 20+, Rust 1.88+ and the MSVC or GNU toolchain (<a href="https://github.com/vd-huy/DataStudio/blob/main/CONTRIBUTING.md#toolchain">toolchain details</a>).
             </p>
             <pre
               class="terminal"
               tabindex="0"
               data-i18n-attr="aria-label:build.commandsLabel"
               aria-label="Build commands"
-            ><code><span class="prompt">&gt;</span> git clone https://github.com/caothanhphatit/fosta-dbclient.git
-<span class="prompt">&gt;</span> cd fosta-dbclient
+            ><code><span class="prompt">&gt;</span> git clone https://github.com/vd-huy/DataStudio.git
+<span class="prompt">&gt;</span> cd DataStudio
 <span class="prompt">&gt;</span> npm install
 <span class="prompt">&gt;</span> npm run tauri build -- --no-bundle</code></pre>
             <p class="fineprint" data-i18n="build.result">
-              The result is <code>src-tauri\target\release\fosta-studio.exe</code>. Want to try the UI first? <code>npm run dev</code> previews it in a browser
+              The result is <code>src-tauri\target\release\datastudio.exe</code>. Want to try the UI first? <code>npm run dev</code> previews it in a browser
               with sample data.
             </p>
           </div>
@@ -1818,8 +1818,8 @@
     <footer class="site-footer">
       <div class="container footer-inner">
         <div class="footer-brand">
-          <a class="brand" href="#top" data-i18n-attr="aria-label:a11y.backToTop" aria-label="Fosta Studio, back to top"
-            ><img src="assets/logo.svg" alt="" width="24" height="24" /><span>Fosta Studio</span></a
+          <a class="brand" href="#top" data-i18n-attr="aria-label:a11y.backToTop" aria-label="DataStudio, back to top"
+            ><img src="assets/logo.svg" alt="" width="24" height="24" /><span>DataStudio</span></a
           >
           <p data-i18n="footer.tagline">Free and open-source database client. GPL-3.0.</p>
         </div>
@@ -1827,18 +1827,18 @@
           <ul class="footer-links">
             <li><a href="databases/" data-i18n="footer.databases">Databases</a></li>
             <li><a href="donate/" data-i18n="footer.support">Support the project</a></li>
-            <li><a href="https://github.com/caothanhphatit/fosta-dbclient">GitHub</a></li>
+            <li><a href="https://github.com/vd-huy/DataStudio">GitHub</a></li>
             <li><a href="https://discord.gg/pBFkZD5mhN">Discord</a></li>
-            <li><a href="https://github.com/caothanhphatit/fosta-dbclient/releases" data-i18n="footer.releases">Releases</a></li>
-            <li><a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/CONTRIBUTING.md" data-i18n="footer.contributing">Contributing</a></li>
-            <li><a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/ROADMAP.md" data-i18n="footer.roadmap">Roadmap</a></li>
-            <li><a href="https://github.com/caothanhphatit/fosta-dbclient/blob/main/LICENSE" data-i18n="footer.license">License</a></li>
-            <li><a href="https://github.com/caothanhphatit/fosta-dbclient/issues" data-i18n="footer.issues">Issues</a></li>
+            <li><a href="https://github.com/vd-huy/DataStudio/releases" data-i18n="footer.releases">Releases</a></li>
+            <li><a href="https://github.com/vd-huy/DataStudio/blob/main/CONTRIBUTING.md" data-i18n="footer.contributing">Contributing</a></li>
+            <li><a href="https://github.com/vd-huy/DataStudio/blob/main/ROADMAP.md" data-i18n="footer.roadmap">Roadmap</a></li>
+            <li><a href="https://github.com/vd-huy/DataStudio/blob/main/LICENSE" data-i18n="footer.license">License</a></li>
+            <li><a href="https://github.com/vd-huy/DataStudio/issues" data-i18n="footer.issues">Issues</a></li>
           </ul>
         </nav>
         <!-- i18n:lang-footer -->
         <p class="footer-note" data-i18n="footer.trademarks">
-          Database names and logos are trademarks of their respective owners; their use does not imply endorsement. Fosta Studio is an independent project and is not affiliated with them.
+          Database names and logos are trademarks of their respective owners; their use does not imply endorsement. DataStudio is an independent project and is not affiliated with them.
         </p>
       </div>
     </footer>

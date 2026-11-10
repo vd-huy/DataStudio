@@ -13,7 +13,7 @@ describe("endpointProblem", () => {
 
   it("accepts http and https URLs", () => {
     expect(endpointProblem("http://localhost:11434/v1", "custom")).toBeNull();
-    expect(endpointProblem(" HTTPS://gateway.example.com/v1 ", "fosta")).toBeNull();
+    expect(endpointProblem(" HTTPS://gateway.example.com/v1 ", "openai")).toBeNull();
   });
 
   it("rejects anything that is not an http(s) URL, quoting at most 40 characters", () => {
@@ -31,19 +31,19 @@ describe("baseUrlOf / providerPreset", () => {
   });
 
   it("falls back to the first preset for unknown providers", () => {
-    expect(providerPreset("nope").value).toBe("fosta");
-    expect(providerPreset(undefined).value).toBe("fosta");
+    expect(providerPreset("nope").value).toBe("openai");
+    expect(providerPreset(undefined).value).toBe("openai");
   });
 });
 
 describe("apiKeyProblem", () => {
   it("requires a key for hosted providers", () => {
-    expect(apiKeyProblem("fosta", "", false)).toBe("Fosta needs an API key. Fosta gateway. Key from admin.fosta.app.");
+    expect(apiKeyProblem("openai", "", false)).toBe("OpenAI needs an API key. Key from platform.openai.com.");
     expect(apiKeyProblem("openai", "  ", false)).not.toBeNull();
   });
 
   it("accepts a typed key, a saved key, or a custom endpoint without one", () => {
-    expect(apiKeyProblem("fosta", "sk-1", false)).toBeNull();
+    expect(apiKeyProblem("openai", "sk-1", false)).toBeNull();
     expect(apiKeyProblem("anthropic", "", true)).toBeNull();
     expect(apiKeyProblem("custom", "", false)).toBeNull();
   });

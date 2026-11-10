@@ -446,7 +446,7 @@ mod tests {
             return; // another test in this process loaded a client
         }
         // An empty folder: connect refuses before loading anything, so no client gets loaded into this test process.
-        let empty = std::env::temp_dir().join("fosta-oracle-adapter-no-client");
+        let empty = std::env::temp_dir().join("datastudio-oracle-adapter-no-client");
         std::fs::create_dir_all(&empty).unwrap();
         let mut spec = ConnectionSpec {
             engine: "oracle".into(),

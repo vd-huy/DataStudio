@@ -11,7 +11,7 @@ What differs:
   https; the demo configuration's user is `admin`, and a 401 carries that hint. No API keys and no Cloud ID.
 - **Languages**: the console and SQL (`_plugins/_sql`, JDBC format). No ES|QL.
 - **APIs**: point in time is `_search/point_in_time` (`pit_id`), lifecycle policies are ISM (`_plugins/_ism/policies`), and `_id`
-  can be sorted (Elasticsearch 8 cannot); a declared key (`_meta.fosta.key`) is still needed to range it.
+  can be sorted (Elasticsearch 8 cannot); a declared key (`_meta.datastudio.key`) is still needed to range it.
 - **Vectors**: with the k-NN plugin, `knn_vector` fields get the vector tools ([elasticsearch.md](elasticsearch.md#vectors)).
   ANN search uses the `knn` query clause when the index has `index.knn: true`; the field's `space_type` (`cosinesimil`, `l2`,
   `innerproduct`; l2 when the mapping names none) is its only metric. Exact search uses the plugin's `knn_score` script. The

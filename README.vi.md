@@ -1,8 +1,8 @@
 <img src="website/assets/logo.svg" alt="" width="72" align="left">
 
-# Fosta Studio
+# DataStudio
 
-[![CI](https://github.com/caothanhphatit/fosta-dbclient/actions/workflows/ci.yml/badge.svg)](https://github.com/caothanhphatit/fosta-dbclient/actions/workflows/ci.yml) [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE) [![Release](https://img.shields.io/github/v/release/caothanhphatit/fosta-dbclient)](https://github.com/caothanhphatit/fosta-dbclient/releases/latest) [![Discord](https://img.shields.io/badge/chat-Discord-5865F2?logo=discord&logoColor=white)](https://discord.gg/pBFkZD5mhN)
+[![CI](https://github.com/vd-huy/DataStudio/actions/workflows/ci.yml/badge.svg)](https://github.com/vd-huy/DataStudio/actions/workflows/ci.yml) [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE) [![Release](https://img.shields.io/github/v/release/vd-huy/DataStudio)](https://github.com/vd-huy/DataStudio/releases/latest) [![Discord](https://img.shields.io/badge/chat-Discord-5865F2?logo=discord&logoColor=white)](https://discord.gg/pBFkZD5mhN)
 
 [English](README.md) · **Tiếng Việt**
 
@@ -10,7 +10,7 @@ Database client nhỏ gọn, chạy nhanh, hỗ trợ **11 engine**: MariaDB, My
 Elasticsearch, OpenSearch, ClickHouse và Oracle. Có bản desktop cho Windows và bản web chạy bằng Docker. Miễn phí, mã nguồn mở
 (GPL-3.0).
 
-**[Tải cho Windows](https://github.com/caothanhphatit/fosta-dbclient/releases/latest)** ·
+**[Tải cho Windows](https://github.com/vd-huy/DataStudio/releases/latest)** ·
 [Website](https://dbcl.fosta.app/vi/) · [Changelog](CHANGELOG.md)
 
 ## Tính năng
@@ -27,7 +27,7 @@ Elasticsearch, OpenSearch, ClickHouse và Oracle. Có bản desktop cho Windows 
 - **Trình soạn query** gợi ý theo cột, format SQL, kết quả trả về dần với nút Stop dừng thật trên server, transaction và lịch sử
   theo từng tab.
 - **Import và export**: nhập CSV, TSV, JSON; xuất CSV, CSV cho Excel, JSON, câu `INSERT` SQL và Markdown.
-- **AI agent** (`Ctrl+Shift+A`) với provider và key của bạn (Fosta, OpenAI, Gemini, Claude, Ollama…). Agent hiểu schema, viết và
+- **AI agent** (`Ctrl+Shift+A`) với provider và key của bạn (OpenAI, Gemini, Claude, Ollama…). Agent hiểu schema, viết và
   sửa query, và chỉ đọc dữ liệu mẫu khi bạn cho phép.
 - **MCP server** cho Claude Code, Claude Desktop, Cursor, VS Code và Zed: các client dùng kết nối đã lưu mà không thấy mật khẩu,
   chỉ trong những workspace bạn cho phép, và mọi lệnh ghi đều chờ bạn duyệt. Mặc định tắt; xem [docs/mcp.md](docs/mcp.md) (tiếng Anh).
@@ -39,15 +39,15 @@ Chi tiết đầy đủ (tiếng Anh): [docs/features.md](docs/features.md).
 
 ### Windows
 
-Tải bộ cài hoặc file `.exe` portable ở [bản phát hành mới nhất](https://github.com/caothanhphatit/fosta-dbclient/releases/latest)
+Tải bộ cài hoặc file `.exe` portable ở [bản phát hành mới nhất](https://github.com/vd-huy/DataStudio/releases/latest)
 rồi chạy. File chưa được ký số nên Windows SmartScreen có thể cảnh báo: bấm *More info* → *Run anyway*. Bản cài đặt tự cập nhật (tải ngầm, cài khi bạn
 thoát app); bản portable báo khi có phiên bản mới.
 
 ### Chạy bằng Docker (bản web)
 
 ```sh
-docker run -d --name fosta-studio -p 127.0.0.1:8080:8080 -v fosta-studio-data:/data ghcr.io/caothanhphatit/fosta-studio
-docker logs fosta-studio
+docker run -d --name datastudio -p 127.0.0.1:8080:8080 -v datastudio-data:/data ghcr.io/vd-huy/datastudio
+docker logs datastudio
 ```
 
 Mở địa chỉ đăng nhập in trong log (`http://localhost:8080/?token=…`). Để kết nối database trên chính máy bạn, dùng
@@ -90,9 +90,9 @@ Build, test và database để test: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Cộng đồng
 
-Hỏi đáp và trò chuyện: [Discord](https://discord.gg/pBFkZD5mhN). Báo lỗi và đề xuất tính năng: [GitHub Issues](https://github.com/caothanhphatit/fosta-dbclient/issues).
+Hỏi đáp và trò chuyện: [Discord](https://discord.gg/pBFkZD5mhN). Báo lỗi và đề xuất tính năng: [GitHub Issues](https://github.com/vd-huy/DataStudio/issues).
 
 ## Giấy phép
 
-[GPL-3.0](LICENSE). Đóng góp được nhận theo [CLA](CLA.md), cho phép tác giả cung cấp thêm giấy phép thương mại. Fosta, provider
-AI mặc định, là một dịch vụ riêng của cùng tác giả; không bắt buộc, mọi provider khác đều dùng được như nhau.
+[GPL-3.0](LICENSE). DataStudio là bản fork đã chỉnh sửa từ [Fosta Studio](https://github.com/caothanhphatit/fosta-dbclient) của Cao Thanh Phat,
+đổi tên và sửa từ 2026-11-10.

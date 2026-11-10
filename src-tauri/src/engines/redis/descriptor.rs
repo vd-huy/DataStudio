@@ -60,7 +60,7 @@ pub fn descriptor() -> EngineDescriptor {
                     .placeholder("30000")
                     .section(FormSection::Advanced),
                 FieldSpec::new("options.clientName", FieldKind::Text, "Client name")
-                    .placeholder("Fosta Studio")
+                    .placeholder("DataStudio")
                     .hint("Sent as CLIENT SETNAME, shown in CLIENT LIST.")
                     .section(FormSection::Advanced),
             ],

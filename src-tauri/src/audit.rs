@@ -1,5 +1,5 @@
 //! Local safety audit log: blocked, confirmed and relaxed operations, the assistant's read-only runs and every MCP tool call, kept in
-//! `fosta-studio-audit.jsonl` next to `fosta-studio.json`.
+//! `datastudio-audit.jsonl` next to `datastudio.json`.
 //!
 //! Same layout as the query history (`history.rs`): append-only JSON Lines under one mutex,
 //! rewritten with the newest `cap` entries when it grows past the cap plus some slack. The log
@@ -22,7 +22,7 @@ use crate::{
     lock::lock,
 };
 
-pub const AUDIT_FILE: &str = "fosta-studio-audit.jsonl";
+pub const AUDIT_FILE: &str = "datastudio-audit.jsonl";
 const DEFAULT_CAP: usize = 20_000;
 const MAX_STATEMENT_CHARS: usize = 2_000;
 
@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     fn appends_and_compacts() {
-        let path = std::env::temp_dir().join(format!("fosta-audit-{}.jsonl", std::process::id()));
+        let path = std::env::temp_dir().join(format!("datastudio-audit-{}.jsonl", std::process::id()));
         let _ = std::fs::remove_file(&path);
         let log = AuditLog::new(path.clone(), 10);
         for index in 0..15 {

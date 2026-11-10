@@ -66,5 +66,5 @@ cd src-tauri && cargo test contract_postgres -- --ignored --test-threads=1
 
 The suites use schema `shop` of database `shop` (`dev/seed/postgres/contract.sql`, loaded by the tests); the checks on the demo
 schemas use `dev/seed/postgres.sql`, which the compose file loads. The image is `pgvector/pgvector` (PostgreSQL with the
-extension); `shop.contract_vectors` backs the vector suite and `public.products.embedding` is the demo column. Override the server with `FOSTA_CONTRACT_POSTGRES_HOST`,
+extension); `shop.contract_vectors` backs the vector suite and `public.products.embedding` is the demo column. Override the server with `DATASTUDIO_CONTRACT_POSTGRES_HOST`,
 `_PORT`, `_USER`, `_PASSWORD` and `_DATABASE`.

@@ -1,15 +1,15 @@
 <img src="website/assets/logo.svg" alt="" width="72" align="left">
 
-# Fosta Studio
+# DataStudio
 
-[![CI](https://github.com/caothanhphatit/fosta-dbclient/actions/workflows/ci.yml/badge.svg)](https://github.com/caothanhphatit/fosta-dbclient/actions/workflows/ci.yml) [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE) [![Release](https://img.shields.io/github/v/release/caothanhphatit/fosta-dbclient)](https://github.com/caothanhphatit/fosta-dbclient/releases/latest) [![Discord](https://img.shields.io/badge/chat-Discord-5865F2?logo=discord&logoColor=white)](https://discord.gg/pBFkZD5mhN)
+[![CI](https://github.com/vd-huy/DataStudio/actions/workflows/ci.yml/badge.svg)](https://github.com/vd-huy/DataStudio/actions/workflows/ci.yml) [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE) [![Release](https://img.shields.io/github/v/release/vd-huy/DataStudio)](https://github.com/vd-huy/DataStudio/releases/latest) [![Discord](https://img.shields.io/badge/chat-Discord-5865F2?logo=discord&logoColor=white)](https://discord.gg/pBFkZD5mhN)
 
 **English** · [Tiếng Việt](README.vi.md)
 
 A small, fast database client for **11 engines**: MariaDB, MySQL, SQL Server, MongoDB, PostgreSQL, SQLite, Redis, Elasticsearch,
 OpenSearch, ClickHouse and Oracle. A desktop app for Windows, or a web edition in Docker. Free and open source (GPL-3.0).
 
-**[Download for Windows](https://github.com/caothanhphatit/fosta-dbclient/releases/latest)** ·
+**[Download for Windows](https://github.com/vd-huy/DataStudio/releases/latest)** ·
 [Website](https://dbcl.fosta.app) · [Changelog](CHANGELOG.md)
 
 ## Features
@@ -25,7 +25,7 @@ OpenSearch, ClickHouse and Oracle. A desktop app for Windows, or a web edition i
   workspaces start read-only, enforced by the database too, and a save never overwrites a row someone else changed.
 - **Query editor** with column-aware completion, a formatter, streaming results with a real Stop, transactions and per-tab history.
 - **Import and export**: CSV, TSV and JSON in; CSV, CSV for Excel, JSON, SQL `INSERT` and Markdown out.
-- **AI agent** (`Ctrl+Shift+A`) with your own provider and key (Fosta, OpenAI, Gemini, Claude, Ollama…). It knows your schema,
+- **AI agent** (`Ctrl+Shift+A`) with your own provider and key (OpenAI, Gemini, Claude, Ollama…). It knows your schema,
   writes and fixes queries, and reads sample rows only if you allow it.
 - **MCP server** for Claude Code, Claude Desktop, Cursor, VS Code and Zed: they use your saved connections without seeing passwords,
   only in the workspaces you allow, and every write waits for your approval. Off by default; see [docs/mcp.md](docs/mcp.md).
@@ -37,15 +37,15 @@ All the details: [docs/features.md](docs/features.md).
 
 ### Windows
 
-Download the installer or the portable `.exe` from the [latest release](https://github.com/caothanhphatit/fosta-dbclient/releases/latest)
+Download the installer or the portable `.exe` from the [latest release](https://github.com/vd-huy/DataStudio/releases/latest)
 and run it. The binaries are not code-signed yet, so Windows SmartScreen may warn you: choose *More info* → *Run anyway*. The installed app updates itself
 (downloaded in the background, installed when you quit); the portable one shows when a new release is out.
 
 ### Run with Docker (web edition)
 
 ```sh
-docker run -d --name fosta-studio -p 127.0.0.1:8080:8080 -v fosta-studio-data:/data ghcr.io/caothanhphatit/fosta-studio
-docker logs fosta-studio
+docker run -d --name datastudio -p 127.0.0.1:8080:8080 -v datastudio-data:/data ghcr.io/vd-huy/datastudio
+docker logs datastudio
 ```
 
 Open the sign-in address printed in the log (`http://localhost:8080/?token=…`). For databases on your own machine, use
@@ -89,10 +89,9 @@ Building, tests and test databases: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Community
 
-Questions and chat: [Discord](https://discord.gg/pBFkZD5mhN). Bugs and feature requests: [GitHub Issues](https://github.com/caothanhphatit/fosta-dbclient/issues).
+Questions and chat: [Discord](https://discord.gg/pBFkZD5mhN). Bugs and feature requests: [GitHub Issues](https://github.com/vd-huy/DataStudio/issues).
 
 ## License
 
-[GPL-3.0](LICENSE). Contributions are accepted under the [CLA](CLA.md), which also lets the maintainer offer commercial licenses.
-Fosta, the AI agent's default provider, is a separate service by the same author; it is optional, and any other provider works the
-same way.
+[GPL-3.0](LICENSE). DataStudio is a modified fork of [Fosta Studio](https://github.com/caothanhphatit/fosta-dbclient) by Cao Thanh Phat,
+renamed and changed from 2026-11-10.

@@ -3,7 +3,7 @@
 # runs mongo on ubuntu-22.04 (ci/engines/mongo.json).
 # Test-only credentials; never reuse them.
 # docker compose -f dev/compose/mongo.yml up -d --wait
-# 127.0.0.1:27017  root / studio-root  database events (auth db admin); contract data in fosta_contract
+# 127.0.0.1:27017  root / studio-root  database events (auth db admin); contract data in datastudio_contract
 
 name: db-studio-dev
 

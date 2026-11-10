@@ -1,7 +1,7 @@
 # SQL Server 2022 (MSSQL_TAG overrides the image tag) for the contract tests.
 # Test-only credentials; never reuse them.
 # docker compose -f dev/compose/mssql.yml up -d --wait   then: dev/seed-mssql.sh (SQL Server has no init directory)
-# 127.0.0.1:1433  sa / Studio#Pass2026  database ERP; contract data in fosta_contract
+# 127.0.0.1:1433  sa / Studio#Pass2026  database ERP; contract data in datastudio_contract
 
 name: db-studio-dev
 

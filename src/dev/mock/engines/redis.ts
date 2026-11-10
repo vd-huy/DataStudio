@@ -4,7 +4,7 @@
  * `redis.keyInfo`, `redis.readValue`, `redis.edit` with `expect` guards, `redis.info`, `redis.slowlog`) and runs console
  * commands on the same data.
  *
- * Conflict demo: open a key, edit a value, then in the browser console run `__fostaMock.touchRow("c-local", "db0", "users:1")`
+ * Conflict demo: open a key, edit a value, then in the browser console run `__datastudioMock.touchRow("c-local", "db0", "users:1")`
  * (someone else changes the key) and save: `redis.edit` fails with `CONFLICT`.
  */
 import type { ColumnInfo, ConnectInfo, EngineDescriptor, ObjectDescription, ObjectNode, RunRequest, StreamEvent, Value } from "../../../core/contract";

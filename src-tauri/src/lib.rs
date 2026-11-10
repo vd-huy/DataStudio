@@ -1,4 +1,4 @@
-//! Fosta Studio's backend core, shared by its two front-ends:
+//! DataStudio's backend core, shared by its two front-ends:
 //!
 //! - the desktop app (`main.rs`, feature `desktop`): a Tauri window; the commands are Tauri commands;
 //! - the web server (`server/`, feature `web`): the Docker image; the commands are `POST /api/invoke/<command>`.
@@ -85,12 +85,12 @@ impl AppState {
     /// A state whose config and history live in a fresh temporary folder (tests).
     #[cfg(test)]
     pub(crate) fn for_test(name: &str, capabilities: Capabilities, config: config::AppConfig) -> Self {
-        let directory = std::env::temp_dir().join(format!("fosta-state-{name}-{}", std::process::id()));
+        let directory = std::env::temp_dir().join(format!("datastudio-state-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&directory);
         std::fs::create_dir_all(&directory).expect("temporary folder");
         let tasks = tasks::TaskManager::new(tokio::runtime::Handle::current(), Arc::new(events::NoEvents), capabilities.tasks);
         Self {
-            config: config::ConfigStore::at(directory.join("fosta-studio.json"), config),
+            config: config::ConfigStore::at(directory.join("datastudio.json"), config),
             engines: runtime::ConnectionManager::default(),
             tasks: Arc::new(tasks),
             ai: ai::AiRuns::default(),

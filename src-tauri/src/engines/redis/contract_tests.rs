@@ -1,5 +1,5 @@
 //! Contract tests for Redis against `dev/compose/redis.yml` (127.0.0.1:6379, password `studio-redis`; override with
-//! `FOSTA_CONTRACT_REDIS_HOST` / `_PORT` / `_PASSWORD`). Run: `cargo test contract_redis -- --ignored --test-threads=1`.
+//! `DATASTUDIO_CONTRACT_REDIS_HOST` / `_PORT` / `_PASSWORD`). Run: `cargo test contract_redis -- --ignored --test-threads=1`.
 //!
 //! The shared harness has tabular suites (tree to a table, describe columns, browse, edit rows) that a key-value engine
 //! cannot pass, and no `suite_kv` yet, so this module generates the suites that apply (`classify`, `connect`, `query`,
@@ -25,7 +25,7 @@ use crate::{
 };
 
 fn env(name: &str, default: &str) -> String {
-    std::env::var(format!("FOSTA_CONTRACT_REDIS_{name}")).unwrap_or_else(|_| default.to_owned())
+    std::env::var(format!("DATASTUDIO_CONTRACT_REDIS_{name}")).unwrap_or_else(|_| default.to_owned())
 }
 
 const PAGE_KEYS: usize = 250;
@@ -588,12 +588,12 @@ async fn contract_redis_a_run_lands_in_the_database_it_names() {
 // --- Vector suite --------------------------------------------------------------------------------------------------------
 
 /// Search indexes live in database 0 only, so the vector data is there, under its own prefix and index (never FLUSHDB).
-const VECTOR_INDEX: &str = "fosta_contract_vectors";
-const VECTOR_PREFIX: &str = "fosta_contract:vec:";
+const VECTOR_INDEX: &str = "datastudio_contract_vectors";
+const VECTOR_PREFIX: &str = "datastudio_contract:vec:";
 const VECTOR_DOCS: u32 = 300;
 /// A small JSON index for the attribute names a query must escape (dropped with its documents at the end).
-const JSON_INDEX: &str = "fosta_contract_vectors_json";
-const JSON_PREFIX: &str = "fosta_contract:jvec:";
+const JSON_INDEX: &str = "datastudio_contract_vectors_json";
+const JSON_PREFIX: &str = "datastudio_contract:jvec:";
 
 /// (Re)creates the vector documents and their HNSW cosine index in database 0; `None` without the Query Engine.
 async fn seed_vectors() -> Option<()> {

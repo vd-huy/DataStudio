@@ -227,7 +227,7 @@ pub fn forget_ai_key(connection_id: &str) -> AppResult<()> {
     delete(&SecretKey::AiKey(connection_id.to_owned()))
 }
 
-/// Windows Credential Manager (the OS keychain elsewhere), service `fosta-studio`.
+/// Windows Credential Manager (the OS keychain elsewhere), service `datastudio`.
 #[cfg(feature = "desktop")]
 pub struct KeyringStore;
 
@@ -238,8 +238,8 @@ mod keyring_store {
     use super::{KeyringStore, SecretStore};
     use crate::error::AppResult;
 
-    const SERVICE: &str = "fosta-studio";
-    /// The Credential Manager service before the rename to Fosta Studio. Secrets found there are moved on first read.
+    const SERVICE: &str = "datastudio";
+    /// The Credential Manager service before the rename to DataStudio. Secrets found there are moved on first read.
     const LEGACY_SERVICE: &str = "db-studio";
 
     impl SecretStore for KeyringStore {

@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
-const CRATE = "fosta-studio";
+const CRATE = "datastudio";
 
 /** Version slots per file; each pattern captures [prefix, version]. The first slot is the source of truth. */
 const targets = [

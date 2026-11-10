@@ -1,5 +1,5 @@
 //! Live tests against `dev/compose/{redis,elasticsearch,opensearch}.yml` (Redis on 127.0.0.1:6379, password `studio-redis`).
-//! Run with `cargo test live_engine_ -- --ignored --test-threads=1`. Each test writes its own keys under `fosta-test:`
+//! Run with `cargo test live_engine_ -- --ignored --test-threads=1`. Each test writes its own keys under `datastudio-test:`
 //! so it does not depend on the seed script, and the seed keys (users:*, sessions:*, ...) are checked when present.
 
 use std::time::Duration;
@@ -17,12 +17,12 @@ use super::{
 
 fn options(resp3: bool) -> RedisConnectOptions {
     RedisConnectOptions {
-        host: std::env::var("FOSTA_REDIS_HOST").unwrap_or_else(|_| "127.0.0.1".into()),
+        host: std::env::var("DATASTUDIO_REDIS_HOST").unwrap_or_else(|_| "127.0.0.1".into()),
         port: Some(6379),
         password: Some("studio-redis".into()),
         db: 0,
         resp3,
-        client_name: Some("fosta-live-test".into()),
+        client_name: Some("datastudio-live-test".into()),
         ..Default::default()
     }
 }
@@ -34,7 +34,7 @@ async fn engine(resp3: bool) -> RedisEngine {
 }
 
 fn key(name: &str) -> Blob {
-    Blob::text(format!("fosta-test:{name}"))
+    Blob::text(format!("datastudio-test:{name}"))
 }
 
 async fn reset(engine: &RedisEngine, names: &[&str]) {
@@ -80,7 +80,7 @@ async fn live_engine_redis_scan_and_prefix_tree() {
 
     let mut tree = PrefixTree::new(":");
     let mut request = ScanRequest {
-        pattern: Some("fosta-test:scan:*".into()),
+        pattern: Some("datastudio-test:scan:*".into()),
         count: Some(100),
         page_size: Some(120),
         with_meta: true,
@@ -98,7 +98,7 @@ async fn live_engine_redis_scan_and_prefix_tree() {
     }
     assert!(pages >= 2, "120-key pages over 301 keys");
     assert_eq!(tree.len(), 301);
-    let scan = tree.children("fosta-test:scan:");
+    let scan = tree.children("datastudio-test:scan:");
     let folders: Vec<_> = scan
         .iter()
         .filter(|entry| entry.has_children)
@@ -111,7 +111,7 @@ async fn live_engine_redis_scan_and_prefix_tree() {
 
     let hashes = engine
         .scan_keys(&ScanRequest {
-            pattern: Some("fosta-test:scan:*".into()),
+            pattern: Some("datastudio-test:scan:*".into()),
             type_filter: Some(RedisType::Hash),
             page_size: Some(10_000),
             ..Default::default()
@@ -446,7 +446,7 @@ async fn live_engine_redis_console() {
     let engine = engine(true).await;
     let mut console = engine.open_console().await.unwrap();
     let results = console
-        .run("# console test\nSET fosta-test:console \"hello world\"\nGET fosta-test:console\nHSET fosta-test:console-h a 1 b 2\nHGETALL fosta-test:console-h\nNOSUCHCOMMAND\nDEL fosta-test:console fosta-test:console-h")
+        .run("# console test\nSET datastudio-test:console \"hello world\"\nGET datastudio-test:console\nHSET datastudio-test:console-h a 1 b 2\nHGETALL datastudio-test:console-h\nNOSUCHCOMMAND\nDEL datastudio-test:console datastudio-test:console-h")
         .await;
     assert_eq!(results.len(), 6);
     assert_eq!(results[0].reply, Some(RedisReply::Ok));
@@ -471,21 +471,21 @@ async fn live_engine_redis_console() {
     assert_eq!(results[5].classification.class, CommandClass::Write);
 
     // SELECT stays inside the console connection.
-    let selected = console.run("SELECT 1\nSET fosta-test:db1 x\nDBSIZE").await;
+    let selected = console.run("SELECT 1\nSET datastudio-test:db1 x\nDBSIZE").await;
     assert_eq!(selected[0].reply, Some(RedisReply::Ok));
     assert!(engine
         .scan_keys(&ScanRequest {
-            pattern: Some("fosta-test:db1".into()),
+            pattern: Some("datastudio-test:db1".into()),
             ..Default::default()
         })
         .await
         .unwrap()
         .keys
         .is_empty());
-    console.run("DEL fosta-test:db1\nSELECT 0").await;
+    console.run("DEL datastudio-test:db1\nSELECT 0").await;
 
     // MULTI/EXEC takes the highest class of the queued commands.
-    let transaction = console.run("MULTI\nSET fosta-test:tx 1\nFLUSHDB").await;
+    let transaction = console.run("MULTI\nSET datastudio-test:tx 1\nFLUSHDB").await;
     assert_eq!(transaction.len(), 3);
     assert_eq!(console.classify_line("EXEC").unwrap().class, CommandClass::Destructive);
     let discard = console.run("DISCARD").await;
@@ -496,7 +496,7 @@ async fn live_engine_redis_console() {
     assert_eq!(monitor[0].classification.class, CommandClass::Unsupported);
     assert!(monitor[0].error.is_some());
     console.set_timeout(Duration::from_millis(300));
-    let blocked = console.run("BLPOP fosta-test:never 5").await;
+    let blocked = console.run("BLPOP datastudio-test:never 5").await;
     assert!(
         blocked[0].error.as_deref().unwrap_or("").contains("did not answer"),
         "{:?}",

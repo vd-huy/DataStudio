@@ -34,7 +34,7 @@ export function welcomeScreen(workspaceName: HTMLElement, actions: WelcomeAction
     h(
       "div",
       { class: "welcome-inner" },
-      h("div", { class: "welcome-brand" }, h("img", { class: "welcome-icon", src: logoUrl, alt: "" }), h("h1", {}, "Fosta Studio")),
+      h("div", { class: "welcome-brand" }, h("img", { class: "welcome-icon", src: logoUrl, alt: "" }), h("h1", {}, "DataStudio")),
       h("p", { class: "welcome-sub" }, "Workspace ", workspaceName),
       h(
         "div",

@@ -5,7 +5,7 @@
 # The Oracle tests also need Oracle Instant Client (19c or newer): on PATH, or downloaded with
 # `cargo test live_oracle_instant_client_download -- --ignored` (see docs/engines/oracle.md).
 
-name: fosta-dev-sql
+name: datastudio-dev-sql
 
 services:
   oracle:

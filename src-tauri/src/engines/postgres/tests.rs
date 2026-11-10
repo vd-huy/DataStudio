@@ -277,7 +277,7 @@ async fn live_engine_postgres_typed_values_round_trip() {
     assert_eq!(get("c_domain"), Value::Decimal("42.50".into()));
     assert_eq!(shown("c_composite"), "(\"1 Main St\",Hanoi,100000)");
     assert_eq!(shown("c_xml"), "<a>1</a>");
-    assert_eq!(shown("c_tsvector"), "'fosta':1 'studio':2");
+    assert_eq!(shown("c_tsvector"), "'data':1 'studio':2");
     assert_eq!(get("c_oid"), Value::Int(1259));
     assert!(page.rows[1][1..].iter().all(Value::is_null), "row 2 is all NULL");
 
@@ -501,7 +501,7 @@ async fn live_engine_postgres_read_only_backstop_is_reasserted() {
         ..RunOptions::default()
     };
     let rw = RunOptions::default();
-    let probe = "CREATE TEMP TABLE fosta_ro_probe (a int)";
+    let probe = "CREATE TEMP TABLE datastudio_ro_probe (a int)";
     let refused = |err: crate::engines::common::EngineError| assert_eq!(err.code.as_deref(), Some("25006"), "{err}");
 
     // A statement that switched the session default off (classified Admin; here run past the gateway) does not survive
@@ -539,5 +539,5 @@ async fn live_engine_postgres_read_only_backstop_is_reasserted() {
     s.run("SELECT 1", &ro, &mut CollectSink::default()).await.unwrap();
     s.rollback().await.unwrap();
     s.run(probe, &rw, &mut CollectSink::default()).await.unwrap();
-    s.run("DROP TABLE fosta_ro_probe", &rw, &mut CollectSink::default()).await.unwrap();
+    s.run("DROP TABLE datastudio_ro_probe", &rw, &mut CollectSink::default()).await.unwrap();
 }

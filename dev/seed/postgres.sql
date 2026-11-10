@@ -166,7 +166,7 @@ INSERT INTO type_zoo VALUES (
     '1 year 2 mons 3 days 04:05:06', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '{"a": 1, "b": [true, null]}',
     '{"nested": {"x": 1.5}}', '{1,2,3}', '{"x","y z",NULL}', '192.168.1.10/32', '10.0.0.0/8', '08:00:2b:01:02:03',
     B'10101010', B'101', '(1.5,-2)', '[1,10)', '["2026-01-01 00:00:00","2026-12-31 00:00:00")', 'paid', 42.50,
-    ROW('1 Main St', 'Hanoi', '100000'), '<a>1</a>', to_tsvector('simple', 'fosta studio'), 1259
+    ROW('1 Main St', 'Hanoi', '100000'), '<a>1</a>', to_tsvector('simple', 'data studio'), 1259
 );
 INSERT INTO type_zoo (id) VALUES (2);
 

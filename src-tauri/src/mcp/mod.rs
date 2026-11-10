@@ -522,11 +522,11 @@ impl McpState {
             lock(&self.listener).as_ref().is_some_and(|listener| listener.port == settings.port)
         };
         let bridge_command = if web {
-            vec!["fosta-studio-server".to_owned(), "mcp".to_owned()]
+            vec!["datastudio-server".to_owned(), "mcp".to_owned()]
         } else {
             let exe = std::env::current_exe()
                 .map(|path| path.display().to_string())
-                .unwrap_or_else(|_| "fosta-studio".into());
+                .unwrap_or_else(|_| "datastudio".into());
             vec![exe, "mcp".to_owned()]
         };
         McpStatus {

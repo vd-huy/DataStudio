@@ -43,7 +43,7 @@ impl ChSession {
     pub(super) fn new(http: Http) -> Self {
         Self {
             http,
-            session_id: new_query_id().replacen("fosta-", "fosta-session-", 1),
+            session_id: new_query_id().replacen("datastudio-", "datastudio-session-", 1),
             running: Arc::new(Mutex::new(None)),
         }
     }

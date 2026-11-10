@@ -1,6 +1,6 @@
 /**
  * Updates in the dev mock: `check_update` always finds 0.1.1, so the status bar item and its dialog can be previewed.
- * `__fostaMock.setInstallKind("portable" | "web")` changes the edition the dialog is for (then Settings → Check for
+ * `__datastudioMock.setInstallKind("portable" | "web")` changes the edition the dialog is for (then Settings → Check for
  * updates now); the Tauri updater and process plugins are simulated (a 2-second download, "Restart" reloads the page).
  * Open the page with `?whatsNew` to see the "What's new" note, or with `?installKind=portable` (or `web`) to start as that edition.
  */
@@ -22,7 +22,7 @@ export function mockCheckUpdate(): UpdateInfo {
     current: __APP_VERSION__,
     latest: LATEST,
     newer: true,
-    url: `https://github.com/caothanhphatit/fosta-dbclient/releases/tag/v${LATEST}`,
+    url: `https://github.com/vd-huy/DataStudio/releases/tag/v${LATEST}`,
     publishedAt: new Date().toISOString(),
   };
 }

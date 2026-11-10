@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Renders the Fosta Studio website for every language. Node 20+, no dependencies.
+// Renders the DataStudio website for every language. Node 20+, no dependencies.
 //
 //   node website/build.mjs <outdir>    check the strings, then write every page in every language: <outdir>/index.html
 //                                      (English), <outdir>/databases/, <outdir>/donate/, and the same under /vi/, /zh/, /ja/
@@ -22,9 +22,9 @@ const ORIGIN = "https://dbcl.fosta.app";
 // Direct download links for the Windows build. The release workflow publishes assets named after the version, and GitHub
 // turns the spaces of the installer's name into dots. A release only needs the version bump in package.json:
 // "{installer-url}" and "{portable-url}" in the templates become these at build time.
-const RELEASE_BASE = `https://github.com/caothanhphatit/fosta-dbclient/releases/download/v${APP_VERSION}`;
-const INSTALLER_URL = `${RELEASE_BASE}/Fosta.Studio_${APP_VERSION}_x64-setup.exe`;
-const PORTABLE_URL = `${RELEASE_BASE}/Fosta-Studio_${APP_VERSION}_x64_portable.exe`;
+const RELEASE_BASE = `https://github.com/vd-huy/DataStudio/releases/download/v${APP_VERSION}`;
+const INSTALLER_URL = `${RELEASE_BASE}/DataStudio_${APP_VERSION}_x64-setup.exe`;
+const PORTABLE_URL = `${RELEASE_BASE}/DataStudio_${APP_VERSION}_x64_portable.exe`;
 
 // The first locale is the default: served at the root, and the x-default alternate.
 export const LOCALES = [
@@ -48,7 +48,7 @@ const BUILD_KEYS = ["lang.label", "lang.current", "offer.prompt", "offer.dismiss
 
 // Files copied next to the pages. README.md files are documentation and are not published.
 const STATIC = ["styles.css", "main.js", "assets"];
-const MARKER = ".fosta-site"; // written into the output folder, so a rebuild may safely empty it
+const MARKER = ".datastudio-site"; // written into the output folder, so a rebuild may safely empty it
 
 // Inline markup allowed inside a string, with the attributes each tag may carry.
 const INLINE = { strong: [], b: [], em: [], code: [], kbd: [], br: [], a: ["href"] };
@@ -427,7 +427,7 @@ export function renderPage(html, loc, dicts, page = PAGES[0]) {
 
   // 6. Links to other sites (GitHub, docs) open in a new tab, so the visitor keeps this page.
   out = out.replace(/<a\s[^>]*href="https:\/\/[^"]*"[^>]*>/g, (tag) =>
-    /\starget=/.test(tag) || /href="https:\/\/dbcl\.fosta\.app[/"]/.test(tag) ? tag : tag.replace(/>$/, ' target="_blank" rel="noopener">'),
+    /\starget=/.test(tag) || /href="https:\/\/dbcl\.datastudio\.app[/"]/.test(tag) ? tag : tag.replace(/>$/, ' target="_blank" rel="noopener">'),
   );
 
   // 7. The app version.

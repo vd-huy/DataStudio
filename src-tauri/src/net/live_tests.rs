@@ -13,7 +13,7 @@ use super::ssh::{self, SSH_AUTH_FAILED, SSH_HOST_KEY_MISMATCH, SSH_HOST_KEY_UNKN
 use super::ssh::{SSH_KEY_FILE, SSH_SECRET_REQUIRED};
 use super::*;
 
-const TARGET_CONTAINER: &str = "fosta-dev-ssh-ssh-target-1";
+const TARGET_CONTAINER: &str = "datastudio-dev-ssh-ssh-target-1";
 const KEY_PASSPHRASE: &str = "tunnel-key-pass";
 
 /// MariaDB as the SSH target container sees it.
@@ -31,7 +31,7 @@ struct Scratch {
 
 impl Scratch {
     fn new(tag: &str) -> Self {
-        let dir = std::env::temp_dir().join(format!("fosta-net-live-{tag}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("datastudio-net-live-{tag}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         Self { dir }
@@ -331,7 +331,7 @@ async fn live_ssh_agent_authenticates() {
     #[cfg(windows)]
     let socket = {
         use tokio::net::windows::named_pipe::ServerOptions;
-        let name = format!(r"\\.\pipe\fosta-test-agent-{}", std::process::id());
+        let name = format!(r"\\.\pipe\datastudio-test-agent-{}", std::process::id());
         let first = ServerOptions::new().first_pipe_instance(true).create(&name).unwrap();
         let pipe = name.clone();
         let incoming = futures_util::stream::unfold(first, move |server| {

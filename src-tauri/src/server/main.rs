@@ -1,4 +1,4 @@
-//! The web front-end (`fosta-studio-server`, feature `web`): serves the UI and exposes the shared commands
+//! The web front-end (`datastudio-server`, feature `web`): serves the UI and exposes the shared commands
 //! over HTTP, for the Docker image.
 //!
 //! - `POST /api/invoke/<command>`: the same JSON arguments and result as Tauri's `invoke` (see `api.rs`);
@@ -21,7 +21,7 @@ use std::{
     sync::Arc,
 };
 
-use fosta_studio::{
+use datastudio::{
     config,
     secrets::{
         self,
@@ -36,7 +36,7 @@ use crate::{api::WebEvents, auth::Auth};
 
 const DEFAULT_LISTEN: &str = "127.0.0.1:8080";
 
-/// Everything the server is configured with, from `FOSTA_STUDIO_*` environment variables.
+/// Everything the server is configured with, from `DATASTUDIO_*` environment variables.
 struct Settings {
     listen: SocketAddr,
     ui_dir: PathBuf,
@@ -52,32 +52,32 @@ struct Settings {
 
 impl Settings {
     fn from_env() -> Result<Self, String> {
-        let listen = env("FOSTA_STUDIO_LISTEN").unwrap_or_else(|| DEFAULT_LISTEN.to_owned());
+        let listen = env("DATASTUDIO_LISTEN").unwrap_or_else(|| DEFAULT_LISTEN.to_owned());
         let listen = listen
             .parse()
-            .map_err(|_| format!("FOSTA_STUDIO_LISTEN must be an address and port such as 0.0.0.0:8080, not '{listen}'"))?;
-        let auth = env("FOSTA_STUDIO_AUTH").unwrap_or_default().to_ascii_lowercase();
+            .map_err(|_| format!("DATASTUDIO_LISTEN must be an address and port such as 0.0.0.0:8080, not '{listen}'"))?;
+        let auth = env("DATASTUDIO_AUTH").unwrap_or_default().to_ascii_lowercase();
         if !matches!(auth.as_str(), "" | "on" | "token" | "off") {
-            return Err(format!("FOSTA_STUDIO_AUTH must be 'token' (the default) or 'off', not '{auth}'"));
+            return Err(format!("DATASTUDIO_AUTH must be 'token' (the default) or 'off', not '{auth}'"));
         }
         Ok(Self {
             listen,
-            ui_dir: env("FOSTA_STUDIO_UI").map_or_else(|| PathBuf::from("dist"), PathBuf::from),
+            ui_dir: env("DATASTUDIO_UI").map_or_else(|| PathBuf::from("dist"), PathBuf::from),
             data_dir: config::data_dir().map_err(|error| error.to_string())?,
-            token: env("FOSTA_STUDIO_TOKEN"),
+            token: env("DATASTUDIO_TOKEN"),
             auth_off: auth == "off",
-            tasks: flag("FOSTA_STUDIO_TASKS"),
-            secure_cookie: flag("FOSTA_STUDIO_SECURE_COOKIE"),
-            public_url: env("FOSTA_STUDIO_PUBLIC_URL").map(|url| url.trim_end_matches('/').to_owned()),
-            allowed_origins: list("FOSTA_STUDIO_ALLOWED_ORIGINS")
+            tasks: flag("DATASTUDIO_TASKS"),
+            secure_cookie: flag("DATASTUDIO_SECURE_COOKIE"),
+            public_url: env("DATASTUDIO_PUBLIC_URL").map(|url| url.trim_end_matches('/').to_owned()),
+            allowed_origins: list("DATASTUDIO_ALLOWED_ORIGINS")
                 .into_iter()
                 .map(|origin| origin.trim_end_matches('/').to_owned())
                 .collect(),
-            allowed_hosts: list("FOSTA_STUDIO_ALLOWED_HOSTS"),
+            allowed_hosts: list("DATASTUDIO_ALLOWED_HOSTS"),
         })
     }
 
-    /// The URL printed with the token: `FOSTA_STUDIO_PUBLIC_URL`, else localhost on the listening port.
+    /// The URL printed with the token: `DATASTUDIO_PUBLIC_URL`, else localhost on the listening port.
     fn login_base(&self) -> String {
         self.public_url
             .clone()
@@ -119,9 +119,9 @@ fn in_container() -> bool {
 /// `LD_LIBRARY_PATH`, and the server restarts itself once with it; a client downloaded later then loads without a restart.
 #[cfg(all(target_os = "linux", feature = "engine-oracle"))]
 fn oracle_library_path() {
-    use fosta_studio::engines::oracle::instant_client;
+    use datastudio::engines::oracle::instant_client;
     use std::os::unix::process::CommandExt;
-    const MARKER: &str = "FOSTA_STUDIO_ORACLE_PATH_SET";
+    const MARKER: &str = "DATASTUDIO_ORACLE_PATH_SET";
     if std::env::var_os(MARKER).is_some() {
         return;
     }
@@ -147,7 +147,7 @@ fn oracle_library_path() {
         .env("LD_LIBRARY_PATH", joined)
         .env(MARKER, "1")
         .exec();
-    eprintln!("fosta-studio-server: could not restart with the Oracle client folder on LD_LIBRARY_PATH: {error}");
+    eprintln!("datastudio-server: could not restart with the Oracle client folder on LD_LIBRARY_PATH: {error}");
 }
 
 #[cfg(not(all(target_os = "linux", feature = "engine-oracle")))]
@@ -158,7 +158,7 @@ fn main() -> ExitCode {
     let settings = match Settings::from_env() {
         Ok(settings) => settings,
         Err(error) => {
-            eprintln!("fosta-studio-server: {error}");
+            eprintln!("datastudio-server: {error}");
             return ExitCode::FAILURE;
         }
     };
@@ -172,26 +172,26 @@ fn main() -> ExitCode {
         Some("rotate-token") => rotate_token(&settings),
         Some("mcp") => mcp_bridge(&settings),
         Some("--version" | "version") => {
-            println!("fosta-studio-server {}", env!("CARGO_PKG_VERSION"));
+            println!("datastudio-server {}", env!("CARGO_PKG_VERSION"));
             Ok(())
         }
         Some(other) => Err(format!(
-            "unknown command '{other}'. Usage: fosta-studio-server [serve | token | rotate-token | mcp | healthcheck | version]"
+            "unknown command '{other}'. Usage: datastudio-server [serve | token | rotate-token | mcp | healthcheck | version]"
         )),
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
-            eprintln!("fosta-studio-server: {error}");
+            eprintln!("datastudio-server: {error}");
             ExitCode::FAILURE
         }
     }
 }
 
-/// `fosta-studio-server token`: prints the login URL again (e.g. `docker exec <container> /app/fosta-studio-server token`).
+/// `datastudio-server token`: prints the login URL again (e.g. `docker exec <container> /app/datastudio-server token`).
 fn print_login(settings: &Settings) -> Result<(), String> {
     if settings.auth_off {
-        println!("Authentication is off (FOSTA_STUDIO_AUTH=off): open {}/", settings.login_base());
+        println!("Authentication is off (DATASTUDIO_AUTH=off): open {}/", settings.login_base());
         return Ok(());
     }
     let (token, _) = auth::load_token(&settings.data_dir, settings.token.clone())?;
@@ -199,12 +199,12 @@ fn print_login(settings: &Settings) -> Result<(), String> {
     Ok(())
 }
 
-/// `fosta-studio-server rotate-token`: replaces the access token and the cookie signing key, which signs out
+/// `datastudio-server rotate-token`: replaces the access token and the cookie signing key, which signs out
 /// every browser; a running server picks up the new token on its next request.
 fn rotate_token(settings: &Settings) -> Result<(), String> {
     if settings.auth_off {
         return Err(String::from(
-            "authentication is off (FOSTA_STUDIO_AUTH=off): there is no token to rotate",
+            "authentication is off (DATASTUDIO_AUTH=off): there is no token to rotate",
         ));
     }
     std::fs::create_dir_all(&settings.data_dir)
@@ -215,17 +215,17 @@ fn rotate_token(settings: &Settings) -> Result<(), String> {
     Ok(())
 }
 
-/// `fosta-studio-server mcp`: the stdio bridge for MCP clients, relaying to this server's `/mcp` with the MCP token
-/// from the secret store (e.g. `docker exec -i <container> /app/fosta-studio-server mcp`). It never sends the access
+/// `datastudio-server mcp`: the stdio bridge for MCP clients, relaying to this server's `/mcp` with the MCP token
+/// from the secret store (e.g. `docker exec -i <container> /app/datastudio-server mcp`). It never sends the access
 /// token, and exits when the MCP server is off.
 fn mcp_bridge(settings: &Settings) -> Result<(), String> {
     if settings.auth_off {
         return Err(String::from(
-            "authentication is off (FOSTA_STUDIO_AUTH=off), so the MCP endpoint is off too",
+            "authentication is off (DATASTUDIO_AUTH=off), so the MCP endpoint is off too",
         ));
     }
     let config = config::read_saved().map_err(|error| format!("cannot read the settings: {error}"))?;
-    fosta_studio::mcp::bridge::require_enabled(&config)?;
+    datastudio::mcp::bridge::require_enabled(&config)?;
     let token = saved_mcp_token(&settings.data_dir)?;
     let mut address = settings.listen;
     if address.ip().is_unspecified() {
@@ -235,7 +235,7 @@ fn mcp_bridge(settings: &Settings) -> Result<(), String> {
             std::net::Ipv6Addr::LOCALHOST.into()
         });
     }
-    match fosta_studio::mcp::bridge::run(format!("http://{address}/mcp"), token) {
+    match datastudio::mcp::bridge::run(format!("http://{address}/mcp"), token) {
         0 => Ok(()),
         _ => Err(String::from("the MCP bridge stopped")),
     }
@@ -270,10 +270,10 @@ fn serve(settings: Settings) -> Result<(), String> {
 async fn run(settings: Settings) -> Result<(), String> {
     std::fs::create_dir_all(&settings.data_dir)
         .map_err(|error| format!("cannot create the data directory {}: {error}", settings.data_dir.display()))?;
-    println!("Fosta Studio {} web edition", env!("CARGO_PKG_VERSION"));
+    println!("DataStudio {} web edition", env!("CARGO_PKG_VERSION"));
     println!("Data directory: {}", settings.data_dir.display());
-    let log_dir = fosta_studio::logging::init(&settings.data_dir, fosta_studio::logging::LogLocation::Web);
-    fosta_studio::runtime::install_panic_hook();
+    let log_dir = datastudio::logging::init(&settings.data_dir, datastudio::logging::LogLocation::Web);
+    datastudio::runtime::install_panic_hook();
     println!("Logs: {}", log_dir.display());
 
     let (store, key_source) =
@@ -297,7 +297,7 @@ async fn run(settings: Settings) -> Result<(), String> {
         auth
     };
     if settings.tasks {
-        println!("Commands are on (FOSTA_STUDIO_TASKS): the UI can run programs inside this container.");
+        println!("Commands are on (DATASTUDIO_TASKS): the UI can run programs inside this container.");
     }
 
     let (sender, _) = broadcast::channel(1024);
@@ -313,7 +313,7 @@ async fn run(settings: Settings) -> Result<(), String> {
 
     if !settings.ui_dir.join("index.html").exists() {
         eprintln!(
-            "Warning: no UI found in {} (set FOSTA_STUDIO_UI to the folder `npm run build` writes, dist/).",
+            "Warning: no UI found in {} (set DATASTUDIO_UI to the folder `npm run build` writes, dist/).",
             settings.ui_dir.display()
         );
     }
@@ -343,21 +343,21 @@ fn announce_token(settings: &Settings, token: &str, generated: bool) {
     let line = "=".repeat(78);
     if settings.token.is_some() {
         println!(
-            "Sign in with the access token from FOSTA_STUDIO_TOKEN: {}/?token=<token>",
+            "Sign in with the access token from DATASTUDIO_TOKEN: {}/?token=<token>",
             settings.login_base()
         );
     } else if generated {
         println!("{line}");
-        println!("  Fosta Studio is ready. Open this address to sign in (shown only this once):");
+        println!("  DataStudio is ready. Open this address to sign in (shown only this once):");
         println!();
         println!("    {}/?token={token}", settings.login_base());
         println!();
         println!("  The token is saved in {}.", settings.data_dir.join(auth::TOKEN_FILE).display());
-        println!("  Print the address again with: docker exec <container> /app/fosta-studio-server token");
+        println!("  Print the address again with: docker exec <container> /app/datastudio-server token");
         println!("{line}");
     } else {
         println!(
-            "Sign in with the access token saved in {}; print the address with: docker exec <container> /app/fosta-studio-server token",
+            "Sign in with the access token saved in {}; print the address with: docker exec <container> /app/datastudio-server token",
             settings.data_dir.join(auth::TOKEN_FILE).display()
         );
     }
@@ -366,11 +366,11 @@ fn announce_token(settings: &Settings, token: &str, generated: bool) {
 fn warn_auth_off() {
     let line = "!".repeat(78);
     eprintln!("{line}");
-    eprintln!("  WARNING: authentication is OFF (FOSTA_STUDIO_AUTH=off).");
+    eprintln!("  WARNING: authentication is OFF (DATASTUDIO_AUTH=off).");
     eprintln!("  Anyone who can reach this port can use every saved connection, password and");
     eprintln!("  database through it. Use this only on a trusted machine or behind your own");
     eprintln!("  authenticating proxy. Requests are accepted only for the hosts in");
-    eprintln!("  FOSTA_STUDIO_ALLOWED_HOSTS (default: localhost, 127.0.0.1, [::1]).");
+    eprintln!("  DATASTUDIO_ALLOWED_HOSTS (default: localhost, 127.0.0.1, [::1]).");
     eprintln!("{line}");
 }
 

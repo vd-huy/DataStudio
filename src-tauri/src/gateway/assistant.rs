@@ -364,7 +364,7 @@ mod tests {
 
     #[test]
     fn only_single_allowed_reads_pass() {
-        let path = std::env::temp_dir().join(format!("fosta-assistant-check-{}.jsonl", std::process::id()));
+        let path = std::env::temp_dir().join(format!("datastudio-assistant-check-{}.jsonl", std::process::id()));
         let gateway = Gateway::with_audit(AuditLog::new(path.clone(), 1000));
         let engine = FakeEngine::leak();
         let open = context(Preset::Open);

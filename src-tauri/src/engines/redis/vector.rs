@@ -793,7 +793,7 @@ impl VectorStore for RedisVectors {
                     "Exact scan: the index of {} serves {} distance only",
                     field.attribute, field.distance_metric
                 ),
-                format!("Read all {read} of {total} documents; distances computed by Fosta Studio on Redis's scale"),
+                format!("Read all {read} of {total} documents; distances computed by DataStudio on Redis's scale"),
             ];
             let sql = format!("FT.SEARCH {} * RETURN … LIMIT 0 {total} DIALECT 2", console_arg(index));
             (found, plan, None, sql.clone(), sql)

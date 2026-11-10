@@ -1,6 +1,6 @@
 # ClickHouse
 
-Fosta Studio talks to ClickHouse 25.8 (the version the suites run against; see "Versions") over the HTTP interface, with the
+DataStudio talks to ClickHouse 25.8 (the version the suites run against; see "Versions") over the HTTP interface, with the
 app's own `reqwest` and no extra client crate. The engine id is `clickhouse`; the code is in `src-tauri/src/engines/clickhouse/`
 and the UI in `src/engines/clickhouse/`.
 
@@ -48,7 +48,7 @@ ClickHouse has no transactional row updates, so editing works differently from t
 notice above the table:
 
 - An update is `ALTER TABLE … UPDATE …` and a delete is a lightweight `DELETE FROM … WHERE …` (`ALTER TABLE … DELETE` on servers
-  before 23.3). Both are **mutations**: ClickHouse rewrites the data parts in the background. Fosta Studio waits for each one
+  before 23.3). Both are **mutations**: ClickHouse rewrites the data parts in the background. DataStudio waits for each one
   (`mutations_sync = 2`), but they are not transactions and cannot be rolled back.
 - Only **MergeTree-family** tables (`MergeTree`, `ReplacingMergeTree`, `Replicated…`, `Shared…`, …) have mutations. Every other
   table is **read-only**: views, materialized views, dictionaries, `Log`, `Memory`, `Distributed`, `Kafka`… The grid has no Add,

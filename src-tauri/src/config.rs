@@ -22,8 +22,8 @@ use crate::{
     tasks::TaskDef,
 };
 
-const CONFIG_FILE: &str = "fosta-studio.json";
-/// The config file's name before the app was renamed to Fosta Studio; moved on first start.
+const CONFIG_FILE: &str = "datastudio.json";
+/// The config file's name before the app was renamed to DataStudio; moved on first start.
 const LEGACY_CONFIG_FILE: &str = "db-studio.json";
 const DEFAULT_WORKSPACE_ID: &str = "default";
 const DEFAULT_WORKSPACE_NAME: &str = "Local";
@@ -730,15 +730,15 @@ pub fn read_saved() -> AppResult<AppConfig> {
     Ok(stored.into())
 }
 
-/// A file in the data directory, where `fosta-studio.json` lives.
+/// A file in the data directory, where `datastudio.json` lives.
 pub fn data_path(name: &str) -> AppResult<PathBuf> {
     Ok(data_dir()?.join(name))
 }
 
 /// Environment variable naming the data directory (the web server's `/data` volume).
-pub const DATA_DIR_ENV: &str = "FOSTA_STUDIO_DATA";
+pub const DATA_DIR_ENV: &str = "DATASTUDIO_DATA";
 
-/// `FOSTA_STUDIO_DATA` when set, otherwise the executable's folder (the desktop app is portable).
+/// `DATASTUDIO_DATA` when set, otherwise the executable's folder (the desktop app is portable).
 pub fn data_dir() -> AppResult<PathBuf> {
     if let Some(directory) = std::env::var_os(DATA_DIR_ENV).filter(|value| !value.is_empty()) {
         return Ok(PathBuf::from(directory));
@@ -792,7 +792,7 @@ fn load_file(path: &Path, local_connection: bool) -> AppResult<AppConfig> {
             let mut starter = AppConfig::starter(local_connection);
             write_config(path, &starter)?;
             starter.startup_notice = Some(format!(
-                "The settings file could not be read ({error}). It was moved to {} and Fosta Studio started with new settings.",
+                "The settings file could not be read ({error}). It was moved to {} and DataStudio started with new settings.",
                 aside.display()
             ));
             Ok(starter)
@@ -872,7 +872,7 @@ mod tests {
     }
 
     fn scratch(name: &str) -> PathBuf {
-        let directory = std::env::temp_dir().join(format!("fosta-config-{name}-{}", std::process::id()));
+        let directory = std::env::temp_dir().join(format!("datastudio-config-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&directory);
         fs::create_dir_all(&directory).unwrap();
         directory
@@ -1096,7 +1096,7 @@ mod tests {
         fs::write(&path, V1_FIXTURE).unwrap();
         let config = load_file(&path, true).unwrap();
         assert!(config.startup_notice.is_none());
-        let backup = directory.join("fosta-studio.json.v1.bak");
+        let backup = directory.join("datastudio.json.v1.bak");
         assert_eq!(fs::read_to_string(&backup).unwrap(), V1_FIXTURE);
         write_config(&path, &config).unwrap();
         fs::write(&backup, "older backup").unwrap();
@@ -1118,7 +1118,7 @@ mod tests {
         let mut config = AppConfig::starter(false);
         config.startup_notice = Some("hello".into());
         write_config(&path, &config).unwrap();
-        assert!(!directory.join("fosta-studio.json.tmp").exists());
+        assert!(!directory.join("datastudio.json.tmp").exists());
         let written: serde_json::Value = serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
         assert!(written.get("startupNotice").is_none());
         assert_eq!(written["configVersion"], 2);
@@ -1132,12 +1132,12 @@ mod tests {
         fs::write(&path, "{ not json").unwrap();
         let config = load_file(&path, true).unwrap();
         let notice = config.startup_notice.as_deref().unwrap();
-        assert!(notice.contains("fosta-studio.json.corrupt-"), "{notice}");
+        assert!(notice.contains("datastudio.json.corrupt-"), "{notice}");
         assert_eq!(config.workspaces[0].connections[0].id, "local-mariadb");
         let aside: Vec<_> = fs::read_dir(&directory)
             .unwrap()
             .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
-            .filter(|name| name.starts_with("fosta-studio.json.corrupt-"))
+            .filter(|name| name.starts_with("datastudio.json.corrupt-"))
             .collect();
         assert_eq!(aside.len(), 1);
         assert_eq!(fs::read_to_string(directory.join(&aside[0])).unwrap(), "{ not json");
@@ -1156,9 +1156,9 @@ mod tests {
 
     #[test]
     fn legacy_files_are_moved_once_and_never_overwrite() {
-        let dir = std::env::temp_dir().join(format!("fosta-rename-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("datastudio-rename-{}", std::process::id()));
         fs::create_dir_all(&dir).unwrap();
-        let (new, old) = (dir.join("fosta-studio.json"), dir.join("db-studio.json"));
+        let (new, old) = (dir.join("datastudio.json"), dir.join("db-studio.json"));
         fs::write(&old, "old").unwrap();
         move_legacy_file(&new, &old).unwrap();
         assert_eq!(fs::read_to_string(&new).unwrap(), "old");

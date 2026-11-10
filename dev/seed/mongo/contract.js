@@ -1,7 +1,7 @@
 // Contract-test data for MongoDB (src-tauri/src/contract/testing). The Rust fixture builds the same documents itself
-// before each suite (database fosta_contract); this script is for a fresh container or a manual reset:
+// before each suite (database datastudio_contract); this script is for a fresh container or a manual reset:
 //   docker exec -i db-studio-dev-mongo-1 mongosh -u root -p studio-root --quiet < dev/seed/mongo/contract.js
-const contract = db.getSiblingDB("fosta_contract");
+const contract = db.getSiblingDB("datastudio_contract");
 contract.contract_items.drop();
 contract.contract_children.drop();
 const items = [];
