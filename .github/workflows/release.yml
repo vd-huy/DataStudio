@@ -1,6 +1,6 @@
 name: Release
 
-# Pushing a tag vX.Y.Z builds the Windows app and opens a draft GitHub Release for review.
+# Pushing a tag vX.Y.Z builds the Windows app and publishes a GitHub Release with it.
 # See "Releasing" in CONTRIBUTING.md.
 on:
   push:
@@ -111,6 +111,12 @@ jobs:
           portable="DataStudio_${VERSION}_x64_portable.exe"
           cp src-tauri/target/release/datastudio.exe "$portable"
           gh release upload "$GITHUB_REF_NAME" "$portable" --clobber --repo "$GITHUB_REPOSITORY"
+      # The release stays a draft while assets upload, so it never goes public half-filled.
+      - name: Publish the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false --repo "$GITHUB_REPOSITORY"
 
   docker:
     name: Docker web edition

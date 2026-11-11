@@ -153,10 +153,11 @@ DataStudio follows [Semantic Versioning](https://semver.org/). `package.json` is
    ```
 
 4. The tag starts `.github/workflows/release.yml`: it checks that the tag matches the version files and that `CHANGELOG.md` has a section
-   for it, builds the NSIS installer and the portable exe, and creates a **draft** GitHub Release with that section as its notes. When a
+   for it, builds the NSIS installer and the portable exe, and publishes a GitHub Release with that section as its notes (it stays a
+   draft only while the assets upload). When a
    `Dockerfile` exists, it also pushes `ghcr.io/vd-huy/datastudio` tagged `X.Y.Z`, `X.Y` and `latest`.
    The installer is signed for the in-app updater with the `TAURI_SIGNING_PRIVATE_KEY` repository secret (the key matching
    `plugins.updater.pubkey` in `tauri.conf.json`; `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` only if the key has a password), and
    `latest.json` is attached for the updater. The workflow stops early when the key secret is missing.
-5. Review the draft release (notes, assets), then publish it. Installed apps see it once it is published. A tag with a suffix such as `v0.2.0-rc.1` becomes a pre-release and does not
-   move the `X.Y` or `latest` image tags.
+5. Installed apps see the release as soon as the workflow finishes, so the tag is the point of no return. A tag with a suffix such as
+   `v0.2.0-rc.1` becomes a pre-release, which installed apps skip, and does not move the `X.Y` or `latest` image tags.
