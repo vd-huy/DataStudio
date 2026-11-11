@@ -7,9 +7,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-11
+
 ### Added
 
 - A "Community (Discord)" link in the settings menu and on the welcome screen, and the Discord invite in the README.
+- **Query results**: a floating pager (first / previous / next / last, Count) with a page size menu (10 to 1000, All, Custom, Set as
+  default); a `SELECT` is paged and sorted on the server, and results from a single table can be edited, with Preview SQL before
+  Save.
+- **Table view**: TablePlus-style editing toolbar, highlighted changed rows, Preview SQL and the same page size control.
+- **Column resize**: drag a header's right edge to change a column's width (double-click to fit again); widths stay across pages.
+- **Multi-row selection**: Shift/Ctrl+click, drag, Shift+Up/Down or Ctrl+A pick several rows; Ctrl+C copies them as CSV with a
+  header line, and the row menu copies them as CSV, JSON, Markdown or `INSERT` statements.
+
+### Fixed
+
+- The query pager's Next and Last buttons stayed disabled, and the row total was wrong ("1–400 of 400") after changing page or
+  page size; a page now shows exactly the page size, and the extra row read to detect a next page is no longer counted.
+- Scrolling (or dragging the scrollbar) to the bottom of a grid made it jump back up.
 
 ## [0.2.0] - 2026-11-09
 
@@ -186,6 +201,7 @@ First public release for Windows, plus a web edition for Docker.
 - **Design view** with columns and DDL, and an interactive **ER diagram** per database.
 - Light, dark and system themes. Settings are stored in `datastudio.json` next to the executable.
 
-[Unreleased]: https://github.com/vd-huy/DataStudio/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/vd-huy/DataStudio/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/vd-huy/DataStudio/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/vd-huy/DataStudio/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/vd-huy/DataStudio/releases/tag/v0.1.0
