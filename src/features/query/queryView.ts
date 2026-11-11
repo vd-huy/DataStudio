@@ -798,7 +798,8 @@ export class QueryView implements TabContent {
                 this.scheduleRender(current);
               },
               confirmation,
-              this.pageSize >= 50000 ? null : this.pageSize + 1,
+              // Exactly one page; the backend marks the result truncated when more rows exist (the pager's "has more").
+              this.pageSize >= 50000 ? null : this.pageSize,
             ),
           inFlight,
         );
@@ -1088,7 +1089,8 @@ export class QueryView implements TabContent {
     let truncated = false;
 
     try {
-      const pageSql = buildPaginatedQuery(baseSql, dialect, limit, offset, sort);
+      // One row past the page, read only to learn whether a next page exists (the backend keeps `limit`, marks it truncated).
+      const pageSql = buildPaginatedQuery(baseSql, dialect, limit + 1, offset, sort);
       const req: RunRequest = { text: pageSql, database: this.currentDatabase(), offset: 0 };
       const summary = await this.connection.run(
         this.sessionId,
@@ -1102,18 +1104,23 @@ export class QueryView implements TabContent {
           }
         },
         null,
-        limit + 1,
+        limit,
       );
       if (summary) elapsedMs = summary.elapsedMs;
 
       const hasMore = fetchedRows.length > limit || truncated;
-      const displayedRows = hasMore && fetchedRows.length > limit ? fetchedRows.slice(0, limit) : fetchedRows;
+      const displayedRows = fetchedRows.slice(0, limit);
 
       panel.hasMore = hasMore;
       panel.elapsedMs = elapsedMs;
-      if (!hasMore && (panel.total === null || !panel.exactTotal)) {
+      if (!hasMore) {
+        // The last page: the total is known exactly.
         panel.total = offset + displayedRows.length;
         panel.exactTotal = true;
+      } else if (panel.total !== null && panel.total <= offset + displayedRows.length) {
+        // More rows than the total said (it was stale): unknown again.
+        panel.total = null;
+        panel.exactTotal = false;
       }
 
       panel.grid.load({

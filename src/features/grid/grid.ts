@@ -64,6 +64,9 @@ const DEFAULT_VIEWPORT = 800;
 /** Row height (22px compact, 26px comfortable cell incl. its 1px border), refined by measuring once. */
 let rowHeight = density() === "compact" ? 22 : 26;
 let rowHeightMeasured = false;
+/** Narrowest a column can be dragged. */
+const MIN_COLUMN_WIDTH = 40;
+let gridCount = 0;
 onDensityChange(() => {
   rowHeight = density() === "compact" ? 22 : 26;
   rowHeightMeasured = false;
@@ -102,10 +105,22 @@ export class DataGrid {
   private commitEdit: (() => void) | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private disposed = false;
+  /** Widths the user dragged, by column name; kept across reloads (pages) of the same columns. */
+  private columnSizes = new Map<string, number>();
+  private readonly sizeStyle = h("style");
+  private readonly gridId = String((gridCount += 1));
+  /** Set while a resize drag ends, so the click it makes does not sort the column. */
+  private resized = false;
+  /** Rows picked for copying (Shift/Ctrl+click, a drag, Shift+arrows, Ctrl+A); empty means just the selected row. */
+  private marked = new Set<number>();
+  /** The row a Shift range starts from. */
+  private anchor: number | null = null;
+  /** The row a mouse drag started on, while the button is held. */
+  private dragFrom: number | null = null;
 
   constructor(onChange: () => void = () => undefined) {
     this.onChange = onChange;
-    this.element = h("div", { class: "grid", tabIndex: 0 });
+    this.element = h("div", { class: "grid", tabIndex: 0, "data-grid": this.gridId });
     this.element.addEventListener("scroll", () => this.scheduleWindow(), { passive: true });
     if (typeof ResizeObserver !== "undefined") {
       this.resizeObserver = new ResizeObserver(() => this.scheduleWindow());
@@ -113,12 +128,14 @@ export class DataGrid {
     }
     this.element.addEventListener("keydown", (event) => this.handleKey(event));
     this.element.addEventListener("mousedown", (event) => this.handlePointer(event));
+    this.element.addEventListener("mouseover", (event) => this.handleDrag(event));
     this.element.addEventListener("dblclick", (event) => this.handleDoubleClick(event));
     this.element.addEventListener("contextmenu", (event) => this.handleContextMenu(event));
   }
 
   load(setup: GridSetup): void {
     const sameColumns = sameColumnNames(this.setup.columns, setup.columns);
+    if (!sameColumns) this.columnSizes.clear();
     this.setup = setup;
     // Rows streaming into a result grid reload it: the filters typed and the sort picked there stay.
     if (!(setup.clientFilter && sameColumns)) this.filters = { ...setup.columnFilters };
@@ -373,6 +390,9 @@ export class DataGrid {
   private render(): void {
     this.visible = this.computeVisible();
     this.visiblePosition = new Map(this.visible.map((index, position) => [index, position]));
+    // Rows may have moved, been filtered out or replaced: the picked range starts over.
+    this.marked.clear();
+    this.anchor = null;
     this.headerCells = [h("th", { class: "row-number" }), ...this.displayed.map((column) => this.headerCell(this.setup.columns[column], column))];
     this.columnWidths = this.headerCells.map(() => 0);
     const header = h("tr", {}, ...this.headerCells);
@@ -395,7 +415,8 @@ export class DataGrid {
       h("tbody", { class: "grid-spacer", "aria-hidden": "true" }, h("tr", {}, this.bottomSpacer)),
     );
     const empty = this.visible.length === 0 ? h("div", { class: "grid-empty" }, this.emptyMessage()) : null;
-    this.element.replaceChildren(table, ...(empty ? [empty] : []));
+    this.applyColumnSizes();
+    this.element.replaceChildren(this.sizeStyle, table, ...(empty ? [empty] : []));
     this.updateWindow(true);
     this.restoreFilterFocus();
   }
@@ -432,8 +453,7 @@ export class DataGrid {
   private updateWindow(force: boolean): void {
     const { start, end } = this.windowRange();
     if (force || start !== this.windowStart || end !== this.windowEnd) this.applyWindow(start, end);
-    this.topSpacer.style.height = `${this.windowStart * rowHeight}px`;
-    this.bottomSpacer.style.height = `${(this.visible.length - this.windowEnd) * rowHeight}px`;
+    else this.sizeSpacers();
     if (!rowHeightMeasured && this.element.isConnected) this.measureRowHeight();
   }
 
@@ -471,7 +491,15 @@ export class DataGrid {
     }
     this.windowStart = start;
     this.windowEnd = end;
+    // Spacers first: measuring columns forces a layout, and a table shorter than the scroll offset would make the browser
+    // clamp it (scrolled to the bottom, the grid jumped up).
+    this.sizeSpacers();
     this.lockColumnWidths();
+  }
+
+  private sizeSpacers(): void {
+    this.topSpacer.style.height = `${this.windowStart * rowHeight}px`;
+    this.bottomSpacer.style.height = `${(this.visible.length - this.windowEnd) * rowHeight}px`;
   }
 
   /** Columns only grow as new rows scroll in, so the layout does not jitter. */
@@ -479,7 +507,7 @@ export class DataGrid {
     if (!this.element.isConnected || this.windowEnd === this.windowStart) return;
     const widths = this.headerCells.map((cell) => Math.ceil(cell.getBoundingClientRect().width));
     widths.forEach((width, column) => {
-      if (width <= this.columnWidths[column]) return;
+      if (width <= this.columnWidths[column] || this.columnSizes.has(this.setup.columns[this.displayed[column - 1]]?.name)) return;
       this.columnWidths[column] = width;
       this.headerCells[column].style.minWidth = `${width}px`;
     });
@@ -509,8 +537,6 @@ export class DataGrid {
       // Scrolling was clamped (e.g. a detached grid); render a window around the row.
       const start = Math.max(0, Math.floor((position - OVERSCAN) / WINDOW_CHUNK) * WINDOW_CHUNK);
       this.applyWindow(start, Math.min(this.visible.length, start + WINDOW_CHUNK * 4));
-      this.topSpacer.style.height = `${this.windowStart * rowHeight}px`;
-      this.bottomSpacer.style.height = `${(this.visible.length - this.windowEnd) * rowHeight}px`;
     }
   }
 
@@ -564,8 +590,58 @@ export class DataGrid {
         ? h("div", { class: "th-type" }, h("span", { class: `type-badge type-${kind}` }, TYPE_LABELS[kind]), h("span", { class: "th-type-name" }, typeName))
         : null,
     );
-    if (onSort) cell.addEventListener("click", () => onSort(column.name));
+    if (onSort)
+      cell.addEventListener("click", () => {
+        if (!this.resized) onSort(column.name);
+      });
+    cell.append(this.resizeHandle(cell, column.name));
     return cell;
+  }
+
+  /** The drag handle on a header's right edge; a double click gives the column back its automatic width. */
+  private resizeHandle(cell: HTMLElement, name: string): HTMLElement {
+    const handle = h("div", { class: "col-resizer", title: "Drag to resize; double-click to fit" });
+    handle.addEventListener("mousedown", (event) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const startX = event.clientX;
+      const startWidth = cell.getBoundingClientRect().width;
+      cell.style.minWidth = "";
+      document.body.classList.add("col-resizing");
+      const move = (moveEvent: MouseEvent) => {
+        this.columnSizes.set(name, Math.max(MIN_COLUMN_WIDTH, Math.round(startWidth + moveEvent.clientX - startX)));
+        this.applyColumnSizes();
+      };
+      const up = () => {
+        document.removeEventListener("mousemove", move);
+        document.removeEventListener("mouseup", up);
+        document.body.classList.remove("col-resizing");
+        this.resized = true;
+        setTimeout(() => (this.resized = false));
+      };
+      document.addEventListener("mousemove", move);
+      document.addEventListener("mouseup", up);
+    });
+    handle.addEventListener("click", (event) => event.stopPropagation());
+    handle.addEventListener("dblclick", (event) => {
+      event.stopPropagation();
+      this.columnSizes.delete(name);
+      this.applyColumnSizes();
+    });
+    return handle;
+  }
+
+  /** One rule per dragged column, on every cell of its position (header, filter row, rows). */
+  private applyColumnSizes(): void {
+    this.sizeStyle.textContent = this.displayed
+      .map((column, position) => {
+        const width = this.columnSizes.get(this.setup.columns[column].name);
+        return width === undefined
+          ? ""
+          : `.grid[data-grid="${this.gridId}"] .grid-table tr > :nth-child(${position + 2}) { width: ${width}px; min-width: ${width}px; max-width: ${width}px; }`;
+      })
+      .join("\n");
   }
 
   private renderRow(row: GridRow, index: number): HTMLTableRowElement {
@@ -578,6 +654,7 @@ export class DataGrid {
       ...this.displayed.map((column) => this.renderCell(row, row.current[column] ?? NULL, column)),
     );
     row.element = element;
+    if (this.marked.has(index)) element.classList.add("marked");
     const selected = current ? this.displayed.indexOf(this.selection!.column) : -1;
     if (selected >= 0) element.cells[selected + 1]?.classList.add("selected");
     return element;
@@ -651,7 +728,61 @@ export class DataGrid {
   private handlePointer(event: MouseEvent): void {
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLButtonElement) return;
     const position = this.positionOf(event.target);
-    if (position) this.select(position);
+    if (!position) return;
+    const row = position.row;
+    if (event.button !== 0) {
+      // A right click inside the picked rows keeps them for the menu's copy items.
+      if (!this.marked.has(row)) this.setMarked([]);
+    } else if (event.shiftKey) {
+      this.markRange(this.anchor ?? this.selection?.row ?? row, row);
+    } else if (event.ctrlKey || event.metaKey) {
+      const next = new Set(this.marked.size ? this.marked : this.selection ? [this.selection.row] : []);
+      if (next.has(row)) next.delete(row);
+      else next.add(row);
+      this.setMarked([...next]);
+      this.anchor = row;
+    } else {
+      this.setMarked([]);
+      this.anchor = row;
+      this.dragFrom = row;
+      document.addEventListener("mouseup", () => (this.dragFrom = null), { once: true });
+    }
+    this.select(position);
+  }
+
+  /** Dragging with the button held picks the rows from where it started. */
+  private handleDrag(event: MouseEvent): void {
+    if (this.dragFrom === null || !(event.buttons & 1)) return;
+    const position = this.positionOf(event.target);
+    if (!position || position.row === this.selection?.row) return;
+    this.markRange(this.dragFrom, position.row);
+    this.select(position);
+  }
+
+  /** Picks the rows between `from` and `to` as shown (sorted and filtered), both included. */
+  private markRange(from: number, to: number): void {
+    const a = this.visiblePosition.get(from);
+    const b = this.visiblePosition.get(to);
+    if (a === undefined || b === undefined) return;
+    this.anchor = from;
+    this.setMarked(this.visible.slice(Math.min(a, b), Math.max(a, b) + 1));
+  }
+
+  private setMarked(rows: number[]): void {
+    this.marked = new Set(rows);
+    for (const element of this.tbody.rows) element.classList.toggle("marked", this.marked.has(Number(element.dataset.row)));
+  }
+
+  /** The picked rows in the order shown, or the selected row alone. */
+  private markedRows(): GridRow[] {
+    const picked = this.marked.size ? this.visible.filter((index) => this.marked.has(index)) : this.selection ? [this.selection.row] : [];
+    return picked.map((index) => this.rows[index]);
+  }
+
+  private async copyMarked(format: ExportFormat): Promise<void> {
+    const rows = this.markedRows().map((row) => row.current);
+    await copyText(exportRows(format, this.setup.columns, rows, this.setup.tableName, this.setup.dialect));
+    toast(`Copied ${rows.length} row(s) as ${EXPORT_LABELS[format]}`, "success");
   }
 
   private handleDoubleClick(event: MouseEvent): void {
@@ -700,6 +831,12 @@ export class DataGrid {
       "separator",
       { label: "Copy value", icon: "copy", run: () => void copyText(displayValue(value) ?? "") },
       { label: "Copy row", run: () => void copyText(rowText(row.current)) },
+      ...(this.marked.size > 1
+        ? EXPORT_FORMATS.map((format): MenuItem => ({
+            label: `Copy ${this.marked.size} selected rows as ${EXPORT_LABELS[format]}`,
+            run: () => void this.copyMarked(format),
+          }))
+        : []),
       ...EXPORT_FORMATS.map((format): MenuItem => ({
         label: `Copy page as ${EXPORT_LABELS[format]}`,
         run: () => void this.copyExport(format),
@@ -783,11 +920,27 @@ export class DataGrid {
       const position = this.visiblePosition.get(this.selection.row) ?? -1;
       const target = this.visible[clamp(position + move.row, 0, this.visible.length - 1)];
       const column = stepVisibleColumn(this.displayed, this.selection.column, move.column);
-      if (target !== undefined) this.select({ row: target, column });
+      if (target === undefined) return;
+      // Shift+Up/Down grows the picked rows; any other move drops them.
+      if (event.shiftKey && move.row !== 0) this.markRange(this.anchor ?? this.selection.row, target);
+      else {
+        this.setMarked([]);
+        this.anchor = target;
+      }
+      this.select({ row: target, column });
       return;
     }
     const command = event.ctrlKey || event.metaKey;
-    if (command && event.key.toLowerCase() === "c") {
+    if (command && event.key.toLowerCase() === "a") {
+      event.preventDefault();
+      this.setMarked(this.visible);
+    } else if (event.key === "Escape" && this.marked.size) {
+      this.setMarked([]);
+    } else if (command && event.key.toLowerCase() === "c" && this.marked.size > 1) {
+      // Several rows: CSV with a header line, ready for a spreadsheet.
+      event.preventDefault();
+      void this.copyMarked("csv");
+    } else if (command && event.key.toLowerCase() === "c") {
       event.preventDefault();
       void copyText(displayValue(this.rows[this.selection.row].current[this.selection.column] ?? NULL) ?? "");
     } else if (command && event.key.toLowerCase() === "v") {

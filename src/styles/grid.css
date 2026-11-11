@@ -199,3 +199,25 @@
   background: color-mix(in srgb, var(--accent) 10%, var(--editor-bg));
   font-weight: 600;
 }
+
+/* Column resize handle on a header's right edge. */
+.col-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+.col-resizer:hover {
+  background: var(--accent);
+  opacity: 0.6;
+}
+
+body.col-resizing,
+body.col-resizing * {
+  cursor: col-resize !important;
+  user-select: none;
+}

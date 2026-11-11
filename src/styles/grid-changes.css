@@ -117,6 +117,16 @@
   box-shadow: inset 0 -2px 0 var(--accent);
 }
 
+/* Rows picked for copying (Shift/Ctrl+click, drag, Shift+arrows, Ctrl+A). */
+.grid-table tbody tr.marked:not(.state-modified):not(.state-new):not(.state-deleted) td.cell {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+}
+
+.grid-table tbody tr.marked td.row-number {
+  background: color-mix(in srgb, var(--accent) 35%, var(--surface));
+  color: var(--fg);
+}
+
 .pending-bar {
   display: flex;
   flex: none;

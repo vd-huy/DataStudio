@@ -188,7 +188,8 @@ export function createPageSizePill(options: PageSizePillOptions): PageSizePillCo
     openMenu(event);
   });
 
-  return {
+  let lastState: PagerState | null = null;
+  const control: PageSizePillControl = {
     element: container,
     getSize: () => currentSize,
     setSize: (size: number, triggerCallback = false) => {
@@ -204,6 +205,7 @@ export function createPageSizePill(options: PageSizePillOptions): PageSizePillCo
       }
     },
     update: (state: PagerState) => {
+      lastState = state;
       pagerNav.hidden = false;
       divider.hidden = false;
       const { offset, count, total, exactTotal, elapsedMs, hasMore } = state;
@@ -222,7 +224,8 @@ export function createPageSizePill(options: PageSizePillOptions): PageSizePillCo
       firstBtn.disabled = state.canGoFirst !== undefined ? !state.canGoFirst : offset <= 0;
       prevBtn.disabled = !before;
       nextBtn.disabled = !after;
-      lastBtn.disabled = state.canGoLast !== undefined ? !state.canGoLast : total === null || !exactTotal || offset + count >= total;
+      // An unknown total still allows Last: it counts first, then jumps.
+      lastBtn.disabled = state.canGoLast !== undefined ? !state.canGoLast : !after;
 
       countBtn.hidden = exactTotal || (!hasMore && offset === 0);
     },
@@ -233,7 +236,11 @@ export function createPageSizePill(options: PageSizePillOptions): PageSizePillCo
         prevBtn.disabled = true;
         nextBtn.disabled = true;
         lastBtn.disabled = true;
+      } else if (lastState && pageInfo.textContent === "Loading…") {
+        // A load that failed: back to the page still shown.
+        control.update(lastState);
       }
     },
   };
+  return control;
 }
