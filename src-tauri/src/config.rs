@@ -1287,7 +1287,8 @@ mod tests {
         });
         assert_eq!(config.ai_active.as_ref().unwrap().model, "picked");
         config.put_ai_connection(AiConnection {
-            provider: crate::ai::AiProvider::Openai,
+            // A provider other than the default (Openai), so the connection really moves.
+            provider: crate::ai::AiProvider::Anthropic,
             default_model: "gpt".into(),
             ..connection
         });
