@@ -6,7 +6,8 @@ import type { EditorState, Extension } from "@codemirror/state";
 import { currentStatement, type CurrentStatement } from "../editor";
 import { SchemaCache } from "../schemaCache";
 import type { FormatOptions, LangDialect, LanguageContext, LanguageSupport } from "../types";
-import { sqlCompletionSource } from "./completion";
+import { sqlCompletionSource, type SqlCompletionOptions } from "./completion";
+import { SqlMetadata } from "./metadata";
 import { statementAt, statementRangeAt } from "./split";
 
 const ClickHouseSQL = SQLDialect.define({
@@ -68,13 +69,27 @@ export function createSqlLanguage(options: SqlLanguageOptions): SqlLanguageSuppo
   const schema = options.schema ?? new SchemaCache();
   const ownsCache = !options.schema;
   const format = options.format ?? formatSqlRemote;
+  let metadata: SqlMetadata | null = null;
+  let activeSchema = schema;
   return {
     id: "sql",
     dialect,
-    schema,
+    get schema() {
+      return activeSchema;
+    },
     async editorExtensions(ctx?: LanguageContext): Promise<Extension[]> {
       const connection = ctx?.connection;
-      if (ownsCache && connection) void schema.load(() => connection.completionSchema(ctx.database ?? null));
+      const database = ctx?.database;
+      if (ownsCache && connection && database) {
+        if (!metadata || metadata.connection !== connection || metadata.database !== database || ctx.reload) {
+          metadata = new SqlMetadata(connection, database);
+        }
+        const current = metadata;
+        activeSchema = current.schema;
+        return [sqlEditorLanguage(dialect, current.schema, { ready: current.ready, loadTables: (tables) => current.loadTables(tables) })];
+      }
+      metadata = null;
+      activeSchema = schema;
       return [sqlEditorLanguage(dialect, schema)];
     },
     statementAt: (text, offset) => statementAt(dialect, text, offset),
@@ -83,9 +98,9 @@ export function createSqlLanguage(options: SqlLanguageOptions): SqlLanguageSuppo
 }
 
 /** Highlighting plus schema-driven completion, without lang-sql's own keyword completion. */
-export function sqlEditorLanguage(dialect: LangDialect, schema: SchemaCache): Extension {
+export function sqlEditorLanguage(dialect: LangDialect, schema: SchemaCache, metadata: Pick<SqlCompletionOptions, "loadTables" | "ready"> = {}): Extension {
   const cm = codemirrorDialect(dialect);
-  const source = sqlCompletionSource({ dialect, schema: () => schema.get() });
+  const source = sqlCompletionSource({ dialect, schema: () => schema.get(), ...metadata });
   return new CMLanguageSupport(cm.language, cm.language.data.of({ autocomplete: source }));
 }
 

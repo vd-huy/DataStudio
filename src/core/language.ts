@@ -4,7 +4,6 @@
  * (`EngineUiModule.languages`); `defaultLanguageSupport` / `sqlLanguageSupport` are the fallbacks.
  */
 import type { Extension } from "@codemirror/state";
-import { SchemaCache } from "../lang/schemaCache";
 import { statementAt as sqlStatementAt } from "../lang/sql/split";
 import { api } from "./api";
 import type { ConnectionApi } from "./connectionApi";
@@ -17,8 +16,6 @@ export interface LanguageContext {
   /** Load the names again even when they were just loaded for this database (after DDL, or "Refresh names"). */
   reload?: boolean;
 }
-
-let reloadSequence = 0;
 
 export interface TextRange {
   from: number;
@@ -136,27 +133,17 @@ export function defaultLanguageSupport(id = "text", options: SplitOptions = {}):
  */
 export function sqlLanguageSupport(dialect: SqlDialectId | null, format?: (text: string) => Promise<string>): LanguageSupport {
   const langDialect = dialect ?? "generic";
-  const schema = new SchemaCache();
   let language: Promise<LanguageSupport> | null = null;
   const load = () =>
     (language ??= import("../lang/sql/support").then(({ createSqlLanguage }) =>
       createSqlLanguage({
         dialect: langDialect,
-        schema,
         format: (_dialect, text, options) => (format ? format(text) : api.formatSql(dialect, text, options ?? null)),
       }),
     ));
   return {
     id: "sql",
-    editorExtensions: async (ctx) => {
-      const connection = ctx?.connection;
-      const database = ctx?.database;
-      if (connection && database) {
-        const key = ctx?.reload ? `${database}#${++reloadSequence}` : database;
-        void schema.load(() => connection.completionSchema(database), key);
-      }
-      return (await load()).editorExtensions(ctx);
-    },
+    editorExtensions: async (ctx) => (await load()).editorExtensions(ctx),
     statementAt: (text, offset) => sqlStatementAt(langDialect, text, offset),
     format: async (text) => {
       const support = await load();

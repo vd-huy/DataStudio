@@ -22,6 +22,8 @@ export interface ScopeTable {
   columns: ScopeColumn[];
   /** The schema table the ref resolved to. */
   table?: CompletionTable;
+  /** Tables whose columns are projected by a CTE or subquery (including `*`). */
+  sources?: ScopeTable[];
   /** Nesting depth of the query the ref belongs to (0 = outermost). */
   depth: number;
   /** Offset of the ref in the document. */
@@ -433,6 +435,7 @@ function collectRefs(dialect: LangDialect, schema: CompletionSchema, tokens: Tok
     const info = cteBodies.get(cte);
     if (!info) continue;
     cte.columns = info.explicit ? info.explicit.map((name) => ({ name })) : info.body ? deriveColumns(dialect, schema, tokens, info.body, groups) : [];
+    if (info.body) cte.sources = info.body.refs;
   }
 
   let mode: "none" | "from" = "none";
@@ -472,7 +475,14 @@ function parseRef(dialect: LangDialect, schema: CompletionSchema, tokens: Token[
     const close = matchingClose(tokens, k, end);
     const sub = groupAt(groups, k);
     if (sub && sub.query) {
-      ref = { kind: "subquery", name: "", columns: deriveColumns(dialect, schema, tokens, sub, groups), depth: g.depth, at: tokens[k].start };
+      ref = {
+        kind: "subquery",
+        name: "",
+        columns: deriveColumns(dialect, schema, tokens, sub, groups),
+        sources: sub.refs,
+        depth: g.depth,
+        at: tokens[k].start,
+      };
     }
     k = close + 1;
   } else if (isName(tokens[k]) && !ALIAS_STOP.has(upper(tokens[k]))) {
@@ -538,7 +548,7 @@ export function findTable(schema: CompletionSchema, name: string, schemaName?: s
 function resolveRef(schema: CompletionSchema, g: Group, name: string, schemaName: string | undefined, at: number): ScopeTable {
   if (!schemaName) {
     const cte = visibleCtes(g).find((c) => eq(c.name, name));
-    if (cte) return { kind: "cte", name: cte.name, columns: cte.columns, depth: g.depth, at };
+    if (cte) return { kind: "cte", name: cte.name, columns: cte.columns, sources: cte.sources, depth: g.depth, at };
   }
   const table = findTable(schema, name, schemaName);
   return {

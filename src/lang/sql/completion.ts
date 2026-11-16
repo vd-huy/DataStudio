@@ -10,6 +10,10 @@ export interface SqlCompletionOptions {
   dialect: LangDialect;
   /** The current schema snapshot; called on every completion so the cache can change under the editor. */
   schema: () => CompletionSchema;
+  /** Load missing columns for tables in scope without waiting for the full database catalog. */
+  loadTables?: (tables: ScopeTable[]) => Promise<void>;
+  /** The initial catalog load, used when table names have not arrived yet. */
+  ready?: Promise<CompletionSchema>;
 }
 
 const IDENT_CHARS = /^[\w$#@]*$/;
@@ -52,7 +56,42 @@ export function sqlCompletions(dialect: LangDialect, schema: CompletionSchema, d
 
 /** A CodeMirror `CompletionSource` over a schema provider. */
 export function sqlCompletionSource(options: SqlCompletionOptions): CompletionSource {
-  return (context: CompletionContext) => sqlCompletions(options.dialect, options.schema(), context.state.doc.toString(), context.pos, context.explicit);
+  return async (context: CompletionContext) => {
+    const doc = context.state.doc.toString();
+    let schema = options.schema();
+    let ctx = analyzeSql(options.dialect, schema, doc, context.pos);
+    if (ctx.kind === "none" || (!context.explicit && ctx.prefix === "" && !ctx.quote && ctx.kind !== "member")) return null;
+    // Table/schema names need the catalog; alias columns can load directly even while that catalog is pending.
+    if (options.ready && (ctx.kind === "table" || ctx.kind === "join" || (ctx.kind === "member" && resolveMember(schema, ctx).kind !== "columns"))) {
+      await options.ready;
+      if (context.aborted) return null;
+      schema = options.schema();
+      ctx = analyzeSql(options.dialect, schema, doc, context.pos);
+    }
+    if (options.loadTables) {
+      let tables: ScopeTable[] = [];
+      if (ctx.kind === "member") {
+        const target = resolveMember(schema, ctx);
+        if (target.kind === "columns") tables = [target.table];
+      } else if (ctx.kind === "column" || ctx.kind === "joinCondition" || ctx.kind === "join") {
+        tables = ctx.scope;
+      }
+      const missing: ScopeTable[] = [];
+      const seen = new Set<ScopeTable>();
+      const collect = (table: ScopeTable) => {
+        if (seen.has(table)) return;
+        seen.add(table);
+        if (table.kind === "table" && !table.columns.length) missing.push(table);
+        for (const source of table.sources ?? []) collect(source);
+      };
+      tables.forEach(collect);
+      if (missing.length) {
+        await options.loadTables(missing);
+        if (context.aborted) return null;
+      }
+    }
+    return sqlCompletions(options.dialect, options.schema(), doc, context.pos, context.explicit);
+  };
 }
 
 function buildOptions(dialect: LangDialect, schema: CompletionSchema, ctx: SqlContext): Completion[] {

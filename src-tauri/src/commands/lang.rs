@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::{
     ai::catalog,
-    contract::{Capability, ObjectDescription, ObjectNode, SchemaGraph, SqlDialectId},
+    contract::{Capability, EngineFamily, ObjectDescription, ObjectNode, SchemaGraph, SqlDialectId},
     error::AppResult,
     lang::{self, schema::ForeignKeyPart, CompletionSchema, CompletionTable, Dialect, FormatOptions},
     runtime::Handle,
@@ -126,11 +126,13 @@ fn table_from_graph(node: &ObjectNode, kind: &str, graph: &SchemaGraph) -> Optio
     ))
 }
 
-/// Diagram metadata is capped; recover missing columns with bounded per-table descriptions.
+/// Use graph columns immediately; the SQL query editor resolves missing columns on demand.
+/// Descriptions fill graph omissions for other editors; when no graph is available, all editors use a bounded fallback.
 async fn completion_table<F, Fut>(
     node: &ObjectNode,
     kind: &str,
     graph: Option<&SchemaGraph>,
+    columns_on_demand: bool,
     budget: &mut usize,
     describe: F,
 ) -> Option<CompletionTable>
@@ -138,8 +140,13 @@ where
     F: FnOnce(crate::contract::ObjectRef) -> Fut,
     Fut: std::future::Future<Output = AppResult<ObjectDescription>>,
 {
-    if let Some(table) = graph.and_then(|graph| table_from_graph(node, kind, graph)) {
-        return Some(table);
+    if let Some(graph) = graph {
+        if let Some(table) = table_from_graph(node, kind, graph) {
+            return Some(table);
+        }
+        if columns_on_demand {
+            return bare_table(node, kind);
+        }
     }
     if *budget > 0 {
         *budget -= 1;
@@ -152,7 +159,8 @@ where
     bare_table(node, kind)
 }
 
-/// Table names from the tree, columns from the graph and bounded fallback descriptions.
+/// Table names from the tree and columns from the graph, with bounded descriptions when no graph is available.
+/// The SQL query editor resolves graph omissions on demand; other editors need their columns in this snapshot.
 async fn build_schema(handle: &Handle, state: &AppState, connection_id: &str, database: Option<String>) -> AppResult<CompletionSchema> {
     let ctx = metadata_context(state, connection_id);
     let databases = catalog::databases(handle, &ctx).await.unwrap_or_default();
@@ -174,16 +182,21 @@ async fn build_schema(handle: &Handle, state: &AppState, connection_id: &str, da
     } else {
         None
     };
+    let columns_on_demand = handle.engine.descriptor().family == EngineFamily::Sql;
     let mut schemas: HashMap<String, usize> = HashMap::new();
-    // Diagram graphs omit tables past their display cap; spend the description budget on those missing tables.
-    let mut description_budget = if graph.is_some() { nodes.len() } else { MAX_DESCRIBED };
+    // Non-SQL editors need descriptions for every graph omission; only SQL resolves those columns on demand.
+    let mut description_budget = if graph.is_some() && !columns_on_demand {
+        nodes.len()
+    } else {
+        MAX_DESCRIBED
+    };
     for node in &nodes {
         let kind = kind_of(node);
         let Some(object) = node.object.clone() else { continue };
         if let Some(name) = &object.schema {
             *schemas.entry(name.clone()).or_default() += 1;
         }
-        let table = completion_table(node, &kind, graph.as_ref(), &mut description_budget, |object| {
+        let table = completion_table(node, &kind, graph.as_ref(), columns_on_demand, &mut description_budget, |object| {
             catalog::describe(handle, &ctx, object)
         })
         .await;
@@ -213,15 +226,92 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn completion_describes_a_table_missing_from_the_capped_graph() {
+    async fn completion_keeps_a_table_missing_from_the_capped_graph_without_describing_it() {
         let node = table_node("", "mdl_user");
         let graph = SchemaGraph {
-            tables: vec![],
+            tables: (0..400)
+                .map(|index| crate::contract::SchemaTable {
+                    name: format!("table_{index}"),
+                    kind: "table".into(),
+                    rows: None,
+                    comment: String::new(),
+                    columns: vec![],
+                })
+                .collect(),
             relations: vec![],
             total_tables: 578,
         };
         let mut budget = MAX_DESCRIBED;
-        let table = completion_table(&node, "table", Some(&graph), &mut budget, |object| async {
+        let mut described = false;
+        let table = completion_table(&node, "table", Some(&graph), true, &mut budget, |object| {
+            described = true;
+            async move { Ok(ObjectDescription::new(object)) }
+        })
+        .await
+        .unwrap();
+        assert!(!described, "graph omissions must not trigger eager descriptions");
+        assert_eq!(table.name, "mdl_user");
+        assert!(table.columns.is_empty());
+        assert_eq!(budget, MAX_DESCRIBED);
+    }
+
+    #[tokio::test]
+    async fn completion_describes_a_non_sql_collection_missing_from_the_capped_graph() {
+        let object = serde_json::json!({ "database": "shop", "name": "users", "kind": "collection" });
+        let node: ObjectNode = serde_json::from_value(serde_json::json!({
+            "key": { "id": "users", "kind": "collection", "object": object },
+            "label": "users",
+            "kind": "collection",
+            "icon": "table",
+            "object": object,
+            "expandable": false,
+        }))
+        .unwrap();
+        let graph = SchemaGraph {
+            tables: (0..400)
+                .map(|index| crate::contract::SchemaTable {
+                    name: format!("collection_{index}"),
+                    kind: "collection".into(),
+                    rows: None,
+                    comment: String::new(),
+                    columns: vec![],
+                })
+                .collect(),
+            relations: vec![],
+            total_tables: 578,
+        };
+        let mut budget = MAX_DESCRIBED;
+        let table = completion_table(&node, "collection", Some(&graph), false, &mut budget, |object| async {
+            let mut description = ObjectDescription::new(object);
+            description.columns.push(crate::contract::ColumnInfo::result(
+                "firstname",
+                "string",
+                crate::contract::ValueKind::Text,
+            ));
+            Ok(description)
+        })
+        .await
+        .unwrap();
+        assert_eq!(table.name, "users");
+        assert_eq!(table.kind, "collection");
+        assert_eq!(table.columns.len(), 1);
+        assert_eq!(table.columns[0].name, "firstname");
+        assert_eq!(budget, MAX_DESCRIBED - 1);
+
+        let bare = completion_table(&node, "collection", Some(&graph), false, &mut 0, |_| async {
+            panic!("non-SQL graph omissions must respect the description budget")
+        })
+        .await
+        .unwrap();
+        assert_eq!(bare.name, "users");
+        assert!(bare.columns.is_empty());
+    }
+
+    #[tokio::test]
+    async fn completion_describes_a_table_when_no_graph_is_available() {
+        let node = table_node("", "mdl_user");
+        let mut budget = MAX_DESCRIBED;
+        let table = completion_table(&node, "table", None, true, &mut budget, |object| async {
             let mut description = ObjectDescription::new(object);
             description.columns.push(crate::contract::ColumnInfo::result(
                 "firstname",
@@ -232,14 +322,42 @@ mod tests {
         })
         .await
         .unwrap();
+        assert_eq!(table.name, "mdl_user");
+        assert_eq!(table.columns.len(), 1);
         assert_eq!(table.columns[0].name, "firstname");
+        assert_eq!(table.columns[0].type_name, "varchar(100)");
         assert_eq!(budget, MAX_DESCRIBED - 1);
-        let bare = completion_table(&node, "table", Some(&graph), &mut 0, |_| async {
+    }
+
+    #[tokio::test]
+    async fn completion_keeps_a_bare_table_when_the_description_budget_is_exhausted() {
+        let node = table_node("", "mdl_user");
+        let mut budget = 0;
+        let table = completion_table(&node, "table", None, true, &mut budget, |_| async {
             panic!("description budget exhausted")
         })
         .await
         .unwrap();
-        assert!(bare.columns.is_empty());
+        assert_eq!(table.name, "mdl_user");
+        assert!(table.columns.is_empty());
+        assert_eq!(budget, 0);
+    }
+
+    #[tokio::test]
+    async fn completion_keeps_a_bare_table_when_description_fails() {
+        let node = table_node("", "mdl_user");
+        let mut budget = 1;
+        let mut described = false;
+        let table = completion_table(&node, "table", None, true, &mut budget, |_| {
+            described = true;
+            async { Err(crate::error::AppError::new("description unavailable")) }
+        })
+        .await
+        .unwrap();
+        assert!(described);
+        assert_eq!(table.name, "mdl_user");
+        assert!(table.columns.is_empty());
+        assert_eq!(budget, 0);
     }
 
     #[test]
@@ -273,8 +391,8 @@ mod tests {
         .unwrap()
     }
 
-    #[test]
-    fn schema_graph_tables_match_plain_and_schema_qualified_names() {
+    #[tokio::test]
+    async fn schema_graph_tables_match_plain_and_schema_qualified_names() {
         use crate::contract::{Relation, SchemaColumn, SchemaTable};
         let column = |name: &str, primary: bool| SchemaColumn {
             name: name.into(),
@@ -306,7 +424,17 @@ mod tests {
             }],
             total_tables: 2,
         };
-        let orders = table_from_graph(&table_node("sales", "orders"), "table", &graph).expect("qualified name matches");
+        let mut budget = MAX_DESCRIBED;
+        let orders = completion_table(
+            &table_node("sales", "orders"),
+            "table",
+            Some(&graph),
+            true,
+            &mut budget,
+            |_| async { panic!("graph matches must not trigger descriptions") },
+        )
+        .await
+        .expect("qualified name matches");
         assert_eq!(orders.schema.as_deref(), Some("sales"));
         assert_eq!(orders.columns.len(), 2);
         assert!(orders.columns[0].pk);
@@ -315,8 +443,18 @@ mod tests {
             (fk.schema.as_deref(), fk.table.as_str(), fk.column.as_str()),
             (Some("dbo"), "customers", "id")
         );
-        let customers = table_from_graph(&table_node("dbo", "customers"), "table", &graph).expect("plain name matches");
+        let customers = completion_table(
+            &table_node("dbo", "customers"),
+            "table",
+            Some(&graph),
+            true,
+            &mut budget,
+            |_| async { panic!("graph matches must not trigger descriptions") },
+        )
+        .await
+        .expect("plain name matches");
         assert_eq!(customers.columns.len(), 1);
+        assert_eq!(budget, MAX_DESCRIBED);
         assert!(table_from_graph(&table_node("dbo", "missing"), "table", &graph).is_none());
     }
 }

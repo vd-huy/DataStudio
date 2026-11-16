@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-11-16
+
+### Fixed
+
+- SQL column suggestions now load missing table metadata on demand, including aliases inside functions, CTEs and subqueries.
+  Large databases no longer wait for every table beyond the diagram's 400-table limit to be described before suggestions appear.
+  Completion caches are isolated when switching databases or refreshing names.
+
 ## [1.1.1] - 2026-11-16
 
 ### Fixed
@@ -234,7 +242,9 @@ First public release for Windows, plus a web edition for Docker.
 - **Design view** with columns and DDL, and an interactive **ER diagram** per database.
 - Light, dark and system themes. Settings are stored in `datastudio.json` next to the executable.
 
-[Unreleased]: https://github.com/vd-huy/DataStudio/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/vd-huy/DataStudio/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/vd-huy/DataStudio/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/vd-huy/DataStudio/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/vd-huy/DataStudio/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/vd-huy/DataStudio/compare/v0.2.1...v1.0.0
 [0.2.1]: https://github.com/vd-huy/DataStudio/compare/v0.2.0...v0.2.1
