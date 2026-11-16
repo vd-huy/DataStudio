@@ -1,6 +1,6 @@
 # Contributing to DataStudio
 
-Thanks for helping. This guide covers the local setup, the checks CI runs, and the conventions of the code base.
+Thanks for helping. This guide covers the local setup, local checks, and the conventions of the code base.
 [ARCHITECTURE.md](ARCHITECTURE.md) explains how the pieces fit together.
 
 > **License**: DataStudio is licensed under the [GPL v3.0](LICENSE). By opening a pull request you agree that your contribution
@@ -71,7 +71,7 @@ roughly in step with the real commands when you change their shapes.
 
 ## Checks
 
-CI (`.github/workflows/ci.yml`, Windows) runs all of these; run them before opening a pull request:
+GitHub Actions only builds the Windows EXEs. Run these checks locally before opening a pull request:
 
 ```sh
 npm run version:check   # package.json, tauri.conf.json and Cargo.toml carry the same version
@@ -85,7 +85,7 @@ cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 cargo test              # unit tests; live tests are #[ignore]d
 
-# The web server (CI builds it on Linux; it also builds on Windows)
+# The web server (builds on Linux and Windows)
 cargo clippy --all-targets --no-default-features --features web -- -D warnings
 cargo test --no-default-features --features web
 ```
@@ -103,8 +103,8 @@ cd src-tauri
 cargo test contract_mariadb -- --ignored --test-threads=1
 ```
 
-Each engine's `engines/<id>/contract_tests.rs` runs the shared contract suites plus its own `contract_<id>_*` checks; CI runs them per
-engine from `ci/engines/<id>.json` (`.github/workflows/live.yml`). A few machine-specific tests are named `live_*`:
+Each engine's `engines/<id>/contract_tests.rs` runs the shared contract suites plus its own `contract_<id>_*` checks. Run these locally
+against the corresponding test database. A few machine-specific tests are named `live_*`:
 
 - `live_saved_passwords_are_readable` expects saved passwords in Credential Manager for connections with the ids `local-mariadb`,
   `local-mssql` and `local-mongo` (create them in the app with "Save password" ticked, or skip this test).
@@ -140,7 +140,10 @@ Add a line for user-facing changes under `## [Unreleased]` in [CHANGELOG.md](CHA
 ## Releasing
 
 DataStudio follows [Semantic Versioning](https://semver.org/). `package.json` is the source of truth; `scripts/version.mjs` keeps
-`package-lock.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `src-tauri/Cargo.lock` in step, and CI fails when they disagree.
+`package-lock.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `src-tauri/Cargo.lock` in step; the Windows build checks they agree.
+
+Every push to `main` (or manual run) builds the installer and portable EXE. Download them from the run's
+`DataStudio-<version>-Windows` artifact. Only version tags publish a release for client updates.
 
 1. Bump the version: `npm run version:set -- 0.2.0` (or `patch`, `minor`, `major`).
 2. In `CHANGELOG.md`, move the `## [Unreleased]` notes under a new `## [0.2.0] - YYYY-MM-DD` heading, leave an empty `Unreleased`
@@ -154,10 +157,9 @@ DataStudio follows [Semantic Versioning](https://semver.org/). `package.json` is
 
 4. The tag starts `.github/workflows/release.yml`: it checks that the tag matches the version files and that `CHANGELOG.md` has a section
    for it, builds the NSIS installer and the portable exe, and publishes a GitHub Release with that section as its notes (it stays a
-   draft only while the assets upload). When a
-   `Dockerfile` exists, it also pushes `ghcr.io/vd-huy/datastudio` tagged `X.Y.Z`, `X.Y` and `latest`.
+   draft only while the assets upload).
    The installer is signed for the in-app updater with the `TAURI_SIGNING_PRIVATE_KEY` repository secret (the key matching
    `plugins.updater.pubkey` in `tauri.conf.json`; `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` only if the key has a password), and
    `latest.json` is attached for the updater. The workflow stops early when the key secret is missing.
 5. Installed apps see the release as soon as the workflow finishes, so the tag is the point of no return. A tag with a suffix such as
-   `v0.2.0-rc.1` becomes a pre-release, which installed apps skip, and does not move the `X.Y` or `latest` image tags.
+   `v0.2.0-rc.1` becomes a pre-release, which installed apps skip.

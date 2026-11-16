@@ -1,163 +1,100 @@
-name: Release
+name: Windows EXE
 
-# Pushing a tag vX.Y.Z builds the Windows app and publishes a GitHub Release with it.
-# See "Releasing" in CONTRIBUTING.md.
+# Main pushes build downloadable files; version tags also publish client updates.
 on:
   push:
+    branches: [main]
     tags: ["v*.*.*"]
+  workflow_dispatch:
 
 permissions: {}
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: windows-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  verify:
-    name: Verify version and notes
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      notes: ${{ steps.notes.outputs.notes }}
-      docker: ${{ steps.docker.outputs.present }}
-    steps:
-      # The installed app only accepts updates signed with this key (plugins.updater.pubkey in tauri.conf.json).
-      - name: Updater signing key is set
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-        run: |
-          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            echo "::error::The repository secret TAURI_SIGNING_PRIVATE_KEY is missing. Add the updater's private key (Settings > Secrets and variables > Actions); without it installed apps cannot update."
-            exit 1
-          fi
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Tag matches the version files
-        id: version
-        run: |
-          node scripts/version.mjs check "$GITHUB_REF_NAME"
-          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-      - name: Release notes from CHANGELOG.md
-        id: notes
-        run: |
-          {
-            echo "notes<<DATASTUDIO_RELEASE_NOTES_EOF"
-            node scripts/version.mjs changelog "$GITHUB_REF_NAME"
-            if [ -f Dockerfile ]; then
-              version="${GITHUB_REF_NAME#v}"
-              echo
-              echo "### Docker (web edition)"
-              echo
-              echo '```sh'
-              echo "docker run -d --name datastudio -p 127.0.0.1:8080:8080 -v datastudio-data:/data ghcr.io/vd-huy/datastudio:$version"
-              echo "docker logs datastudio"
-              echo '```'
-              echo
-              echo "Open the sign-in address printed in the log. Image: [ghcr.io/vd-huy/datastudio](https://github.com/vd-huy/DataStudio/pkgs/container/datastudio); settings in [docs/web-edition.md](https://github.com/vd-huy/DataStudio/blob/$GITHUB_REF_NAME/docs/web-edition.md)."
-            fi
-            echo "DATASTUDIO_RELEASE_NOTES_EOF"
-          } >> "$GITHUB_OUTPUT"
-      - name: Is there a Docker web edition?
-        id: docker
-        run: |
-          if [ -f Dockerfile ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; fi
-
   windows:
-    name: Windows app (NSIS installer + portable exe)
-    needs: verify
+    name: Build Windows EXE
     runs-on: windows-latest
     permissions:
       contents: write
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      - name: Updater signing key is set
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::error::The repository secret TAURI_SIGNING_PRIVATE_KEY is missing; signed client updates require it."
+            exit 1
+          fi
+      - name: Read build version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            node scripts/version.mjs check "$GITHUB_REF_NAME"
+          else
+            node scripts/version.mjs check
+          fi
+          echo "version=$(node scripts/version.mjs get)" >> "$GITHUB_OUTPUT"
+      - name: Release notes from CHANGELOG.md
+        if: startsWith(github.ref, 'refs/tags/')
+        id: notes
+        run: |
+          {
+            echo "notes<<DATASTUDIO_RELEASE_NOTES_EOF"
+            node scripts/version.mjs changelog "$GITHUB_REF_NAME"
+            echo "DATASTUDIO_RELEASE_NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
       - run: npm ci
-      - name: Build and create the draft release
-        id: tauri
+      - name: Build Windows installer
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Signs the installer for the in-app updater (tauri.release.conf.json turns on createUpdaterArtifacts).
-          # The password secret may be left unset: the key has an empty password.
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: DataStudio ${{ needs.verify.outputs.version }}
-          releaseBody: ${{ needs.verify.outputs.notes }}
+          # An empty tag builds files without creating a GitHub Release.
+          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+          releaseName: DataStudio ${{ steps.version.outputs.version }}
+          releaseBody: ${{ steps.notes.outputs.notes }}
           releaseDraft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
-          # latest.json, read by installed apps from releases/latest/download/latest.json.
           includeUpdaterJson: true
-          # Bundling is off in tauri.conf.json (local builds are portable); the release turns on the NSIS installer.
           args: --config src-tauri/tauri.release.conf.json
-      - name: Attach the portable exe
-        shell: bash
+      # Keep EXEs downloadable even if publishing a tagged release fails.
+      - name: Prepare portable EXE
+        if: ${{ !cancelled() && hashFiles('src-tauri/target/release/datastudio.exe') != '' }}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: cp src-tauri/target/release/datastudio.exe "DataStudio_${VERSION}_x64_portable.exe"
+      - name: Upload Windows files
+        if: ${{ !cancelled() && hashFiles('DataStudio_*_x64_portable.exe') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: DataStudio-${{ steps.version.outputs.version }}-Windows
+          if-no-files-found: error
+          path: |
+            DataStudio_*_x64_portable.exe
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/nsis/*.sig
+      - name: Attach portable EXE and publish release
+        if: success() && startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ needs.verify.outputs.version }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          portable="DataStudio_${VERSION}_x64_portable.exe"
-          cp src-tauri/target/release/datastudio.exe "$portable"
-          gh release upload "$GITHUB_REF_NAME" "$portable" --clobber --repo "$GITHUB_REPOSITORY"
-      # The release stays a draft while assets upload, so it never goes public half-filled.
-      - name: Publish the release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit "$GITHUB_REF_NAME" --draft=false --repo "$GITHUB_REPOSITORY"
-
-  docker:
-    name: Docker web edition
-    needs: verify
-    if: needs.verify.outputs.docker == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/vd-huy/datastudio
-          flavor: latest=false
-          # X.Y.Z, X.Y and latest; pre-releases (vX.Y.Z-rc.1) only get their full version.
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
-          labels: |
-            org.opencontainers.image.title=DataStudio
-            org.opencontainers.image.description=DataStudio web edition: a database client for 11 engines in your browser
-            org.opencontainers.image.licenses=GPL-3.0-only
-      # The root Dockerfile builds the UI and `datastudio-server` (feature `web`) from the whole repository.
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            VERSION=${{ needs.verify.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          gh release upload "$GITHUB_REF_NAME" "DataStudio_${VERSION}_x64_portable.exe" --clobber --repo "$GITHUB_REPOSITORY"
+          gh release edit "$GITHUB_REF_NAME" --draft=false --repo "$GITHUB_REPOSITORY"
