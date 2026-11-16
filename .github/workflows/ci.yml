@@ -20,6 +20,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Oracle CI setup regression tests
+        run: node --test ci/setup-oracle.test.mjs
       - run: npm run version:check
       - run: npx tsc
       - run: npm run lint
