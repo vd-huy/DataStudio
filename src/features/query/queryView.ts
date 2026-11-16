@@ -193,15 +193,15 @@ export class QueryView implements TabContent {
     this.restoredText = options.restored ? options.text : null;
 
     this.editor = createSqlEditor(this.editorHost, options.text, {
-      run: () => void this.run("selection"),
+      run: () => void this.run("statement"),
       runStatement: () => void this.run("statement"),
+      runAll: () => void this.run("selection"),
       format: () => void this.format(),
       changed: () => this.onEdited?.(),
+      locateStatement: (text, offset) => (this.support ? this.support.statementAt(text, offset) : statementAt(text, offset)),
     });
-    this.runButton = toolButton("play", "Run", () => void this.run("selection"), "Run the selection, or everything when nothing is selected (Ctrl+Enter)");
-    this.statementButton = secondaryTool(
-      toolButton("chevron", "Run statement", () => void this.run("statement"), "Run the selection, or the statement under the cursor (Ctrl+Shift+Enter)"),
-    );
+    this.runButton = toolButton("play", "Run", () => void this.run("statement"), "Run the statement under the cursor, or the selection (Ctrl+Enter)");
+    this.statementButton = secondaryTool(toolButton("chevron", "Run all", () => void this.run("selection"), "Run all statements (Ctrl+Shift+Enter)"));
     this.stopButton = toolButton("stop", "Stop", () => void this.cancel(), "Cancel the running query");
     this.stopButton.disabled = true;
     this.stopButton.hidden = !hasCapability(capabilities, "cancel");

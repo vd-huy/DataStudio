@@ -1,6 +1,6 @@
 [package]
 name = "datastudio"
-version = "1.1.0"
+version = "1.1.1"
 license = "GPL-3.0-only"
 repository = "https://github.com/vd-huy/DataStudio"
 description = "Lightweight desktop database client for MariaDB, MySQL, SQL Server and MongoDB, with workspaces and workspace commands"

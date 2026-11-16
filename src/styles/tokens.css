@@ -45,12 +45,18 @@
   --editor-bg: #ffffff;
   --active-line: rgba(47, 111, 237, 0.045);
   --active-line-gutter: #f3f6fb;
+  --active-statement: rgba(31, 157, 85, 0.09);
   --editor-selection: #b8d6fc;
   --syn-keyword: #0b55c7;
   --syn-string: #b03f0c;
   --syn-number: #0e7c68;
   --syn-comment: #7c8794;
   --syn-type: #8740b3;
+
+  /* Aliases / Fallbacks */
+  --bg-panel: var(--surface);
+  --bg-sidebar: var(--surface-2);
+  --fg-muted: var(--fg-3);
 
   --ws-blue: #3b82f6;
   --ws-green: #22a06b;
@@ -133,12 +139,18 @@ html[data-theme="dark"] {
   --editor-bg: #1a1d22;
   --active-line: rgba(255, 255, 255, 0.045);
   --active-line-gutter: #22262d;
+  --active-statement: rgba(63, 191, 127, 0.12);
   --editor-selection: #264f78;
   --syn-keyword: #6aa5ff;
   --syn-string: #e69a6b;
   --syn-number: #5fd1b5;
   --syn-comment: #7d8590;
   --syn-type: #c79bf0;
+
+  /* Aliases / Fallbacks */
+  --bg-panel: var(--surface);
+  --bg-sidebar: var(--surface-2);
+  --fg-muted: var(--fg-3);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow: 0 14px 36px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);

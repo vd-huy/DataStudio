@@ -7,6 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-16
+
+### Fixed
+
+- Autocomplete suggestion popup in the SQL editor had a transparent background that allowed underlying text to bleed through; it now renders with a solid surface background, border, and shadow.
+- Pressing `Ctrl+Enter` or `F9` now executes the SQL statement under the cursor (or active selection), matching DataGrip/DBeaver behavior, rather than executing all statements in the file.
+- Added visual highlighting for the active SQL statement under the cursor.
+- Added "Run all" (`Ctrl+Shift+Enter`) to run all statements in the editor when needed.
+
 ## [1.1.0] - 2026-11-16
 
 ### Added
