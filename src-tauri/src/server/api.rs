@@ -347,7 +347,13 @@ mod tests {
             if !COMMANDS.contains(&name)
                 && !matches!(
                     name,
-                    "save_download" | "reveal_file" | "open_log_folder" | "open_release_page" | "ai_chat" | "export_prepare"
+                    "save_download"
+                        | "save_export"
+                        | "reveal_file"
+                        | "open_log_folder"
+                        | "open_release_page"
+                        | "ai_chat"
+                        | "export_prepare"
                 )
             {
                 missing.push(name.to_owned());
