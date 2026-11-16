@@ -1,12 +1,18 @@
-//! Exports saved to the Downloads folder.
+//! Exports saved through the native Save As picker, plus legacy Downloads saves.
 
+#[cfg(feature = "desktop")]
 use std::io::Write as _;
 
+#[cfg(feature = "desktop")]
 use super::gateway_context;
 use crate::{
     error::{AppError, AppResult},
+    files,
+};
+#[cfg(feature = "desktop")]
+use crate::{
     export::{self, ChunkSink, ExportProgress, ExportRequest},
-    files, AppState,
+    AppState,
 };
 
 /// Saves an export into Downloads; `base64` is for binary content such as PNG.
@@ -32,8 +38,10 @@ pub struct ExportDone {
 }
 
 /// Writes the file in chunks as the pages arrive.
-struct FileSink(std::io::BufWriter<std::fs::File>);
+#[cfg(feature = "desktop")]
+struct FileSink(std::io::BufWriter<tempfile::NamedTempFile>);
 
+#[cfg(feature = "desktop")]
 #[async_trait::async_trait]
 impl ChunkSink for FileSink {
     async fn write(&mut self, chunk: Vec<u8>) -> AppResult<()> {
@@ -42,35 +50,35 @@ impl ChunkSink for FileSink {
     }
 }
 
-/// Desktop: exports every row matching the grid into Downloads, page by page (`progress` after each page);
+/// Desktop: exports every row matching the grid to a chosen file, page by page (`progress` after each page);
 /// `cancel_request(request.request_id)` stops it and removes the partial file.
+#[cfg(feature = "desktop")]
 pub async fn export_rows(
     state: &AppState,
     connection_id: String,
     request: ExportRequest,
     mut progress: impl FnMut(ExportProgress) + Send,
-) -> AppResult<ExportDone> {
+) -> AppResult<Option<ExportDone>> {
     let context = gateway_context(state, &connection_id)?;
     let (cancel, _registered) = state.engines.requests.register(request.request_id.as_deref());
-    let (file, path) = files::create_download(&request.file_name)?;
+    let Some(path) = files::choose_export_path(&request.file_name).await else {
+        return Ok(None);
+    };
+    if cancel.is_cancelled() {
+        return Err(crate::contract::cancelled());
+    }
+    let file = files::create_export(&path)?;
     let mut sink = FileSink(std::io::BufWriter::new(file));
     let mut on_page = |rows| progress(ExportProgress { rows });
     let written = export::export(&state.engines, &context, &connection_id, &request, &cancel, &mut sink, &mut on_page).await;
-    let flushed = written.and_then(|rows| sink.0.flush().map(|()| rows).map_err(AppError::from));
-    drop(sink);
-    match flushed {
-        Ok(rows) => Ok(ExportDone {
-            path: path.to_string_lossy().into_owned(),
-            rows,
-        }),
-        Err(error) => {
-            let _ = std::fs::remove_file(&path);
-            Err(error)
-        }
-    }
+    let rows = written?;
+    sink.0.flush()?;
+    let temporary = sink.0.into_inner().map_err(|error| AppError::new(error.to_string()))?;
+    let path = files::finish_export(temporary, &path)?;
+    Ok(Some(ExportDone { path, rows }))
 }
 
-fn decode_base64(encoded: &str) -> AppResult<Vec<u8>> {
+pub fn decode_base64(encoded: &str) -> AppResult<Vec<u8>> {
     const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut lookup = [255u8; 256];
     for (index, byte) in ALPHABET.iter().enumerate() {

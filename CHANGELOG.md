@@ -7,6 +7,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-16
+
+### Added
+
+- Query results can be exported to CSV, Excel workbooks (`.xlsx`), JSON, Markdown and SQL INSERT files. Export defaults
+  to all rows returned by the SELECT, including rows beyond the displayed page.
+- Desktop exports open a native Save As dialog to choose the destination. Cancelling or failing an export preserves
+  an existing destination file.
+
+### Fixed
+
+- Query results could show zero rows after saving a deletion because the desktop command finished before streamed row
+  batches arrived. A run now waits for its final ordered stream message before displaying and recording its results.
+- Empty query results now display their column headers and pagination controls.
+- Column suggestions were missing for tables outside the diagram metadata's 400-table limit, including aliases used
+  inside SQL functions. Completion now loads column metadata for the omitted tables.
+
 ## [1.0.0] - 2026-11-11
 
 ### Changed
@@ -208,7 +225,8 @@ First public release for Windows, plus a web edition for Docker.
 - **Design view** with columns and DDL, and an interactive **ER diagram** per database.
 - Light, dark and system themes. Settings are stored in `datastudio.json` next to the executable.
 
-[Unreleased]: https://github.com/vd-huy/DataStudio/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/vd-huy/DataStudio/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/vd-huy/DataStudio/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/vd-huy/DataStudio/compare/v0.2.1...v1.0.0
 [0.2.1]: https://github.com/vd-huy/DataStudio/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/vd-huy/DataStudio/compare/v0.1.0...v0.2.0

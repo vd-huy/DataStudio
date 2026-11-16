@@ -277,6 +277,7 @@ export class ResultArea {
 
   private ensurePanelGrid(panel: Panel): void {
     if (panel.grid) return;
+    panel.loadedRows = -1;
     panel.grid = new DataGrid(() => {
       if (panel.entry && panel.grid) this.onGridChange?.(panel.grid, panel.entry);
     });

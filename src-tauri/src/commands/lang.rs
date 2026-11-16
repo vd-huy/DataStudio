@@ -126,8 +126,33 @@ fn table_from_graph(node: &ObjectNode, kind: &str, graph: &SchemaGraph) -> Optio
     ))
 }
 
-/// The tables, views and collections of `database` with their columns, read through the contract: the object tree
-/// (`children`), then the schema graph when the engine has one, else `describe` per object (capped).
+/// Diagram metadata is capped; recover missing columns with bounded per-table descriptions.
+async fn completion_table<F, Fut>(
+    node: &ObjectNode,
+    kind: &str,
+    graph: Option<&SchemaGraph>,
+    budget: &mut usize,
+    describe: F,
+) -> Option<CompletionTable>
+where
+    F: FnOnce(crate::contract::ObjectRef) -> Fut,
+    Fut: std::future::Future<Output = AppResult<ObjectDescription>>,
+{
+    if let Some(table) = graph.and_then(|graph| table_from_graph(node, kind, graph)) {
+        return Some(table);
+    }
+    if *budget > 0 {
+        *budget -= 1;
+        if let Some(object) = node.object.clone() {
+            if let Ok(description) = describe(object).await {
+                return Some(table_from_description(kind, &description));
+            }
+        }
+    }
+    bare_table(node, kind)
+}
+
+/// Table names from the tree, columns from the graph and bounded fallback descriptions.
 async fn build_schema(handle: &Handle, state: &AppState, connection_id: &str, database: Option<String>) -> AppResult<CompletionSchema> {
     let ctx = metadata_context(state, connection_id);
     let databases = catalog::databases(handle, &ctx).await.unwrap_or_default();
@@ -150,20 +175,18 @@ async fn build_schema(handle: &Handle, state: &AppState, connection_id: &str, da
         None
     };
     let mut schemas: HashMap<String, usize> = HashMap::new();
-    for (index, node) in nodes.iter().enumerate() {
+    // Diagram graphs omit tables past their display cap; spend the description budget on those missing tables.
+    let mut description_budget = if graph.is_some() { nodes.len() } else { MAX_DESCRIBED };
+    for node in &nodes {
         let kind = kind_of(node);
         let Some(object) = node.object.clone() else { continue };
         if let Some(name) = &object.schema {
             *schemas.entry(name.clone()).or_default() += 1;
         }
-        let table = match graph.as_ref() {
-            Some(graph) => table_from_graph(node, &kind, graph).or_else(|| bare_table(node, &kind)),
-            None if index < MAX_DESCRIBED => match catalog::describe(handle, &ctx, object).await {
-                Ok(description) => Some(table_from_description(&kind, &description)),
-                Err(_) => bare_table(node, &kind),
-            },
-            None => bare_table(node, &kind),
-        };
+        let table = completion_table(node, &kind, graph.as_ref(), &mut description_budget, |object| {
+            catalog::describe(handle, &ctx, object)
+        })
+        .await;
         if let Some(table) = table {
             schema.push_table(table);
         }
@@ -188,6 +211,36 @@ pub fn format_sql(_state: &AppState, dialect: Option<SqlDialectId>, text: String
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn completion_describes_a_table_missing_from_the_capped_graph() {
+        let node = table_node("", "mdl_user");
+        let graph = SchemaGraph {
+            tables: vec![],
+            relations: vec![],
+            total_tables: 578,
+        };
+        let mut budget = MAX_DESCRIBED;
+        let table = completion_table(&node, "table", Some(&graph), &mut budget, |object| async {
+            let mut description = ObjectDescription::new(object);
+            description.columns.push(crate::contract::ColumnInfo::result(
+                "firstname",
+                "varchar(100)",
+                crate::contract::ValueKind::Text,
+            ));
+            Ok(description)
+        })
+        .await
+        .unwrap();
+        assert_eq!(table.columns[0].name, "firstname");
+        assert_eq!(budget, MAX_DESCRIBED - 1);
+        let bare = completion_table(&node, "table", Some(&graph), &mut 0, |_| async {
+            panic!("description budget exhausted")
+        })
+        .await
+        .unwrap();
+        assert!(bare.columns.is_empty());
+    }
 
     #[test]
     fn every_contract_dialect_maps_to_the_same_language_dialect() {

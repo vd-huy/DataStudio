@@ -181,7 +181,7 @@ export class TableView implements TabContent {
     });
     if (initialFilter && !this.rawLanguage) toast(`${this.engine.label} takes no raw filter here; the table opens unfiltered`);
     const exportButton = secondaryTool(toolButton("copy", "Copy as", () => undefined, "Copy this page to the clipboard"));
-    const exportFileButton = secondaryTool(toolButton("download", "Export", () => this.exportFile(), "Export rows to a file in Downloads"));
+    const exportFileButton = secondaryTool(toolButton("download", "Export", () => this.exportFile(), "Export rows to a file"));
     const importButton = secondaryTool(toolButton("upload", "Import", () => this.openImport(), "Import rows from CSV or JSON"));
     importButton.hidden = !this.editable;
     exportButton.addEventListener("click", (event) => showContextMenu(event, this.exportMenu()));

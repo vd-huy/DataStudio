@@ -1,5 +1,5 @@
-//! Exports land in the user's Downloads folder, written from Rust so they do
-//! not depend on the webview's download handling.
+//! Exports use the native Save As picker; legacy saves use Downloads. Files are
+//! written from Rust so they do not depend on the webview's download handling.
 
 use std::{
     collections::HashSet,
@@ -39,6 +39,38 @@ pub fn create_download(name: &str) -> AppResult<(fs::File, PathBuf)> {
 
 fn remember_written(path: &Path) {
     lock(&WRITTEN).insert(path.to_path_buf());
+}
+
+/// Native Save As owns path selection and overwrite confirmation.
+#[cfg(feature = "desktop")]
+pub async fn choose_export_path(name: &str) -> Option<PathBuf> {
+    let name = sanitize(name);
+    let extension = Path::new(&name).extension().and_then(|s| s.to_str()).unwrap_or("txt");
+    rfd::AsyncFileDialog::new()
+        .set_title("Export file")
+        .set_file_name(&name)
+        .add_filter(format!("{} file", extension.to_uppercase()), &[extension])
+        .save_file()
+        .await
+        .map(|file| file.path().to_owned())
+}
+
+/// The caller obtains this path from the native picker, never a frontend path argument.
+pub fn save_export(path: &Path, bytes: &[u8]) -> AppResult<String> {
+    use std::io::Write;
+    let mut temporary = create_export(path)?;
+    temporary.write_all(bytes)?;
+    finish_export(temporary, path)
+}
+
+pub fn create_export(path: &Path) -> AppResult<tempfile::NamedTempFile> {
+    Ok(tempfile::NamedTempFile::new_in(path.parent().unwrap_or(Path::new(".")))?)
+}
+
+pub fn finish_export(temporary: tempfile::NamedTempFile, path: &Path) -> AppResult<String> {
+    temporary.persist(path).map_err(|error| error.error)?;
+    remember_written(path);
+    Ok(path.to_string_lossy().into_owned())
 }
 
 /// Whether `path` is a file this run exported.
@@ -105,6 +137,23 @@ fn unique_path(directory: &Path, name: &str) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn exports_preserve_the_destination_until_writing_succeeds() {
+        use std::io::Write;
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("chosen.xlsx");
+        fs::write(&path, b"previous export").unwrap();
+        {
+            let mut partial = create_export(&path).unwrap();
+            partial.write_all(b"partial").unwrap();
+        }
+        assert_eq!(fs::read(&path).unwrap(), b"previous export");
+        save_export(&path, b"new export").unwrap();
+        assert_eq!(fs::read(&path).unwrap(), b"new export");
+        assert!(was_written(&path));
+        assert_eq!(fs::read_dir(directory.path()).unwrap().count(), 1);
+    }
 
     #[test]
     fn only_exported_files_can_be_revealed() {

@@ -1,7 +1,7 @@
 /**
  * Table import (CSV, TSV, JSON, NDJSON) and export (CSV, CSV for Excel, JSON, SQL INSERT, Markdown) for the data tab.
  * Export can cover every row matching the current filter, read page by page with `browse_object` (by keyset where the
- * engine offers one, so a large export stays linear). Files are written to Downloads by the backend. Imports parse each
+ * engine offers one, so a large export stays linear). Desktop exports use a native Save As picker. Imports parse each
  * value for its column's kind first (nothing is sent while a value does not fit), then insert through `apply_edits`
  * (caller "import", one `importId` per run, so the safety rules confirm the run once) in batches; each batch is applied
  * as one set.
@@ -20,6 +20,7 @@ import { excelSeparator, exportDelimited, exportRows } from "./exporters";
 import { importChanges, importValue } from "./importValues";
 import { ExportCancelled, exportFileName, fetchAllRows, type PageCursor } from "./exportFetch";
 import { ConfirmationSession } from "../safety/confirmationDialog";
+import { bytesBase64, exportXlsx } from "./xlsx";
 
 const IMPORT_BATCH = 500;
 const PREVIEW_ROWS = 6;
@@ -28,10 +29,11 @@ const SKIP = "__skip__";
 const BOM = String.fromCharCode(0xfeff);
 const LEADING_BOM = new RegExp(`^${BOM}`);
 
-type FileFormat = "csv" | "excel" | "json" | "insert" | "markdown";
+type FileFormat = "csv" | "excel" | "xlsx" | "json" | "insert" | "markdown";
 
 const FORMATS: { value: FileFormat; label: string; extension: string }[] = [
   { value: "csv", label: "CSV", extension: "csv" },
+  { value: "xlsx", label: "Excel workbook (.xlsx)", extension: "xlsx" },
   { value: "excel", label: `CSV for Excel (UTF-8 with BOM, "${excelSeparator()}" separated, from your locale)`, extension: "csv" },
   { value: "json", label: "JSON", extension: "json" },
   { value: "insert", label: "SQL INSERT statements", extension: "sql" },
@@ -49,7 +51,7 @@ export interface ExportSource {
   total: Total | null;
   dialect: SqlDialect;
   /** Reads one page of every row matching the current filter and sort. */
-  read: (cursor: PageCursor, limit: number) => Promise<Page>;
+  read?: (cursor: PageCursor, limit: number) => Promise<Pick<Page, "rows" | "hasMore" | "nextKeyset">>;
   /** The same rows for the backend: CSV and JSON of every row are streamed to the file instead of built in the page. */
   stream?: { connectionId: string; request: BrowseRequest };
 }
@@ -58,7 +60,7 @@ export interface ExportSource {
 const STREAMED: FileFormat[] = ["csv", "excel", "json"];
 
 /**
- * Every row through the backend, which reads the pages and writes them as they come: desktop into Downloads (with
+ * Every row through the backend, which reads the pages and writes them as they come: desktop to a chosen file (with
  * progress; closing the dialog stops it and removes the partial file), web as the browser's download of a streamed
  * response. Memory stays at one page either way. Resolves false when the backend cannot stream (the dev mock), so the
  * dialog builds the file in the page instead.
@@ -90,7 +92,7 @@ async function streamExport(
       return true;
     }
     const done = await api.exportRows(stream.connectionId, request, (progress) => onProgress(progress.rows));
-    if (!signal.aborted) savedDialog(`Exported ${formatNumber(done.rows)} rows`, done.path);
+    if (done && !signal.aborted) savedDialog(`Exported ${formatNumber(done.rows)} rows`, done.path);
     return true;
   } catch (error) {
     if (errorCode(error) === "UNSUPPORTED_CAPABILITY") return false;
@@ -103,8 +105,8 @@ async function streamExport(
 
 export function exportDialog(source: ExportSource): void {
   const format = h("select", { class: "input" }, ...FORMATS.map((item) => h("option", { value: item.value }, item.label)));
-  const scopeAll = h("input", { type: "radio", name: "scope", checked: true });
-  const scopePage = h("input", { type: "radio", name: "scope" });
+  const scopeAll = h("input", { type: "radio", name: "scope", checked: Boolean(source.read), disabled: !source.read });
+  const scopePage = h("input", { type: "radio", name: "scope", checked: !source.read });
   const fileName = textInput(`${source.title}.csv`, { class: "input mono" });
   const progress = h("p", { class: "test-status" });
   format.addEventListener("change", () => {
@@ -124,7 +126,7 @@ export function exportDialog(source: ExportSource): void {
       h("label", { class: "checkbox" }, scopeAll, h("span", {}, `All ${totalText}rows${filtered}`)),
       h("label", { class: "checkbox" }, scopePage, h("span", {}, `This page only (${formatNumber(source.pageRows.length)} rows)`)),
     ),
-    field("File name", fileName, capabilities().browserDownloads ? "Downloaded by your browser" : "Saved to your Downloads folder"),
+    field("File name", fileName, capabilities().browserDownloads ? "Downloaded by your browser" : "Choose the save location in the Save As dialog"),
     progress,
   );
   // Closing the dialog (Esc, Cancel) while rows are being read stops the export.
@@ -152,15 +154,17 @@ export function exportDialog(source: ExportSource): void {
               );
               if (streamed) return;
             }
-            const rows = scopePage.checked
-              ? source.pageRows
-              : await fetchAllRows(source.read, cancel.signal, (done) => (progress.textContent = `Reading rows… ${formatNumber(done)}${of}`));
+            const rows =
+              scopePage.checked || !source.read
+                ? source.pageRows
+                : await fetchAllRows(source.read, cancel.signal, (done) => (progress.textContent = `Reading rows… ${formatNumber(done)}${of}`));
             if (cancel.signal.aborted) return;
             progress.textContent = "Writing file…";
             const chosen = FORMATS.find((item) => item.value === format.value) ?? FORMATS[0];
-            const text = render(chosen.value, source.columns, rows, source.title, source.dialect);
-            const path = await api.saveDownload(exportFileName(fileName.value, source.title, chosen.extension), text, null);
-            savedDialog(`Exported ${formatNumber(rows.length)} rows`, path);
+            const workbook = chosen.value === "xlsx" ? bytesBase64(exportXlsx(source.columns, rows)) : null;
+            const text = chosen.value === "xlsx" ? null : render(chosen.value, source.columns, rows, source.title, source.dialect);
+            const path = await api.saveExport(exportFileName(fileName.value, source.title, chosen.extension), text, workbook);
+            if (path) savedDialog(`Exported ${formatNumber(rows.length)} rows`, path);
           } catch (error) {
             if (error instanceof ExportCancelled) return;
             throw error;
@@ -172,7 +176,7 @@ export function exportDialog(source: ExportSource): void {
   );
 }
 
-function render(format: FileFormat, columns: ColumnInfo[], rows: Value[][], table: string, dialect: SqlDialect): string {
+function render(format: Exclude<FileFormat, "xlsx">, columns: ColumnInfo[], rows: Value[][], table: string, dialect: SqlDialect): string {
   switch (format) {
     case "excel":
       // Excel reads UTF-8 only with a BOM, and splits on the locale's list separator ("," in the US, ";" in Vietnam or Germany).

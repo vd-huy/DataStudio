@@ -122,7 +122,22 @@ export async function runSql(
       session.transaction = { ...session.transaction, open: false };
       emit({ event: "notice", index, text: "The open transaction was committed implicitly before this statement" });
     }
-    if (/^(begin|start\s+transaction|begin\s+tran(saction)?)\b/i.test(sql)) {
+    if ((match = /^select\s+\*\s+from\s*\(\s*([\s\S]+)\s*\)\s+as\s+_datastudio_page\s+limit\s+(\d+)(?:\s+offset\s+(\d+))?$/i.exec(sql))) {
+      const [, inner, limit, offset = "0"] = match;
+      let columns: ColumnInfo[] = [];
+      const rows: Value[][] = [];
+      await runSql(
+        catalog,
+        { ...dialect, maxRows: Number.MAX_SAFE_INTEGER },
+        { ...request, text: inner.trim() },
+        (event) => {
+          if (event.event === "columns") columns = event.columns;
+          if (event.event === "rows") rows.push(...event.rows);
+        },
+        context,
+      );
+      await result(columns, rows.slice(Number(offset), Number(offset) + Number(limit)));
+    } else if (/^(begin|start\s+transaction|begin\s+tran(saction)?)\b/i.test(sql)) {
       session.transaction = { ...session.transaction, open: true };
       done(0, null);
     } else if (/^(commit|rollback)\b/i.test(sql)) {

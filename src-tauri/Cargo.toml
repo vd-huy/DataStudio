@@ -1,6 +1,6 @@
 [package]
 name = "datastudio"
-version = "1.0.0"
+version = "1.1.0"
 license = "GPL-3.0-only"
 repository = "https://github.com/vd-huy/DataStudio"
 description = "Lightweight desktop database client for MariaDB, MySQL, SQL Server and MongoDB, with workspaces and workspace commands"
@@ -14,7 +14,7 @@ default-run = "datastudio"
 [features]
 default = ["desktop", "engines-all"]
 # The MCP server (mcp/) runs on axum in both editions.
-desktop = ["dep:tauri", "dep:tauri-build", "dep:keyring", "dep:tauri-plugin-updater", "dep:tauri-plugin-process", "dep:axum"]
+desktop = ["dep:tauri", "dep:tauri-build", "dep:keyring", "dep:tauri-plugin-updater", "dep:tauri-plugin-process", "dep:axum", "dep:rfd"]
 web = [
     "dep:axum",
     "dep:tower-http",
@@ -72,6 +72,8 @@ tauri-build = { version = "2", features = [], optional = true }
 
 [dependencies]
 tauri = { version = "2", features = [], optional = true }
+rfd = { version = "0.17", optional = true }
+tempfile = "3"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["io-std", "io-util", "macros", "net", "process", "rt", "sync", "time"] }

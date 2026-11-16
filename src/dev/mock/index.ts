@@ -218,12 +218,15 @@ function transaction(sessionId: string, op: TransactionOp): TransactionState {
 type Internals = { runCallback(id: number, data: unknown): void };
 
 /** Sends events through a Tauri channel the way the backend does (ordered by index, then an end marker). */
-function channelEmitter<T>(channel: Channel<T>): { emit(message: T): void; end(): void } {
+function channelEmitter<T>(channel: Channel<T>, completion = false): { emit(message: T): void; end(): void } {
   const internals = (window as unknown as { __TAURI_INTERNALS__: Internals }).__TAURI_INTERNALS__;
   let index = 0;
   return {
     emit: (message) => internals.runCallback(channel.id, { index: index++, message }),
-    end: () => internals.runCallback(channel.id, { index, end: true }),
+    end: () => {
+      if (completion) internals.runCallback(channel.id, { index: index++, message: { __datastudioStreamEnd: true } });
+      internals.runCallback(channel.id, { index, end: true });
+    },
   };
 }
 
@@ -242,7 +245,7 @@ async function run(
   const { engine } = connection(current.connectionId);
   const runner = need(engine, "run", "queries");
   gate(state.config, current.connectionId, "queryTab", classify(engine, request.text), confirmation);
-  const channelSender = channel ? channelEmitter(channel) : null;
+  const channelSender = channel ? channelEmitter(channel, true) : null;
   const sender = channelSender && maxRows ? rowCap(channelSender, maxRows) : channelSender;
   const controller = new AbortController();
   current.running = controller;
@@ -697,6 +700,8 @@ function handle(command: string, payload: Record<string, unknown> = {}): unknown
       const current = session(str("sessionId"));
       return classify(connection(current.connectionId).engine, str("text")).map((statement) => statement.category);
     }
+    case "save_export":
+      return str("name");
     case "export_prepare":
     case "export_rows":
       // The mock has no backend to stream from: the dialog builds the file in the page instead.

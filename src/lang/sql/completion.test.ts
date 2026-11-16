@@ -16,6 +16,24 @@ const labels = (text: string, dialect?: LangDialect) => complete(text, dialect)?
 const option = (text: string, label: string, dialect?: LangDialect): Completion | undefined => complete(text, dialect)?.options.find((o) => o.label === label);
 
 describe("SQL completion", () => {
+  it("completes JOIN aliases inside SELECT function arguments automatically", async () => {
+    const support = createSqlLanguage({ dialect: "mySql", schema: new SchemaCache(SHOP), format: async (_d, t) => t });
+    const extensions = await support.editorExtensions();
+    for (const sql of [
+      "select concat(c.n|, c.email) as 'Họ tên', o.total from orders o join customers c on c.id = o.customer_id where o.id in ('1', '2')",
+      "select concat(c.|, c.email) as 'Họ tên', o.total from orders o join customers c on c.id = o.customer_id",
+    ]) {
+      const { doc, pos } = cursor(sql);
+      const state = EditorState.create({ doc, selection: { anchor: pos }, extensions });
+      const sources = state.languageDataAt<(c: CompletionContext) => unknown>("autocomplete", pos);
+      const result = (await sources[0](new CompletionContext(state, pos, false))) as { options: Completion[] } | null;
+      expect(
+        result?.options.map((o) => o.label),
+        sql,
+      ).toContain("name");
+    }
+  });
+
   it("offers statement keywords at the start, in the case typed", () => {
     expect(labels("|").slice(0, 3)).toEqual(["SELECT", "INSERT", "UPDATE"]);
     expect(labels("sel|")).toContain("select");

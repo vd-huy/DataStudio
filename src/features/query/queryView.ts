@@ -28,8 +28,7 @@ import type {
   Value,
 } from "../../core/contract";
 import { confirmDialog, toast } from "../../core/dialogs";
-import { clamp, copyText, formatNumber, h, icon, iconOrDefault, secondaryTool, separator, spacer, toolButton } from "../../core/dom";
-import { showContextMenu, type MenuItem } from "../../core/contextMenu";
+import { clamp, formatNumber, h, icon, iconOrDefault, secondaryTool, separator, spacer, toolButton } from "../../core/dom";
 import { defaultLanguage, hasCapability } from "../../core/engines";
 import { renderError, showError } from "../../core/errorPanel";
 import { isCancelError } from "../../core/errors";
@@ -41,10 +40,11 @@ import type { TabContent } from "../../core/tabs";
 import type { HistoryEntry } from "../../core/types";
 import { openColumnsPopover } from "../grid/columnsPopover";
 import { gridSetup, type SortState } from "../grid/grid";
-import { EXPORT_LABELS, type ExportFormat } from "../importExport/exporters";
+import { exportDialog } from "../importExport/importExport";
 import { loadDefaultPageSize } from "../table/pageSizePill";
 import { openPreviewSqlDialog } from "../table/previewSql";
-import { buildCountQuery, buildPaginatedQuery } from "./queryPaging";
+import { buildCountQuery, buildPaginatedQuery, isPaginatableQuery } from "./queryPaging";
+import { queryExportReader } from "./queryExport";
 import { extractTargetTable, findKeyColumns } from "./tableExtractor";
 
 import { withConfirmation } from "../safety/confirmationDialog";
@@ -87,7 +87,6 @@ export interface QueryViewOptions {
   languageSupport(languageId: string): Promise<LanguageSupport>;
 }
 
-const EXPORT_FORMATS: ExportFormat[] = ["csv", "json", "markdown", "insert"];
 const HISTORY_PANEL_KEY = "db-studio.queryHistoryPanel";
 /** Reported once per session so a read-only disk does not flood the user with toasts. */
 let historyFailureReported = false;
@@ -258,8 +257,8 @@ export class QueryView implements TabContent {
     this.resultRevertButton = toolButton("undo", "Revert", () => this.revertActiveChanges(), "Revert all pending changes in this result");
     this.resultPreviewButton = toolButton("query", "Preview SQL", () => this.previewActiveChanges(), "Preview SQL statements for pending changes");
     this.resultSubmitButton = toolButton("check", "Save", () => void this.submitActiveChanges(), "Save changes to database (Ctrl+S)");
-    this.resultExportButton = toolButton("download", "Export", () => undefined, "Export result to CSV, JSON, Markdown, or SQL INSERT");
-    this.resultExportButton.addEventListener("click", (event) => this.showExportMenu(event));
+    this.resultExportButton = toolButton("download", "Export", () => undefined, "Export results to CSV, Excel, JSON, Markdown, or SQL INSERT");
+    this.resultExportButton.addEventListener("click", () => this.exportFile());
 
     this.resultToolbar = h(
       "div",
@@ -1058,16 +1057,21 @@ export class QueryView implements TabContent {
     toast("Reverted all pending changes", "info");
   }
 
-  private showExportMenu(event: MouseEvent): void {
+  private exportFile(): void {
     const grid = this.resultArea.activeGrid();
-    if (!grid) return;
-    const items: MenuItem[] = EXPORT_FORMATS.map((format) => ({
-      label: `Copy as ${EXPORT_LABELS[format]}`,
-      run: () => {
-        void copyText(grid.exportPage(format)).then(() => toast(`Copied as ${EXPORT_LABELS[format]}`, "success"));
-      },
-    }));
-    showContextMenu(event, items);
+    const panel = this.resultArea.activePanel();
+    if (!grid || !panel?.entry || this.running) return;
+    const sql = panel.baseSql;
+    const target = extractTargetTable(sql);
+    exportDialog({
+      title: target?.name ?? "query-result",
+      columns: grid.columns(),
+      pageRows: grid.pageRows(),
+      filtered: false,
+      total: panel.total !== null ? { value: panel.total, exact: panel.exactTotal } : null,
+      dialect: dialectOf(this.dialect()),
+      read: isPaginatableQuery(sql) ? queryExportReader(this.connection, this.sessionId, sql, this.currentDatabase(), dialectOf(this.dialect())) : undefined,
+    });
   }
 
   private async loadPage(panel: QueryResultPanel): Promise<void> {

@@ -175,7 +175,7 @@ export const api = {
     onEvent: (event: StreamEvent) => void,
     confirmation: Confirmation | null = null,
     maxRows: number | null = null,
-  ) => invokeStreaming<RunSummary, StreamEvent>("run", { sessionId, request, confirmation, maxRows }, "onEvent", onEvent),
+  ) => invokeStreaming<RunSummary, StreamEvent>("run", { sessionId, request, confirmation, maxRows }, "onEvent", onEvent, true),
   cancelRun: (sessionId: string) => invoke<void>("cancel_run", { sessionId }),
   /** How the engine classifies `text` in the session's language, one category per statement; nothing runs. */
   classifyRun: (sessionId: string, text: string) => invoke<StatementCategory[]>("classify_run", { sessionId, text }),
@@ -229,11 +229,14 @@ export const api = {
    */
   saveDownload: (name: string, text: string | null, base64: string | null) =>
     isTauri() ? invoke<string>("save_download", { name, text, base64 }) : Promise.resolve(downloadInBrowser(name, text, base64)),
+  /** Desktop Save As; cancelling creates no file. Browsers use their normal download UI. */
+  saveExport: (name: string, text: string | null, base64: string | null) =>
+    isTauri() ? invoke<string | null>("save_export", { name, text, base64 }) : Promise.resolve(downloadInBrowser(name, text, base64)),
   /** Desktop only (`capabilities().revealFile`). */
   revealFile: (path: string) => invoke<void>("reveal_file", { path }),
-  /** Desktop only: writes the export into Downloads page by page (`onProgress` after each page). */
+  /** Desktop only: native Save As, then writes page by page (`onProgress` after each page). */
   exportRows: (connectionId: string, request: ExportRequest, onProgress: (progress: { rows: number }) => void) =>
-    invokeStreaming<ExportDone, { rows: number }>("export_rows", { connectionId, request }, "onEvent", onProgress),
+    invokeStreaming<ExportDone | null, { rows: number }>("export_rows", { connectionId, request }, "onEvent", onProgress),
   /** Web only: a one-time ticket; navigating a download to `/api/export/<ticket>` streams the file. */
   exportPrepare: (connectionId: string, request: ExportRequest) => invoke<string>("export_prepare", { connectionId, request }),
   /** What this edition supports; see `core/capabilities.ts`. */

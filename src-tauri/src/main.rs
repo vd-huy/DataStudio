@@ -21,6 +21,17 @@ const SHOW_WINDOW_FALLBACK: Duration = Duration::from_secs(3);
 /// Task events go out as Tauri events (`listen("task-status", …)` in the UI).
 struct TauriEvents(AppHandle);
 
+/// A final message on the same ordered channel fences delayed row batches before the UI finishes a run.
+#[derive(serde::Serialize)]
+#[serde(untagged)]
+enum DesktopStreamEvent<E> {
+    Event(E),
+    End {
+        #[serde(rename = "__datastudioStreamEnd")]
+        end: bool,
+    },
+}
+
 impl EventEmitter for TauriEvents {
     fn emit(&self, event: &str, payload: Value) {
         let _ = self.0.emit(event, payload);
@@ -47,9 +58,12 @@ macro_rules! tauri_command {
         // Events go out on the `onEvent` channel; a failed send means the webview is gone, so the command stops.
         #[allow(clippy::too_many_arguments)]
         #[tauri::command]
-        async fn $name(state: State<'_, Arc<AppState>>, $($arg: $type,)* on_event: Channel<$event>) -> $output {
-            let events: datastudio::events::EventSink<$event> = Arc::new(move |event| on_event.send(event).is_ok());
-            datastudio::logging::command(stringify!($name), $function(&state, $($arg,)* events)).await
+        async fn $name(state: State<'_, Arc<AppState>>, $($arg: $type,)* on_event: Channel<DesktopStreamEvent<$event>>) -> $output {
+            let sender = on_event.clone();
+            let events: datastudio::events::EventSink<$event> = Arc::new(move |event| sender.send(DesktopStreamEvent::Event(event)).is_ok());
+            let result = datastudio::logging::command(stringify!($name), $function(&state, $($arg,)* events)).await;
+            let _ = on_event.send(DesktopStreamEvent::End { end: true });
+            result
         }
     };
 }
@@ -60,7 +74,7 @@ macro_rules! desktop_commands {
         $(tauri_command!([$kind] $name ($($arg : $type),*) -> $output $(=> $event)? = $function);)*
 
         fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'static {
-            tauri::generate_handler![$($name,)* ai_chat, export_rows, save_download, reveal_file, open_log_folder, open_release_page]
+            tauri::generate_handler![$($name,)* ai_chat, export_rows, save_export, save_download, reveal_file, open_log_folder, open_release_page]
         }
     };
 }
@@ -76,14 +90,14 @@ async fn ai_chat(state: State<'_, Arc<AppState>>, request: ChatRequest, on_event
     commands::ai::ai_chat(&state, request, &sink).await
 }
 
-/// Exports every row matching a grid into Downloads, page by page, with progress on `on_event`.
+/// Exports every row matching a grid to a chosen file, with progress on `on_event`.
 #[tauri::command]
 async fn export_rows(
-    state: State<'_, AppState>,
+    state: State<'_, Arc<AppState>>,
     connection_id: String,
     request: datastudio::export::ExportRequest,
     on_event: Channel<datastudio::export::ExportProgress>,
-) -> AppResult<commands::files::ExportDone> {
+) -> AppResult<Option<commands::files::ExportDone>> {
     let progress = move |event| {
         let _ = on_event.send(event);
     };
@@ -92,6 +106,20 @@ async fn export_rows(
         commands::files::export_rows(&state, connection_id, request, progress),
     )
     .await
+}
+
+/// Saves an export to the destination chosen by the user.
+#[tauri::command]
+async fn save_export(name: String, text: Option<String>, base64: Option<String>) -> AppResult<Option<String>> {
+    let bytes = match (text, base64) {
+        (Some(text), _) => text.into_bytes(),
+        (None, Some(encoded)) => commands::files::decode_base64(&encoded)?,
+        _ => return Err(datastudio::error::AppError::new("Nothing to save")),
+    };
+    let Some(path) = datastudio::files::choose_export_path(&name).await else {
+        return Ok(None);
+    };
+    datastudio::files::save_export(&path, &bytes).map(Some)
 }
 
 /// Saves an export into Downloads; `base64` is for binary content such as PNG.

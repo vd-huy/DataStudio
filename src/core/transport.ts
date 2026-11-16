@@ -33,11 +33,25 @@ export async function invoke<T>(command: string, args: Record<string, unknown> =
 }
 
 /** A command that streams events while it runs; `channel` names the argument Tauri expects the `Channel` in. */
-export async function invokeStreaming<T, E>(command: string, args: Record<string, unknown>, channel: string, onEvent: (event: E) => void): Promise<T> {
+export async function invokeStreaming<T, E>(
+  command: string,
+  args: Record<string, unknown>,
+  channel: string,
+  onEvent: (event: E) => void,
+  waitForEnd = false,
+): Promise<T> {
   if (isTauri()) {
-    const events = new Channel<E>();
-    events.onmessage = onEvent;
-    return tauriInvoke<T>(command, { ...args, [channel]: events });
+    let finish = () => {};
+    const ended = new Promise<void>((resolve) => (finish = resolve));
+    const events = new Channel<E | { __datastudioStreamEnd: true }>();
+    events.onmessage = (event) => {
+      if (event && typeof event === "object" && "__datastudioStreamEnd" in event) finish();
+      else onEvent(event as E);
+    };
+    const result = await tauriInvoke<T>(command, { ...args, [channel]: events });
+    // Tauri may resolve invoke before a large row batch reaches the webview.
+    if (waitForEnd) await ended;
+    return result;
   }
   const response = await post(command, args);
   if (!response.body) throw new Error("The server sent no reply");
