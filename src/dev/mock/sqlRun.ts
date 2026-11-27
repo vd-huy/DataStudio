@@ -122,8 +122,10 @@ export async function runSql(
       session.transaction = { ...session.transaction, open: false };
       emit({ event: "notice", index, text: "The open transaction was committed implicitly before this statement" });
     }
-    if ((match = /^select\s+\*\s+from\s*\(\s*([\s\S]+)\s*\)\s+as\s+_datastudio_page\s+limit\s+(\d+)(?:\s+offset\s+(\d+))?$/i.exec(sql))) {
-      const [, inner, limit, offset = "0"] = match;
+    if (
+      (match = /^select\s+\*\s+from\s*\(\s*([\s\S]+)\s*\)\s+as\s+_datastudio_page(?:\s+order\s+by\s+(.+?))?\s+limit\s+(\d+)(?:\s+offset\s+(\d+))?$/i.exec(sql))
+    ) {
+      const [, inner, order, limit, offset = "0"] = match;
       let columns: ColumnInfo[] = [];
       const rows: Value[][] = [];
       await runSql(
@@ -136,6 +138,21 @@ export async function runSql(
         },
         context,
       );
+      if (order) {
+        const keys = order.split(/\s*,\s*/).map((term) => {
+          const name = term.replace(/\s+(asc|desc)$/i, "").replace(/^[`"[]|[`"\]]$/g, "");
+          const position = columns.findIndex((column) => column.name.toLowerCase() === name.toLowerCase());
+          if (position < 0) throw fail(dialect.errors.noColumn(name, "order clause"), sql.lastIndexOf(term));
+          return { position, direction: /\sdesc$/i.test(term) ? -1 : 1 };
+        });
+        rows.sort((a, b) => {
+          for (const { position, direction } of keys) {
+            const comparison = compareValues(a[position], b[position]);
+            if (comparison !== 0) return comparison * direction;
+          }
+          return 0;
+        });
+      }
       await result(columns, rows.slice(Number(offset), Number(offset) + Number(limit)));
     } else if (/^(begin|start\s+transaction|begin\s+tran(saction)?)\b/i.test(sql)) {
       session.transaction = { ...session.transaction, open: true };

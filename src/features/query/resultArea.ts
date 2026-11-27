@@ -20,6 +20,7 @@ export interface Message {
 
 /** While rows stream in, a grid (and the list of result sets) is reloaded at most this often. */
 const GRID_RELOAD_MS = 1000;
+const DEFAULT_QUERY_PAGE_SIZE = 1000;
 
 export interface QueryResultPanel {
   element: HTMLElement;
@@ -31,6 +32,7 @@ export interface QueryResultPanel {
   /** The result set shown; the list's detail tab: the one opened last. */
   entry: StatementResult | null;
   loadedRows: number;
+  loadedDone?: StatementResult["done"];
   loadedAt: number;
   /** The list: its rows as last loaded (JSON), so an unchanged list is not loaded again. */
   loadedSignature?: string;
@@ -39,6 +41,8 @@ export interface QueryResultPanel {
   baseSql: string;
   offset: number;
   limit: number;
+  /** Number of rows to advance when the backend limits the selected page size. */
+  pageSpan: number;
   sort: SortState | null;
   total: number | null;
   exactTotal: boolean;
@@ -68,7 +72,7 @@ export class ResultArea {
   onLastPage: ((panel: QueryResultPanel) => void) | null = null;
   onSort: ((panel: QueryResultPanel, column: string) => void) | null = null;
 
-  private pageSize = loadDefaultPageSize();
+  private pageSize = loadDefaultPageSize(DEFAULT_QUERY_PAGE_SIZE);
   private panels: Panel[] = [];
   private active: Panel | null = null;
   private messages: Panel;
@@ -155,10 +159,6 @@ export class ResultArea {
 
   setPageSize(size: number): void {
     this.pageSize = size;
-    for (const panel of this.panels) {
-      panel.limit = size;
-      panel.pageSizePill?.setSize(size);
-    }
   }
 
   getPageSize(): number {
@@ -265,12 +265,14 @@ export class ResultArea {
     detail.exactTotal = false;
     detail.hasMore = false;
     detail.limit = this.pageSize;
+    detail.pageSpan = this.pageSize;
     detail.loadedRows = -1;
     detail.titleLabel.textContent = `Result #${position + 1}`;
     detail.countLabel.textContent = rowCount(entry);
     detail.button.title = statementExcerpt(entry.sql, 200);
     detail.button.hidden = false;
     this.ensurePanelGrid(detail);
+    detail.pageSizePill?.setSize(detail.limit);
     this.reloadGrid(detail, entry, true, performance.now());
     this.activate(detail);
   }
@@ -283,11 +285,8 @@ export class ResultArea {
     });
     panel.pageSizePill = createPageSizePill({
       initialSize: panel.limit,
-      onPageSizeChange: (size) => {
-        panel.limit = size;
-        this.pageSize = size;
-        this.onPageSizeChange?.(panel, size);
-      },
+      fallbackSize: DEFAULT_QUERY_PAGE_SIZE,
+      onPageSizeChange: (size) => this.onPageSizeChange?.(panel, size),
       onCountRows: () => {
         this.onCountRows?.(panel);
       },
@@ -363,6 +362,7 @@ export class ResultArea {
       baseSql: entry?.sql ?? "",
       offset: 0,
       limit: this.pageSize,
+      pageSpan: this.pageSize,
       sort: null,
       total: null,
       exactTotal: false,
@@ -391,7 +391,7 @@ export class ResultArea {
   }
 
   private reloadGrid(panel: Panel, entry: StatementResult, force: boolean, now: number): void {
-    const stale = entry.rows.length !== panel.loadedRows;
+    const stale = entry.rows.length !== panel.loadedRows || entry.done !== panel.loadedDone;
     if (!panel.grid || !stale || !(force || entry.done !== null || panel.loadedRows <= 0 || now - panel.loadedAt > GRID_RELOAD_MS)) return;
     panel.baseSql = entry.sql;
     const isPaginatable = isPaginatableQuery(entry.sql);
@@ -404,6 +404,7 @@ export class ResultArea {
     const displayedRows = hasMore && rows.length > panel.limit ? rows.slice(0, panel.limit) : rows;
 
     panel.hasMore = hasMore;
+    if (hasMore && displayedRows.length > 0) panel.pageSpan = displayedRows.length;
     panel.elapsedMs = entry.done?.elapsedMs ?? 0;
     if (!hasMore && panel.offset === 0 && entry.done !== null) {
       panel.total = displayedRows.length;
@@ -422,6 +423,7 @@ export class ResultArea {
       keyColumns,
     });
     panel.loadedRows = entry.rows.length;
+    panel.loadedDone = entry.done;
     panel.loadedAt = now;
 
     panel.pageSizePill?.update({

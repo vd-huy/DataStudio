@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ConnectionApi } from "../../core/connectionApi";
 import type { RunRequest } from "../../core/contract";
-import { fetchAllRows } from "../importExport/exportFetch";
+import { ExportCancelled, fetchAllRows } from "../importExport/exportFetch";
 import { queryExportReader } from "./queryExport";
 import { run as runMockSql } from "../../dev/mock/engines/mysql";
 
-describe("export all SELECT rows", () => {
+describe("reading all SELECT rows for export or the result grid", () => {
   it("exports every row through the preview SQL engine, beyond the result grid page", async () => {
     vi.useFakeTimers();
     try {
@@ -20,9 +20,13 @@ describe("export all SELECT rows", () => {
         stopped: false,
         transaction,
       });
-      const reading = fetchAllRows(queryExportReader({ run }, "export", "SELECT * FROM customers", "shop", "mysql"), context.signal);
+      const read = queryExportReader({ run }, "export", "SELECT * FROM customers", "shop", "mysql", { column: "id", descending: true });
+      const reading = fetchAllRows(read, context.signal);
       await vi.runAllTimersAsync();
-      expect(await reading).toHaveLength(2000);
+      const rows = await reading;
+      expect(rows).toHaveLength(2000);
+      expect(rows[0][0]).toEqual({ t: "int", v: 2000 });
+      expect(rows[1999][0]).toEqual({ t: "int", v: 1 });
     } finally {
       vi.useRealTimers();
     }
@@ -38,12 +42,23 @@ describe("export all SELECT rows", () => {
       onEvent({ event: "done", index: 0, affected: null, rows: count, truncated: offset + count < 455, elapsedMs: 1 });
       return { statements: 1, elapsedMs: 1, stopped: false, transaction: { supported: true, open: false, autoCommit: true, failed: false } };
     });
-    const read = queryExportReader({ run }, "session", "SELECT id FROM t WHERE active = 1 LIMIT 455", "shop", "mysql");
+    const sql = "SELECT id, status FROM mdl_onestudy_teachers WHERE status = 3";
+    const read = queryExportReader({ run }, "session", sql, "shop", "mysql", { column: "status", descending: true }, ["id"]);
     const rows = await fetchAllRows(read, new AbortController().signal);
-    expect(rows).toHaveLength(455);
-    expect(rows[454]).toEqual([{ t: "int", v: 454 }]);
-    expect(requests).toHaveLength(3);
-    expect(requests.every((request) => request.database === "shop" && request.text.includes("WHERE active = 1 LIMIT 455"))).toBe(true);
+    expect(rows).toEqual(Array.from({ length: 455 }, (_, v) => [{ t: "int", v }]));
+    expect(requests.map(({ text }) => Number(text.match(/OFFSET (\d+)/)?.[1] ?? 0))).toEqual([0, 200, 400]);
+    expect(requests.every(({ database, text }) => database === "shop" && text.includes(sql) && text.includes("ORDER BY `status` DESC, `id` ASC"))).toBe(true);
+  });
+
+  it("treats a stopped page as cancelled instead of accepting a partial result", async () => {
+    const run: ConnectionApi["run"] = async () => ({
+      statements: 1,
+      elapsedMs: 1,
+      stopped: true,
+      transaction: { supported: true, open: false, autoCommit: true, failed: false },
+    });
+    const read = queryExportReader({ run }, "session", "SELECT * FROM t", "shop", "mysql");
+    await expect(fetchAllRows(read, new AbortController().signal)).rejects.toBeInstanceOf(ExportCancelled);
   });
 
   it("keeps read errors visible instead of silently exporting a partial result", async () => {

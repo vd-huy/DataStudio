@@ -7,6 +7,7 @@ import { showContextMenu, type MenuItem } from "../../core/contextMenu";
 
 export const PAGE_SIZES = [10, 100, 250, 400, 500, 1000];
 export const DEFAULT_PAGE_SIZE_KEY = "datastudio.defaultPageSize";
+export const ALL_ROWS_PAGE_SIZE = 50000;
 
 export interface PagerState {
   offset: number;
@@ -23,6 +24,7 @@ export interface PagerState {
 
 export interface PageSizePillOptions {
   initialSize?: number;
+  fallbackSize?: number;
   onPageSizeChange: (size: number) => void;
   onCountRows?: () => void;
   onFirst?: () => void;
@@ -40,9 +42,9 @@ export interface PageSizePillControl {
   setLoading(loading: boolean): void;
 }
 
-export function loadDefaultPageSize(): number {
+export function loadDefaultPageSize(fallback = 200): number {
   const stored = Number(localStorage.getItem(DEFAULT_PAGE_SIZE_KEY));
-  return stored > 0 ? stored : 200;
+  return stored > 0 ? stored : fallback;
 }
 
 export function saveDefaultPageSize(size: number): void {
@@ -52,7 +54,7 @@ export function saveDefaultPageSize(size: number): void {
 
 export function createPageSizePill(options: PageSizePillOptions): PageSizePillControl {
   let currentSize = options.initialSize ?? loadDefaultPageSize();
-  const label = h("span", {}, currentSize >= 50000 ? "All rows" : `${currentSize} rows`);
+  const label = h("span", {}, currentSize >= ALL_ROWS_PAGE_SIZE ? "All rows" : `${currentSize} rows`);
   const sizeButton = h(
     "button",
     {
@@ -72,7 +74,7 @@ export function createPageSizePill(options: PageSizePillOptions): PageSizePillCo
   const prevBtn = iconButton("prev", "Previous page", () => options.onPrev?.());
   prevBtn.disabled = true;
 
-  const pageInfo = h("span", { class: "pager-info" }, `${currentSize >= 50000 ? "All" : currentSize} rows`);
+  const pageInfo = h("span", { class: "pager-info" }, `${currentSize >= ALL_ROWS_PAGE_SIZE ? "All" : currentSize} rows`);
 
   const countBtn = h("button", { class: "link-button pager-count", type: "button", title: "Count exact total rows" }, "Count");
   countBtn.hidden = true;
@@ -96,7 +98,7 @@ export function createPageSizePill(options: PageSizePillOptions): PageSizePillCo
   const container = h("div", { class: "table-pager-bar", role: "navigation", "aria-label": "Pagination" }, pagerNav, divider, sizeButton);
 
   function updateLabel(): void {
-    label.textContent = currentSize >= 50000 ? "All rows" : `${currentSize} rows`;
+    label.textContent = currentSize >= ALL_ROWS_PAGE_SIZE ? "All rows" : `${currentSize} rows`;
   }
 
   function promptCustomPageSize(): void {
@@ -131,7 +133,7 @@ export function createPageSizePill(options: PageSizePillOptions): PageSizePillCo
   }
 
   function openMenu(event: MouseEvent): void {
-    const defaultLimit = loadDefaultPageSize();
+    const defaultLimit = loadDefaultPageSize(options.fallbackSize);
     const items: MenuItem[] = [];
 
     if (options.onCountRows) {
@@ -161,11 +163,11 @@ export function createPageSizePill(options: PageSizePillOptions): PageSizePillCo
     }
 
     items.push({
-      label: `${currentSize >= 50000 ? "✓ " : "  "}All`,
+      label: `${currentSize >= ALL_ROWS_PAGE_SIZE ? "✓ " : "  "}All`,
       run: () => {
-        currentSize = 50000;
+        currentSize = ALL_ROWS_PAGE_SIZE;
         updateLabel();
-        options.onPageSizeChange(50000);
+        options.onPageSizeChange(currentSize);
       },
     });
 

@@ -43,9 +43,18 @@ export function cleanQuerySql(sql: string): string {
  * Wraps `baseSql` in a subquery and adds ORDER BY and LIMIT/OFFSET clauses for the given dialect.
  * This guarantees that rows are sorted on the server before pagination is applied.
  */
-export function buildPaginatedQuery(baseSql: string, dialect: SqlDialect, limit: number, offset: number, sort: SortState | null): string {
+export function buildPaginatedQuery(
+  baseSql: string,
+  dialect: SqlDialect,
+  limit: number,
+  offset: number,
+  sort: SortState | null,
+  tieBreakers: readonly string[] = [],
+): string {
   const clean = cleanQuerySql(baseSql);
-  const orderClause = sort ? ` ORDER BY ${quoteIdent(sort.column, dialect)} ${sort.descending ? "DESC" : "ASC"}` : "";
+  const orderColumns = tieBreakers.filter((column) => column !== sort?.column).map((column) => `${quoteIdent(column, dialect)} ASC`);
+  if (sort) orderColumns.unshift(`${quoteIdent(sort.column, dialect)} ${sort.descending ? "DESC" : "ASC"}`);
+  const orderClause = orderColumns.length > 0 ? ` ORDER BY ${orderColumns.join(", ")}` : "";
 
   if (dialect === "tsql") {
     // T-SQL requires an ORDER BY clause for OFFSET ... FETCH

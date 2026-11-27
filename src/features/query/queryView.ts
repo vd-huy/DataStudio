@@ -25,7 +25,6 @@ import type {
   SqlDialectId,
   TransactionOp,
   TransactionState,
-  Value,
 } from "../../core/contract";
 import { confirmDialog, toast } from "../../core/dialogs";
 import { clamp, formatNumber, h, icon, iconOrDefault, secondaryTool, separator, spacer, toolButton } from "../../core/dom";
@@ -40,10 +39,11 @@ import type { TabContent } from "../../core/tabs";
 import type { HistoryEntry } from "../../core/types";
 import { openColumnsPopover } from "../grid/columnsPopover";
 import { gridSetup, type SortState } from "../grid/grid";
+import { ExportCancelled, fetchAllRows } from "../importExport/exportFetch";
 import { exportDialog } from "../importExport/importExport";
-import { loadDefaultPageSize } from "../table/pageSizePill";
+import { ALL_ROWS_PAGE_SIZE } from "../table/pageSizePill";
 import { openPreviewSqlDialog } from "../table/previewSql";
-import { buildCountQuery, buildPaginatedQuery, isPaginatableQuery } from "./queryPaging";
+import { buildCountQuery, isPaginatableQuery } from "./queryPaging";
 import { queryExportReader } from "./queryExport";
 import { extractTargetTable, findKeyColumns } from "./tableExtractor";
 
@@ -166,7 +166,7 @@ export class QueryView implements TabContent {
   private readonly autoCommit = h("input", { type: "checkbox", checked: true, title: "Commit every statement on its own" });
   private readonly autoCommitLabel: HTMLElement;
   private readonly transactionButtons: HTMLButtonElement[];
-  private pageSize: number = loadDefaultPageSize();
+  private pageLoad: AbortController | null = null;
   private readonly resultToolbar: HTMLElement;
   private readonly resultRefreshButton: HTMLButtonElement;
   private readonly resultAddButton: HTMLButtonElement;
@@ -311,41 +311,34 @@ export class QueryView implements TabContent {
         this.history.element,
       ),
     );
-    this.resultArea.onActiveChange = () => this.syncResultTools();
+    this.resultArea.onActiveChange = () => {
+      this.syncResultTools();
+      this.loadRemainingRows();
+    };
     this.resultArea.onGridChange = () => this.syncResultTools();
     this.resultArea.onPageSizeChange = (panel, size) => {
-      this.pageSize = size;
-      panel.limit = size;
-      panel.offset = 0;
-      void this.loadPage(panel);
+      if (this.running || !panel.entry?.done || !isPaginatableQuery(panel.baseSql)) {
+        panel.pageSizePill?.setSize(panel.limit);
+        return;
+      }
+      void this.loadPage(panel, 0, size);
     };
     this.resultArea.onCountRows = (panel) => void this.countRows(panel);
-    this.resultArea.onFirstPage = (panel) => {
-      panel.offset = 0;
-      void this.loadPage(panel);
-    };
-    this.resultArea.onPrevPage = (panel) => {
-      panel.offset = Math.max(0, panel.offset - panel.limit);
-      void this.loadPage(panel);
-    };
-    this.resultArea.onNextPage = (panel) => {
-      panel.offset = panel.offset + panel.limit;
-      void this.loadPage(panel);
-    };
+    this.resultArea.onFirstPage = (panel) => void this.loadPage(panel, 0);
+    this.resultArea.onPrevPage = (panel) => void this.loadPage(panel, Math.max(0, panel.offset - panel.pageSpan));
+    this.resultArea.onNextPage = (panel) => void this.loadPage(panel, panel.offset + panel.pageSpan);
     this.resultArea.onLastPage = (panel) => {
       if (panel.total !== null && panel.exactTotal) {
-        panel.offset = Math.floor(Math.max(0, panel.total - 1) / panel.limit) * panel.limit;
-        void this.loadPage(panel);
+        void this.loadPage(panel, Math.floor(Math.max(0, panel.total - 1) / panel.pageSpan) * panel.pageSpan);
       } else {
         void this.countRows(panel, true);
       }
     };
     this.resultArea.onSort = (panel, column) => {
+      if (this.running || !panel.entry?.done) return;
       const current = panel.sort?.column === column ? panel.sort : null;
       const nextSort: SortState | null = current === null ? { column, descending: false } : current.descending ? null : { column, descending: true };
-      panel.sort = nextSort;
-      panel.offset = 0;
-      void this.loadPage(panel);
+      void this.loadPage(panel, 0, panel.limit, nextSort);
     };
 
     this.element.addEventListener("keydown", (event) => {
@@ -462,6 +455,7 @@ export class QueryView implements TabContent {
 
   dispose(): void {
     this.disposed = true;
+    this.pageLoad?.abort();
     window.clearInterval(this.idleTimer);
     if (this.renderFrame !== null) cancelAnimationFrame(this.renderFrame);
     this.editor.destroy();
@@ -779,6 +773,7 @@ export class QueryView implements TabContent {
     const timer = new AttemptTimer();
     const inFlight = (running: boolean) => (this.stopButton.disabled = !running);
     let results = new RunResults();
+    let completed = false;
     this.cancelRequested = false;
     this.setRunning(true);
     const execute = async () => {
@@ -787,6 +782,7 @@ export class QueryView implements TabContent {
         // A retry after a confirmation starts over.
         results = this.startResults();
         const current = results;
+        const pageSize = this.resultArea.getPageSize();
         return timer.attempt(
           () =>
             this.connection.run(
@@ -798,7 +794,7 @@ export class QueryView implements TabContent {
               },
               confirmation,
               // Exactly one page; the backend marks the result truncated when more rows exist (the pager's "has more").
-              this.pageSize >= 50000 ? null : this.pageSize,
+              pageSize >= ALL_ROWS_PAGE_SIZE ? null : pageSize,
             ),
           inFlight,
         );
@@ -836,6 +832,7 @@ export class QueryView implements TabContent {
       }
       this.lastError = null;
       this.finishResults(results, summary, null, timer.elapsed());
+      completed = !summary.stopped;
       if (this.transactionsSupported) this.showTransaction(summary.transaction);
       this.record({ sql: text, database, startedAt, durationMs: summary.elapsedMs, results: results.history(), error: null });
     } catch (error) {
@@ -855,6 +852,7 @@ export class QueryView implements TabContent {
       void this.refreshTransaction();
     } finally {
       this.setRunning(false);
+      if (completed) this.loadRemainingRows();
       this.onChanged?.();
       // New or changed tables and columns complete right away.
       if (changesSchema(text) && results.entries.length > 0) this.refreshNames();
@@ -894,6 +892,7 @@ export class QueryView implements TabContent {
 
   private async cancel(): Promise<void> {
     this.cancelRequested = true;
+    this.pageLoad?.abort();
     try {
       await this.connection.cancelRun(this.sessionId);
       toast("Cancel requested");
@@ -1074,53 +1073,60 @@ export class QueryView implements TabContent {
     });
   }
 
-  private async loadPage(panel: QueryResultPanel): Promise<void> {
-    if (!panel.entry || !panel.grid || !panel.baseSql) return;
+  private loadRemainingRows(): void {
+    const panel = this.resultArea.activePanel();
+    if (panel?.hasMore && panel.limit >= ALL_ROWS_PAGE_SIZE) void this.loadPage(panel, 0);
+  }
+
+  private async loadPage(panel: QueryResultPanel, requestedOffset: number, size = panel.limit, sort = panel.sort): Promise<void> {
+    if (this.running || this.disposed || !panel.entry?.done || !panel.grid || !isPaginatableQuery(panel.baseSql)) return;
+    const entry = panel.entry;
     const baseSql = panel.baseSql;
     const dialect = dialectOf(this.dialect());
-    const limit = panel.limit;
-    const offset = panel.offset;
-    const sort = panel.sort;
+    const limit = size === panel.limit ? panel.pageSpan : size;
+    const allRows = size >= ALL_ROWS_PAGE_SIZE;
+    const offset = allRows ? 0 : requestedOffset;
+    const database = this.currentDatabase();
+    const controller = new AbortController();
 
+    this.pageLoad = controller;
+    this.setRunning(true);
+    this.stopButton.disabled = false;
     panel.pageSizePill?.setLoading(true);
 
     const target = extractTargetTable(baseSql);
     const editable = target !== null;
-    const keyColumns = panel.entry.columns ? findKeyColumns(panel.entry.columns) : [];
-
-    const fetchedRows: Value[][] = [];
-    let elapsedMs = 0;
-    let truncated = false;
+    const keyColumns = entry.columns ? findKeyColumns(entry.columns) : [];
+    // A full reload can use the primary key consistently from its first page onward.
+    const tieBreakers =
+      allRows && target && (sort || !/\border\s+by\b/i.test(baseSql))
+        ? (entry.columns ?? []).filter((column) => column.hints.primary).map((column) => column.name)
+        : [];
+    const read = queryExportReader(this.connection, this.sessionId, baseSql, database, dialect, sort, tieBreakers);
 
     try {
-      // One row past the page, read only to learn whether a next page exists (the backend keeps `limit`, marks it truncated).
-      const pageSql = buildPaginatedQuery(baseSql, dialect, limit + 1, offset, sort);
-      const req: RunRequest = { text: pageSql, database: this.currentDatabase(), offset: 0 };
-      const summary = await this.connection.run(
-        this.sessionId,
-        req,
-        (event) => {
-          if (event.event === "rows") {
-            for (const r of event.rows) fetchedRows.push(r);
-          } else if (event.event === "done") {
-            elapsedMs = event.elapsedMs;
-            truncated = event.truncated;
-          }
-        },
-        null,
-        limit,
-      );
-      if (summary) elapsedMs = summary.elapsedMs;
+      const started = performance.now();
+      const {
+        rows: displayedRows,
+        hasMore,
+        elapsedMs,
+      } = allRows
+        ? { rows: await fetchAllRows(read, controller.signal), hasMore: false, elapsedMs: Math.round(performance.now() - started) }
+        : await read({ offset, after: null }, limit);
+      if (controller.signal.aborted || panel.entry !== entry) return;
 
-      const hasMore = fetchedRows.length > limit || truncated;
-      const displayedRows = fetchedRows.slice(0, limit);
-
+      if (size !== panel.limit) this.resultArea.setPageSize(size);
+      panel.limit = size;
+      panel.offset = offset;
+      panel.sort = sort;
       panel.hasMore = hasMore;
+      panel.pageSpan = hasMore && displayedRows.length > 0 ? displayedRows.length : limit;
       panel.elapsedMs = elapsedMs;
       if (!hasMore) {
         // The last page: the total is known exactly.
         panel.total = offset + displayedRows.length;
         panel.exactTotal = true;
+        if (allRows) panel.countLabel.textContent = formatNumber(displayedRows.length);
       } else if (panel.total !== null && panel.total <= offset + displayedRows.length) {
         // More rows than the total said (it was stale): unknown again.
         panel.total = null;
@@ -1128,7 +1134,7 @@ export class QueryView implements TabContent {
       }
 
       panel.grid.load({
-        ...gridSetup(panel.entry.columns ?? [], displayedRows, dialectOf(this.dialect())),
+        ...gridSetup(entry.columns ?? [], displayedRows, dialect),
         clientFilter: true,
         clientSort: false,
         sort,
@@ -1150,14 +1156,18 @@ export class QueryView implements TabContent {
       });
       this.syncResultTools();
     } catch (error) {
-      showError(error, `Load page at offset ${offset}`);
+      if (!controller.signal.aborted && !(error instanceof ExportCancelled))
+        showError(error, allRows ? "Load all query rows" : `Load page at offset ${offset}`);
     } finally {
+      this.pageLoad = null;
+      this.setRunning(false);
+      panel.pageSizePill?.setSize(panel.limit);
       panel.pageSizePill?.setLoading(false);
     }
   }
 
   private async countRows(panel: QueryResultPanel, jumpToLast = false): Promise<void> {
-    if (!panel.baseSql) return;
+    if (this.running || !panel.entry?.done || !isPaginatableQuery(panel.baseSql)) return;
     const countSql = buildCountQuery(panel.baseSql);
     panel.pageSizePill?.setLoading(true);
     try {
@@ -1182,8 +1192,7 @@ export class QueryView implements TabContent {
         panel.exactTotal = true;
         toast(`Count: ${formatNumber(count)} rows`, "info");
         if (jumpToLast) {
-          panel.offset = Math.floor(Math.max(0, count - 1) / panel.limit) * panel.limit;
-          await this.loadPage(panel);
+          await this.loadPage(panel, Math.floor(Math.max(0, count - 1) / panel.pageSpan) * panel.pageSpan);
         } else {
           panel.pageSizePill?.update({
             offset: panel.offset,
