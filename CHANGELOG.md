@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-11-27
+
+### Fixed
+
+- SQL query results now show up to 1,000 rows per page by default. Choosing **All** loads the full result into the grid.
+- The query pager advances by the number of rows returned when the backend caps a page, so the next page starts at the correct row.
+
 ## [1.1.2] - 2026-11-16
 
 ### Fixed
@@ -242,7 +249,8 @@ First public release for Windows, plus a web edition for Docker.
 - **Design view** with columns and DDL, and an interactive **ER diagram** per database.
 - Light, dark and system themes. Settings are stored in `datastudio.json` next to the executable.
 
-[Unreleased]: https://github.com/vd-huy/DataStudio/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/vd-huy/DataStudio/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/vd-huy/DataStudio/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/vd-huy/DataStudio/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/vd-huy/DataStudio/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/vd-huy/DataStudio/compare/v1.0.0...v1.1.0
